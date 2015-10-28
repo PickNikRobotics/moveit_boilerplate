@@ -1,0 +1,7 @@
+# Realsense 
+camera_intrinsics:
+  fx: 611.9262
+  fy: 611.8618
+  cx: 314.2462
+  cy: 247.3364
+  min_depth: 0.1

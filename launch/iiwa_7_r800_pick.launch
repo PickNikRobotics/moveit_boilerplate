@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+
+ <!-- Load the URDF, SRDF and other .yaml configuration files on the param server -->
+  <include file="$(find iiwa_7_r800moveit_config)/launch/planning_context.launch">
+    <arg name="load_robot_description" value="true"/>
+  </include>
+
+  <!-- GDB Debug Option -->
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" 
+	   value="gdb -x $(find moveit_manipulation)/launch/debug_settings.gdb --ex run --args" />
+
+  <!-- Command line arguments -->
+  <arg name="mode" default="1" />
+  <arg name="auto_step" default="false" />
+  <arg name="full_auto" default="false" />
+  <arg name="verbose" default="1" />
+  <arg name="use_experience" default="1" />
+  <arg name="id" default="0" />
+  <arg name="show_database" default="0" />
+  <arg name="fake_execution" default="0"/>
+  <arg name="fake_perception" default="0"/>
+  <arg name="pose" default=""/>
+
+  <!-- Planning Functionality -->
+  <include ns="moveit_manipulation" file="$(find iiwa_7_r800moveit_config)/launch/planning_pipeline.launch.xml">
+    <arg name="pipeline" value="ompl" />
+  </include>
+
+  <!-- Sensors Functionality -->
+  <!-- <include ns="moveit_manipulation" file="$(find iiwa_7_r800moveit_config)/launch/sensor_manager.launch.xml" > -->
+  <!--   <arg name="moveit_sensor_manager" value="R3" />  -->
+  <!-- </include> -->
+
+  <arg name="allow_trajectory_execution" default="true"/>
+
+  <!-- Launch controller manager in this namespace -->
+  <include ns="moveit_manipulation" file="$(find iiwa_7_r800moveit_config)/launch/trajectory_execution.launch.xml">
+    <arg name="moveit_manage_controllers" value="true" />
+    <arg name="moveit_controller_manager" value="r3" unless="$(arg fake_execution)"/>
+    <arg name="moveit_controller_manager" value="fake" if="$(arg fake_execution)"/>
+  </include>
+
+  <!-- Main process -->
+  <node name="moveit_manipulation" pkg="moveit_manipulation" type="moveit_manipulation" respawn="false" 
+	launch-prefix="$(arg launch_prefix)" output="screen" 
+	args="--mode $(arg mode) --verbose $(arg verbose) --full_auto=$(arg full_auto) --auto_step=$(arg auto_step)
+	      --id $(arg id) --fake_execution $(arg fake_execution) --fake_perception $(arg fake_perception)
+	      --show_database $(arg show_database) --use_experience $(arg use_experience) --pose $(arg pose)">
+
+    <!-- Robot-specific settings -->
+    <rosparam command="load" file="$(find moveit_manipulation)/config/picknik_r3.yaml"/>
+    <rosparam command="load" file="$(find moveit_manipulation)/config/picknik_debug_level.yaml"/>
+    <rosparam command="load" file="$(find iiwa_7_r800moveit_config)/config/kinematics.yaml"/>
+    <rosparam command="load" file="$(find moveit_grasps)/config_robot/bot_grasp_data.yaml"/>
+
+    <!-- Grasp Settings -->
+    <rosparam command="load" file="$(find moveit_grasps)/config/grasp_debug_level.yaml"/>    
+
+    <!-- Shelf dimensions -->
+    <rosparam command="load" file="$(find moveit_manipulation)/config/shelf.yaml"/>
+
+    <!-- Camera settings -->
+    <rosparam command="load" file="$(find moveit_manipulation)/config/camera_intrinsics.yaml"/>
+
+    <!-- Planner settings -->
+    <rosparam command="load" file="$(find moveit_manipulation)/config/moveit_ompl.yaml"/>
+  </node>
+
+</launch>

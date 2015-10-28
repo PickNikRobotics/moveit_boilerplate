@@ -1,0 +1,49 @@
+# Note: Name of file should match name of robot in URDF
+
+# Robot Execution Speed
+main_velocity_scaling_factor: 0.4 # during planning
+approach_velocity_scaling_factor: 0.1
+lift_velocity_scaling_factor: 0.05
+retreat_velocity_scaling_factor: 0.1
+calibration_velocity_scaling_factor: 0.1
+
+# Sleep timers
+wait_before_grasp: 1.0
+wait_after_grasp: 1.0
+
+# Poses
+#start_pose: both_neutral
+start_pose: both_neutral_right_disabled
+right_arm_dropoff_pose: right_goal_bin_pose
+left_arm_dropoff_pose: left_goal_bin_pose
+
+# Semantics
+dual_arm: true
+has_gantry: false
+right_hand_name: right_hand
+left_hand_name: left_hand
+right_arm_name: right_arm
+left_arm_name: left_arm
+both_arms_name: both_arms
+
+# Calibration - xyz, rpy
+#world_to_shelf_transform: [1.0, -0.4365, 0.0, 0.0, 0.0, 0.0]  # IDEAL
+world_to_shelf_transform:  [0.99, -0.4, 0.0, 0.0, 0.0, 0.0]
+
+# Topics
+joint_state_topic: /robot/joint_states
+
+# Goal bin - different for each robot
+goal_bin_x: -0.3
+goal_bin_y: 0.4365
+goal_bin_z: 0.4
+
+# Side limits (walls)
+left_wall_y: 0.0 # 0 means disabled
+#left_wall_y: 1.40 # 0 means disabled
+right_wall_y: -0.60 # 0 means disabled
+
+# Top limit
+ceiling_z: 2.4
+
+

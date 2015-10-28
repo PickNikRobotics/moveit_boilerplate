@@ -1,0 +1,26 @@
+# Shelf parameters
+shelf_width: 0.873
+shelf_height: 2.37
+shelf_depth: 0.875
+shelf_wall_width: 0.032
+shelf_inner_wall_width: 0.006
+shelf_surface_thickness: 0.02
+
+# Bin parameters
+first_bin_from_bottom: 0.81 # If at correct competition height
+first_bin_from_right: 0.025
+#bin_width: 0.250825 # measured
+#bin_middle_width: 0.2921 #measures
+
+bin_right_width: 0.236
+bin_middle_width: 0.299
+bin_left_width: 0.264
+
+
+bin_short_height: 0.2286
+bin_tall_height: 0.2667
+
+bin_depth: 0.38
+bin_top_margin: 0.01
+bin_left_margin: 0.01
+num_bins: 12.0

@@ -1,0 +1,41 @@
+# Standard: 
+#   - prepend with 'show' if it affects rviz
+#   - prepend with 'verbose' if it affects console
+
+debug_level:
+
+  # Goal bin
+  show_goal_bin_markers: false
+
+  # Bounding Box
+  verbose_bounding_box: false
+  
+  # Experience planning
+  verbose_experience_database_stats: false
+  show_experience_database: false
+
+  # Grasp selection
+  show_chosen_grasp_in_world: true
+
+  # Seed state
+  show_grasping_seed_state: false
+
+  # Product Simulator
+  show_random_generated_poses: false
+
+  # Simulation testing
+  show_simulated_paths_moving: true
+
+  # Unit testing
+  unit_test_all: false
+  unit_test_SuperSimple: false
+  unit_test_SimpleRotated: false
+  unit_test_SimpleVeryRotated: false
+  unit_test_SimpleFarBack: false
+  unit_test_ExpoLow: true
+
+  # Perception Interface
+  show_raw_object_pose: false
+  show_world_to_camera_pose: false
+  show_world_to_bin_pose: false
+  show_world_to_object_pose: false

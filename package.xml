@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='ASCII'?>
+<package>
+  <name>moveit_manipulation</name>
+
+  <version>0.1.0</version>
+
+  <description>Main package for controlling robots for Amazon picking challenge</description>
+
+  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+  <license>BSD</license>
+
+  <url type="website">https://github.com/davetcoleman/cu_amazon</url>
+  <url type="butracker">https://github.com/davetcoleman/cu_amazon/issues</url>
+  <url type="repository">https://github.com/davetcoleman/cu_amazon/</url>
+
+  <author email="davetcoleman@gmail.com">Dave Coleman</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>moveit_core</build_depend>
+  <build_depend>moveit_grasps</build_depend>
+  <build_depend>moveit_ompl</build_depend>
+  <build_depend>moveit_visual_tools</build_depend>
+  <build_depend>ompl_visual_tools</build_depend>
+  <build_depend>eigen</build_depend>
+  <build_depend>cmake_modules</build_depend>
+  <build_depend>ompl</build_depend>
+  <build_depend>controller_manager_msgs</build_depend>
+  <build_depend>ros_param_utilities</build_depend>  
+  <build_depend>libgflags-dev</build_depend>
+
+  <run_depend>moveit_core</run_depend>
+  <run_depend>moveit_grasps</run_depend>
+  <run_depend>moveit_visual_tools</run_depend>
+  <run_depend>moveit_ompl</run_depend>
+  <run_depend>eigen</run_depend>
+  <run_depend>python-pandas</run_depend>
+  <run_depend>joy</run_depend>
+  <run_depend>controller_manager_msgs</run_depend>
+  <run_depend>ros_param_utilities</run_depend>
+
+</package>

@@ -1,0 +1,119 @@
+# Note: Name of file should match name of robot in URDF
+
+# Robot Execution Speed
+main_velocity_scaling_factor: 0.7 # moving between cartesian paths
+approach_velocity_scaling_factor: 0.2
+lift_velocity_scaling_factor: 0.1
+retreat_velocity_scaling_factor: 0.6
+calibration_velocity_scaling_factor: 0.5  #0.1
+
+# Sleep timers
+wait_before_grasp: 0.1
+wait_after_grasp: 1.0
+
+# Poses
+start_pose: manipulator_home
+right_arm_dropoff_pose: goal_bin_pose
+left_arm_dropoff_pose: left_goal_bin_pose_DISABLED
+
+# Cartesian path config
+jump_threshold: 4
+
+# Safety
+collision_wall_safety_margin: 0.01 # 0.02
+
+# Semantics
+dual_arm: false
+has_gantry: true
+right_hand_name: gripper
+left_hand_name: gripper_DISABLED
+right_arm_name: manipulator
+right_arm_only_name: jaco_arm
+left_arm_name: manipulator_DISABLED
+both_arms_name: manipulator_DISABLED
+
+# Calibration
+# 0.029 m is the width of frame to gantry center, to be added to the z component
+# 0.035 m is the width of the 8020 bar in front of shelf
+# in-lab distance is 0.5+0.029-0.035 = 0.494
+#world_to_shelf_transform: [0.489, -0.438, 0.002, 0.0, 0.0, 0.0]  # IDEAL
+# values are yaw, roll, pitch in world frame
+
+#world_to_shelf_transform: [0.7, -0.45, -0.037, 0.012, -0.01, 0.007]  # normal shelf
+#world_to_shelf_transform: [ 0.693, -0.436, -0.177, 0.012, -0.003, -0.009] # chair shelf
+world_to_shelf_transform: [ 0.686, -0.444, -0.179, -0.002, -0.014, -0.016] # after rpy bug
+# Adding 0.38 m offset on arm_mount_joint
+# Actual 0.167 offset
+
+# 0.52 m from shelf (large frame to leg) before moving shelf 
+
+# From computer vision
+#collision_shelf_transform: [-0.052738, -0.330819, 1.35112, -0.0235953, 0.125, 0.3432]
+collision_shelf_transform:  [-0.062738, -0.330819, 1.35112, -0.0235953, 0.125, 0.3432]
+collision_shelf_transform_x_offset: 0.01
+
+# Ideal location to have an attached object (crayons)
+ideal_attached_transform: [0, 0, -0.19, 0, 0, 0]
+
+# Topics
+joint_state_topic: /joint_states
+
+# Goal bin - different for each robot
+goal_bin_x: -0.35
+goal_bin_y: 0.0635
+goal_bin_z: 0.41 #0.5
+place_goal_down_distance_desired: 0.17
+goal_bin_clearance: 0.4
+
+# Side limits (walls)
+left_wall_y: 0 # 0 means disabled
+right_wall_y: 0 # 0 means disabled
+
+# Top limit
+ceiling_z: 5 #2.4
+
+# End effector configuration - jaco specific
+finger_3_offset: -0.1 # open more than the others TODO remove in favor of grasp_data?
+
+# Perception Data
+camera:
+  # THIS IS USED TO OFFSET THE CAMERA TO THE CIRCLAR CALIBRATION LOCATION
+  x_translation_from_bin: 0.55 # meters
+  y_translation_from_bin: 0.0 # negative is right looking at shelf
+  # THIS IS USED TO OFFSET THE GANTRY FROM THE BIN CENTROID
+  z_translation_from_bin: -0.86 # must be -0.66 or less
+  x_rotation_from_standard_grasp: 0 #-0.2  # radians
+  y_rotation_from_standard_grasp: 0  # negative is torwards right of shelf
+  z_rotation_from_standard_grasp: 0  # radians
+  lift_distance: 0.05
+  left_distance: 0.05
+  camera_frame_display_scale: 0.0005
+  left_camera_frame: /xtion_left_depth_frame  # Deprecated
+  right_camera_frame: /xtion_right_depth_frame # Deprecated
+
+# Test data
+test:
+  test_joint_limit_joint: 1  # starts at 0, negative number means test all
+  test_double: 0.05 # for anything
+  # During development it is nice to have ability to tweak a value
+  test_pose: [0.12, 0.06, 0.03, 1.57, 0, 0] # x,y,z,r,p,y
+  
+bounding_box_reduction: 1.0 # reduce bounding box size slightly
+
+# Where to put the camera
+bin_height:
+  row1: 1.0 # top row
+  row2: 0.7913
+  row3: 0.5691
+  row4: 0.3013 # bottom rowx
+
+behavior:
+  end_effector_enabled: true
+  super_auto: true
+  dropping_bounding_box: true
+  use_camera_hack_offset: false
+  ddtr_mode: false
+  use_computer_vision_shelf: true
+
+
+
