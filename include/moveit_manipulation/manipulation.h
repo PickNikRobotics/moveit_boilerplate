@@ -1,11 +1,35 @@
 /*********************************************************************
- * Software License Agreement
+ * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2015, Dave Coleman <dave@dav.ee>
+ *  Copyright (c) 2015, PickNik LLC
  *  All rights reserved.
  *
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of PickNik LLC nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
 /* Author: Dave Coleman <dave@dav.ee>
@@ -204,42 +228,6 @@ public:
                             const moveit::core::RobotStatePtr the_grasp, bool verbose);
 
   /**
-   * \brief Helper for getting the joint that is the gantry, with error checks
-   * \return NULL on failure, the joint on success
-   */
-  const moveit::core::JointModel* getGantryJoint();
-
-  /**
-   * \brief After grasping an object, lift object up slightly
-   * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
-   * \param desired_lift_distance
-   * \param velocity_scaling_factor
-   * \param up
-   * \param ignore_collision
-   * \return true on success
-   */
-  bool executeVerticlePath(const moveit::core::JointModelGroup* arm_jmg,
-                           const double& desired_lift_distance,
-                           const double& velocity_scaling_factor, bool up,
-                           bool ignore_collision = false);
-
-  /**
-   * \brief After grasping an object, lift object up slightly
-   * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
-   * \param desired_lift_distance
-   * \param velocity_scaling_factor
-   * \param up
-   * \param ignore_collision
-   * \param best_attempt - even if we can't achieve the desired_list_distance, execute anyway as
-   * much as possible
-   * \return true on success
-   */
-  bool executeVerticlePathGantryOnly(const moveit::core::JointModelGroup* arm_jmg,
-                                     const double& desired_lift_distance,
-                                     const double& velocity_scaling_factor, bool up,
-                                     bool ignore_collision, bool best_attempt = false);
-
-  /**
    * \brief After grasping an object, lift object up slightly using IK
    * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
    * \param desired_lift_distance
@@ -318,11 +306,15 @@ public:
 
   /**
    * \brief Get the robot state that accomplished a desired end effector pose
+   * \param ee_pose - desired pose of end effector
+   * \param robot_state - seed state for IK solver
+   * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
+   * \param consistency_limits - if greater than 0, forces ik solver to only find solutions within that joint distance
    * \return true on success
    */
   bool getRobotStateFromPose(const Eigen::Affine3d& ee_pose,
                              moveit::core::RobotStatePtr& robot_state, JointModelGroup* arm_jmg,
-                             bool use_consistency_limits = false);
+                             double consistency_limit = 0.0);
 
   /**
    * \brief Move a pose in a specified direction and specified length, where all poses are in the

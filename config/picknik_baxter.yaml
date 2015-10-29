@@ -19,7 +19,6 @@ left_arm_dropoff_pose: left_goal_bin_pose
 
 # Semantics
 dual_arm: true
-has_gantry: false
 right_hand_name: right_hand
 left_hand_name: left_hand
 right_arm_name: right_arm

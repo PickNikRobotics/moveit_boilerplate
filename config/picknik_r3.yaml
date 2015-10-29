@@ -24,7 +24,6 @@ collision_wall_safety_margin: 0.01 # 0.02
 
 # Semantics
 dual_arm: false
-has_gantry: false
 right_hand_name: gripper
 left_hand_name: gripper_DISABLED
 right_arm_name: arm

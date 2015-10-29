@@ -24,7 +24,6 @@ collision_wall_safety_margin: 0.01 # 0.02
 
 # Semantics
 dual_arm: false
-has_gantry: false
 right_hand_name: gripper
 left_hand_name: gripper_DISABLED
 right_arm_name: arm
@@ -33,7 +32,7 @@ left_arm_name: manipulator_DISABLED
 both_arms_name: manipulator_DISABLED
 
 # Topics
-joint_state_topic: /joint_states
+joint_state_topic: /iiwa_7_r800/joint_states
 
 # Test data
 test:
@@ -85,6 +84,5 @@ start_state_max_bounds_error: 0.05 # overrides verion in ompl_planning_pipeline.
 behavior:
   end_effector_enabled: true
   super_auto: true
-  dropping_bounding_box: true
-  use_camera_hack_offset: false
-  use_computer_vision_shelf: false
+  # manipulation.cpp
+  get_robot_state_from_pose__collision_checking_verbose: false

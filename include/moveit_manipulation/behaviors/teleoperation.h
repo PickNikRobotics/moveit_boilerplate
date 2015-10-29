@@ -32,37 +32,48 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/*
-   Author: Dave Coleman <dave@dav.ee>
-   Desc:   Shortcuts for namespaces
+/* Author: Dave Coleman <dave@dav.ee>
+   Desc:   Realtime teleoperation capabilities using MoveIt!
 */
 
-#ifndef MOVEIT_MANIPULATION__NAMESPACES
-#define MOVEIT_MANIPULATION__NAMESPACES
+#ifndef MOVEIT_MANIPULATON__TELEOPERATION_
+#define MOVEIT_MANIPULATON__TELEOPERATION_
 
-// Temporarily define namespaces
-namespace moveit_visual_tools
-{
-}
-namespace rviz_visual_tools
-{
-}
-namespace ompl_visual_tools
-{
-}
-namespace moveit
-{
-namespace core
-{
-class JointModelGroup;
-}
-}
+// Teleoperation
+#include <moveit_manipulation/moveit_boilerplate.h>
 
-// Shortcuts
-namespace mvt = moveit_visual_tools;
-namespace rvt = rviz_visual_tools;
-namespace ovt = ompl_visual_tools;
+namespace moveit_manipulation
+{
+class Teleoperation : public moveit_manipulation::MoveItBoilerplate
+{
+public:
+  /**
+   * \brief Constructor
+   */
+  Teleoperation();
 
-typedef const moveit::core::JointModelGroup JointModelGroup;
+  void enableTeleoperation();
+
+  geometry_msgs::Pose getInteractiveMarkerPose();
+
+  void setupInteractiveMarker();
+
+  /**
+   * \brief Callback from interactive markers
+   * \param pose - pose recived from marker
+   * \param mode - 1 is regular - recieve new pose, 
+   *               2 is reset imarker
+   */
+  void processMarkerPose(const geometry_msgs::Pose& pose, int mode);
+
+private:
+
+  // Teleop
+  bool teleoperation_enabled_ = false;
+  Eigen::Affine3d interactive_marker_pose_;
+  InteractiveMarkerCallback callback_;
+};  // end class
+
+}  // end namespace
 
 #endif

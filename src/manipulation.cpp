@@ -1,11 +1,35 @@
 /*********************************************************************
- * Software License Agreement
+ * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2015, Dave Coleman <dave@dav.ee>
+ *  Copyright (c) 2015, PickNik LLC
  *  All rights reserved.
  *
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of PickNik LLC nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
 /* Author: Dave Coleman <dave@dav.ee>
@@ -890,115 +914,6 @@ bool Manipulation::generateApproachPath(moveit_grasps::GraspCandidatePtr chosen_
   return true;
 }
 
-const moveit::core::JointModel* Manipulation::getGantryJoint()
-{
-  if (!config_->has_gantry_)
-  {
-    ROS_ERROR_STREAM_NAMED("manipulation", "Attempt to use gantry on robot that does not have one");
-    return NULL;
-  }
-
-  const moveit::core::JointModel* gantry_joint = robot_model_->getJointModel("gantry_joint");
-  if (!gantry_joint)
-  {
-    ROS_ERROR_STREAM_NAMED("manipulation", "Failed to get joint link");
-    return NULL;
-  }
-  if (gantry_joint->getVariableCount() != 1)
-  {
-    ROS_ERROR_STREAM_NAMED("manipulation", "Invalid number of joints in "
-                                               << gantry_joint->getName());
-    return NULL;
-  }
-  return gantry_joint;
-}
-
-bool Manipulation::executeVerticlePath(JointModelGroup* arm_jmg,
-                                       const double& desired_lift_distance,
-                                       const double& velocity_scaling_factor, bool up,
-                                       bool ignore_collision)
-{
-  ROS_INFO_STREAM_NAMED("manipulation", "Executing verticle path " << (up ? "up" : "down"));
-
-  // Attempt to only use gantry, then fall back to IK
-  if (config_->has_gantry_)
-  {
-    if (executeVerticlePathGantryOnly(arm_jmg, desired_lift_distance, velocity_scaling_factor, up,
-                                      ignore_collision))
-      return true;
-    else
-      ROS_INFO_STREAM_NAMED("manipulation", "Falling back to IK-based solution");
-  }
-
-  return executeVerticlePathWithIK(arm_jmg, desired_lift_distance, up, ignore_collision);
-}
-
-bool Manipulation::executeVerticlePathGantryOnly(JointModelGroup* arm_jmg,
-                                                 const double& desired_lift_distance,
-                                                 const double& velocity_scaling_factor, bool up,
-                                                 bool ignore_collision, bool best_attempt)
-{
-  if (!config_->has_gantry_)
-  {
-    ROS_ERROR_STREAM_NAMED("manipulation", "Attempt to use gantry on robot that does not have one");
-    return false;
-  }
-
-  // Find joint property
-  const moveit::core::JointModel* gantry_joint = getGantryJoint();
-
-  // Get latest state
-  getCurrentState();
-
-  std::vector<moveit::core::RobotStatePtr> robot_state_trajectory;
-  robot_state_trajectory.push_back(current_state_);
-
-  // Get current gantry joint
-  const double* current_gantry_positions = current_state_->getJointPositions(gantry_joint);
-
-  // Set new gantry joint
-  double new_gantry_positions[1];
-  if (up)
-    new_gantry_positions[0] = current_gantry_positions[0] + desired_lift_distance;
-  else
-    new_gantry_positions[0] = current_gantry_positions[0] - desired_lift_distance;
-
-  // Check joint limits
-  if (!gantry_joint->satisfiesPositionBounds(new_gantry_positions))
-  {
-    ROS_INFO_STREAM_NAMED("manipulation", "New gantry position of "
-                                              << new_gantry_positions[0]
-                                              << " does not satisfy joint limit bounds.");
-
-    if (!best_attempt)
-      return false;
-  }
-
-  // Create new movemenet state
-  moveit::core::RobotStatePtr new_state(new moveit::core::RobotState(*current_state_));
-  new_state->setJointPositions(gantry_joint, new_gantry_positions);
-  robot_state_trajectory.push_back(new_state);
-
-  // Get approach trajectory message
-  moveit_msgs::RobotTrajectory cartesian_trajectory_msg;
-  if (!convertRobotStatesToTrajectory(robot_state_trajectory, cartesian_trajectory_msg, arm_jmg,
-                                      velocity_scaling_factor))
-
-  {
-    ROS_ERROR_STREAM_NAMED("manipulation", "Failed to convert to parameterized trajectory");
-    return false;
-  }
-
-  // Execute
-  if (!execution_interface_->executeTrajectory(cartesian_trajectory_msg, arm_jmg))
-  {
-    ROS_ERROR_STREAM_NAMED("manipulation", "Failed to execute trajectory");
-    return false;
-  }
-
-  return true;
-}
-
 bool Manipulation::executeVerticlePathWithIK(JointModelGroup* arm_jmg,
                                              const double& desired_lift_distance, bool up,
                                              bool ignore_collision)
@@ -1345,14 +1260,16 @@ JointModelGroup* Manipulation::chooseArm(const Eigen::Affine3d& ee_pose)
 
 bool Manipulation::getRobotStateFromPose(const Eigen::Affine3d& ee_pose,
                                          moveit::core::RobotStatePtr& robot_state,
-                                         JointModelGroup* arm_jmg, bool use_consistency_limits)
+                                         JointModelGroup* arm_jmg, double consistency_limit)
 {
   // Setup collision checking with a locked planning scene
   {
-    bool collision_checking_verbose = false;
+    static bool collision_checking_verbose = 
+      config_->isEnabled("get_robot_state_from_pose__collision_checking_verbose");
     if (collision_checking_verbose)
-      ROS_WARN_STREAM_NAMED("manipulation",
-                            "moveToEEPose() has collision_checking_verbose turned on");
+      ROS_WARN_STREAM_NAMED("manipulation.getRobotStateFromPose",
+                            "collision_checking_verbose turned on");
+
     boost::scoped_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls;
     ls.reset(new planning_scene_monitor::LockedPlanningSceneRO(planning_scene_monitor_));
     bool only_check_self_collision = true;
@@ -1365,17 +1282,18 @@ bool Manipulation::getRobotStateFromPose(const Eigen::Affine3d& ee_pose,
     double timeout = 0;        // use default
 
     // Create consistency limits TODO cache
-    std::vector<double> consistency_limits;
-    if (use_consistency_limits)
-      for (std::size_t i = 0; i < arm_jmg->getActiveJointModels().size();
-           ++i)  // TODO hard coded njoints
-        consistency_limits.push_back(0.5);
+    // This specifies the desired distance between the solution and the seed state
+    std::vector<double> consistency_limits_vector;
+    if (consistency_limit)
+      // TODO hard coded njoints
+      for (std::size_t i = 0; i < arm_jmg->getActiveJointModels().size(); ++i)            
+        consistency_limits_vector.push_back(consistency_limit);
 
     const moveit::core::LinkModel* ik_tip_link = grasp_datas_[arm_jmg]->parent_link_;
-    if (!robot_state->setFromIK(arm_jmg, ee_pose, ik_tip_link->getName(), consistency_limits,
+    if (!robot_state->setFromIK(arm_jmg, ee_pose, ik_tip_link->getName(), consistency_limits_vector,
                                 attempts, timeout, constraint_fn))
     {
-      visual_tools_->publishZArrow(ee_pose, rvt::RED);
+      //visual_tools_->publishZArrow(ee_pose, rvt::RED);
       static std::size_t warning_counter = 0;
       ROS_WARN_STREAM_NAMED("manipulation", "Unable to find arm solution for desired pose " << warning_counter++);
       return false;
@@ -1696,8 +1614,8 @@ bool Manipulation::fixCollidingState(planning_scene::PlanningScenePtr cloned_sce
     double desired_distance = 0.2;
     bool up = true;
     bool ignore_collision = true;
-    if (!executeVerticlePath(arm_jmg, desired_distance, config_->lift_velocity_scaling_factor_, up,
-                             ignore_collision))
+    if (!executeVerticlePathWithIK(arm_jmg, desired_distance, up,
+				   ignore_collision))
     {
       return false;
     }
@@ -2125,7 +2043,6 @@ bool Manipulation::showJointLimits(JointModelGroup* jmg)
   return true;
 }
 
-// Note: deprecated function
 bool Manipulation::teleoperation(const Eigen::Affine3d& ee_pose, bool move,
                                  JointModelGroup* arm_jmg)
 {
@@ -2133,8 +2050,9 @@ bool Manipulation::teleoperation(const Eigen::Affine3d& ee_pose, bool move,
   // debugging!
 
   // Solve IK
-  bool use_consistency_limits = true;
-  if (!getRobotStateFromPose(ee_pose, teleop_state_, arm_jmg, use_consistency_limits))
+  // consistency_limits - if greater than 0, forces ik solver to only find solutions within that joint distance
+  double consistency_limit = 2.0;
+  if (!getRobotStateFromPose(ee_pose, teleop_state_, arm_jmg, consistency_limit))
     return false;
 
   // Execute robot pose

@@ -126,21 +126,31 @@ target_link_libraries(moveit_boilerplate
 )
 
 # Teleop-specific functionality
-add_library(moveit_teleop
-  src/moveit_teleop.cpp
+add_library(teleoperation
+  src/behaviors/teleoperation.cpp
 )
-target_link_libraries(moveit_teleop  
+target_link_libraries(teleoperation  
+  moveit_boilerplate
+  ${catkin_LIBRARIES} 
+  ${Boost_LIBRARIES}
+)
+
+# Teleop-specific functionality
+add_library(arm_testing
+  src/behaviors/arm_testing.cpp
+)
+target_link_libraries(arm_testing  
   moveit_boilerplate
   ${catkin_LIBRARIES} 
   ${Boost_LIBRARIES}
 )
 
 ## Declare a C++ executable
-add_executable(main src/main.cpp)
+add_executable(teleoperation_main src/behaviors/teleoperation_main.cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(main
-  moveit_teleop
+target_link_libraries(teleoperation_main
+  teleoperation
   gflags
   ${catkin_LIBRARIES}
 )

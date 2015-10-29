@@ -120,11 +120,9 @@ public:
   JointModelGroup* right_arm_;
   JointModelGroup* left_arm_;
   JointModelGroup* both_arms_;  // TODO remove?
-  JointModelGroup* arm_only_;   // with jacob, this does not include the gantry
 
   // Logic on type of robot
   bool dual_arm_;
-  bool has_gantry_;
 
   // Execution mode
   bool fake_execution_;

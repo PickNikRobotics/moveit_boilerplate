@@ -115,7 +115,6 @@ bool ManipulationData::load(robot_model::RobotModelPtr robot_model, bool fake_ex
 
   // Decide on dual arm mode we are in
   ros_param_utilities::getBoolParameter(parent_name, nh_, "dual_arm", dual_arm_);
-  ros_param_utilities::getBoolParameter(parent_name, nh_, "has_gantry", has_gantry_);
 
   // Generic test variable
   ros_param_utilities::getDoubleParameter(parent_name, nh_, "test/test_double", test_double_);
@@ -157,7 +156,6 @@ bool ManipulationData::load(robot_model::RobotModelPtr robot_model, bool fake_ex
   {
     // Load arm groups
     right_arm_ = robot_model->getJointModelGroup(right_arm_name_);
-    arm_only_ = robot_model->getJointModelGroup(right_arm_only_name_);
   }
 
   // Set world frame

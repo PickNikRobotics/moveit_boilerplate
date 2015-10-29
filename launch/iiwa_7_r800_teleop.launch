@@ -15,7 +15,7 @@
   <!-- Command line arguments -->
   <arg name="mode" default="1" />
   <arg name="auto_step" default="false" />
-  <arg name="full_auto" default="false" />
+  <arg name="full_auto" default="true" />
   <arg name="id" default="0" />
   <arg name="fake_execution" default="0"/>
   <arg name="pose" default=""/>
@@ -35,7 +35,7 @@
   </include>
 
   <!-- Main process -->
-  <node name="moveit_manipulation" pkg="moveit_manipulation" type="main" respawn="false" 
+  <node name="moveit_manipulation" pkg="moveit_manipulation" type="teleoperation_main" respawn="false" 
 	launch-prefix="$(arg launch_prefix)" output="screen"
 	args="--mode $(arg mode) --full_auto=$(arg full_auto) --auto_step=$(arg auto_step)
 	      --id $(arg id) --fake_execution $(arg fake_execution) --pose $(arg pose)">	      

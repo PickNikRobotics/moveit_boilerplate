@@ -115,7 +115,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
     ROS_DEBUG_STREAM_NAMED("execution_interface.trajectory", "Publishing:\n" << trajectory_msg);
 
   // Save to file
-  if (!run_fast || false)
+  if (false && !run_fast)
   {
     // Only save non-finger trajectories
     if (trajectory.joint_names.size() > 3)

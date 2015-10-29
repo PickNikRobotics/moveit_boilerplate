@@ -24,7 +24,6 @@ collision_wall_safety_margin: 0.01 # 0.02
 
 # Semantics
 dual_arm: false
-has_gantry: true
 right_hand_name: gripper
 left_hand_name: gripper_DISABLED
 right_arm_name: manipulator
@@ -32,12 +31,6 @@ right_arm_only_name: jaco_arm
 left_arm_name: manipulator_DISABLED
 both_arms_name: manipulator_DISABLED
 
-# Calibration
-# 0.029 m is the width of frame to gantry center, to be added to the z component
-# 0.035 m is the width of the 8020 bar in front of shelf
-# in-lab distance is 0.5+0.029-0.035 = 0.494
-#world_to_shelf_transform: [0.489, -0.438, 0.002, 0.0, 0.0, 0.0]  # IDEAL
-# values are yaw, roll, pitch in world frame
 
 #world_to_shelf_transform: [0.7, -0.45, -0.037, 0.012, -0.01, 0.007]  # normal shelf
 #world_to_shelf_transform: [ 0.693, -0.436, -0.177, 0.012, -0.003, -0.009] # chair shelf
@@ -74,22 +67,6 @@ ceiling_z: 5 #2.4
 
 # End effector configuration - jaco specific
 finger_3_offset: -0.1 # open more than the others TODO remove in favor of grasp_data?
-
-# Perception Data
-camera:
-  # THIS IS USED TO OFFSET THE CAMERA TO THE CIRCLAR CALIBRATION LOCATION
-  x_translation_from_bin: 0.55 # meters
-  y_translation_from_bin: 0.0 # negative is right looking at shelf
-  # THIS IS USED TO OFFSET THE GANTRY FROM THE BIN CENTROID
-  z_translation_from_bin: -0.86 # must be -0.66 or less
-  x_rotation_from_standard_grasp: 0 #-0.2  # radians
-  y_rotation_from_standard_grasp: 0  # negative is torwards right of shelf
-  z_rotation_from_standard_grasp: 0  # radians
-  lift_distance: 0.05
-  left_distance: 0.05
-  camera_frame_display_scale: 0.0005
-  left_camera_frame: /xtion_left_depth_frame  # Deprecated
-  right_camera_frame: /xtion_right_depth_frame # Deprecated
 
 # Test data
 test:
