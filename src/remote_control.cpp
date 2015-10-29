@@ -70,7 +70,7 @@ RemoteControl::RemoteControl(ros::NodeHandle nh)
 
   // Subscribe to remote control topic
   std::size_t queue_size = 10;
-  remote_control_ = nh_.subscribe("/moveit_manipulation/remote_control", queue_size,
+  remote_control_ = nh_.subscribe("/picknik_main/remote_control", queue_size,
                                   &RemoteControl::remoteCallback, this);
   remote_joy_ = nh_.subscribe("/joy", queue_size, &RemoteControl::joyCallback, this);
 
@@ -105,8 +105,8 @@ void RemoteControl::joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   // 4 - LB
   // 5 - RB
   // 6 - back
-  //if (msg->buttons[6])
-  //parent_->testGoHome();
+  // if (msg->buttons[6])
+  // parent_->testGoHome();
   // 7 - start
   // 8 - power
   if (msg->buttons[8])
@@ -172,7 +172,8 @@ bool RemoteControl::waitForNextStep(const std::string& caption)
     return true;
 
   // Show message
-  std::cout << std::endl << std::endl;
+  std::cout << std::endl
+            << std::endl;
   std::cout << MOVEIT_CONSOLE_COLOR_CYAN << "Waiting to " << caption << MOVEIT_CONSOLE_COLOR_RESET
             << std::endl;
 
@@ -221,20 +222,19 @@ void RemoteControl::initializeInteractiveMarkers(const geometry_msgs::Pose& pose
       new interactive_markers::InteractiveMarkerServer("basic_controls", "", false));
 
   // Menu
-  menu_handler_.insert("First Entry", boost::bind(&RemoteControl::processFeedback, this, _1));
-  menu_handler_.insert("Second Entry", boost::bind(&RemoteControl::processFeedback, this, _1));
-  interactive_markers::MenuHandler::EntryHandle sub_menu_handle = menu_handler_.insert("Submenu");
-  menu_handler_.insert(sub_menu_handle, "First Entry",
-                       boost::bind(&RemoteControl::processFeedback, this, _1));
-  menu_handler_.insert(sub_menu_handle, "Second Entry",
-                       boost::bind(&RemoteControl::processFeedback, this, _1));
+  menu_handler_.insert("Reset", boost::bind(&RemoteControl::processFeedback, this, _1));
+  // menu_handler_.insert("Second Entry", boost::bind(&RemoteControl::processFeedback, this, _1));
+  // interactive_markers::MenuHandler::EntryHandle sub_menu_handle =
+  // menu_handler_.insert("Submenu");
+  // menu_handler_.insert(sub_menu_handle, "First Entry",
+  //                      boost::bind(&RemoteControl::processFeedback, this, _1));
+  // menu_handler_.insert(sub_menu_handle, "Second Entry",
+  //                      boost::bind(&RemoteControl::processFeedback, this, _1));
 
   // Get initial pose
 
   // Marker
   bool fixed = false;
-  // tf::Vector3 position;
-  // position = tf::Vector3( 0.518256, -0.0173147, 0.648519);
   bool show_6dof = true;
   make6DofMarker(fixed, visualization_msgs::InteractiveMarkerControl::MENU, pose, show_6dof);
 
@@ -246,24 +246,24 @@ void RemoteControl::make6DofMarker(bool fixed, unsigned int interaction_mode,
 {
   using namespace visualization_msgs;
 
-  InteractiveMarker int_marker;
-  int_marker.header.frame_id = "world";
-  int_marker.pose = pose;
-  int_marker.scale = 0.1;
 
-  int_marker.name = "simple_6dof";
-  int_marker.description = "Simple 6-DOF Control";
+  int_marker_.header.frame_id = "world";
+  int_marker_.pose = pose;
+  int_marker_.scale = 0.1;
+
+  int_marker_.name = "simple_6dof";
+  int_marker_.description = "MoveIt! Teleoperation";
 
   // insert a box
-  makeBoxControl(int_marker);
-  int_marker.controls[0].interaction_mode = interaction_mode;
+  makeBoxControl(int_marker_);
+  int_marker_.controls[0].interaction_mode = interaction_mode;
 
   InteractiveMarkerControl control;
 
   if (fixed)
   {
-    int_marker.name += "_fixed";
-    int_marker.description += "\n(fixed orientation)";
+    int_marker_.name += "_fixed";
+    int_marker_.description += "\n(fixed orientation)";
     control.orientation_mode = InteractiveMarkerControl::FIXED;
   }
 
@@ -276,8 +276,8 @@ void RemoteControl::make6DofMarker(bool fixed, unsigned int interaction_mode,
       mode_text = "ROTATE_3D";
     if (interaction_mode == InteractiveMarkerControl::MOVE_ROTATE_3D)
       mode_text = "MOVE_ROTATE_3D";
-    int_marker.name += "_" + mode_text;
-    int_marker.description =
+    int_marker_.name += "_" + mode_text;
+    int_marker_.description =
         std::string("3D Control") + (show_6dof ? " + 6-DOF controls" : "") + "\n" + mode_text;
   }
 
@@ -289,10 +289,10 @@ void RemoteControl::make6DofMarker(bool fixed, unsigned int interaction_mode,
     control.orientation.z = 0;
     control.name = "rotate_x";
     control.interaction_mode = InteractiveMarkerControl::ROTATE_AXIS;
-    int_marker.controls.push_back(control);
+    int_marker_.controls.push_back(control);
     control.name = "move_x";
     control.interaction_mode = InteractiveMarkerControl::MOVE_AXIS;
-    int_marker.controls.push_back(control);
+    int_marker_.controls.push_back(control);
 
     control.orientation.w = 1;
     control.orientation.x = 0;
@@ -300,10 +300,10 @@ void RemoteControl::make6DofMarker(bool fixed, unsigned int interaction_mode,
     control.orientation.z = 0;
     control.name = "rotate_z";
     control.interaction_mode = InteractiveMarkerControl::ROTATE_AXIS;
-    int_marker.controls.push_back(control);
+    int_marker_.controls.push_back(control);
     control.name = "move_z";
     control.interaction_mode = InteractiveMarkerControl::MOVE_AXIS;
-    int_marker.controls.push_back(control);
+    int_marker_.controls.push_back(control);
 
     control.orientation.w = 1;
     control.orientation.x = 0;
@@ -311,17 +311,17 @@ void RemoteControl::make6DofMarker(bool fixed, unsigned int interaction_mode,
     control.orientation.z = 1;
     control.name = "rotate_y";
     control.interaction_mode = InteractiveMarkerControl::ROTATE_AXIS;
-    int_marker.controls.push_back(control);
+    int_marker_.controls.push_back(control);
     control.name = "move_y";
     control.interaction_mode = InteractiveMarkerControl::MOVE_AXIS;
-    int_marker.controls.push_back(control);
+    int_marker_.controls.push_back(control);
   }
 
-  imarker_server_->insert(int_marker);
-  imarker_server_->setCallback(int_marker.name,
+  imarker_server_->insert(int_marker_);
+  imarker_server_->setCallback(int_marker_.name,
                                boost::bind(&RemoteControl::processFeedback, this, _1));
   if (interaction_mode != visualization_msgs::InteractiveMarkerControl::NONE)
-    menu_handler_.apply(*imarker_server_, int_marker.name);
+    menu_handler_.apply(*imarker_server_, int_marker_.name);
 }
 
 visualization_msgs::InteractiveMarkerControl&
@@ -396,41 +396,25 @@ void RemoteControl::processFeedback(
   switch (feedback->event_type)
   {
     case InteractiveMarkerFeedback::BUTTON_CLICK:
-      // ROS_INFO_STREAM( stream.str() << ": button click" << mouse_point_ss.str() << "." );
       break;
 
     case InteractiveMarkerFeedback::MENU_SELECT:
-      // ROS_INFO_STREAM( stream.str() << ": menu item " << feedback->menu_entry_id << " clicked" <<
-      // mouse_point_ss.str() << "." );
+      if (feedback->menu_entry_id == 1)
+      {
+        std::cout << "RESET " << std::endl;
+	imarker_callback_(feedback->pose, 2);
+      }
       break;
 
     case InteractiveMarkerFeedback::POSE_UPDATE:
-
-      //parent_->processMarkerPose(feedback->pose, false);
-      // ROS_INFO_STREAM( "pose changed"
-      //     << "\nposition = "
-      //     << feedback->pose.position.x
-      //     << ", " << feedback->pose.position.y
-      //     << ", " << feedback->pose.position.z
-      //     << "\norientation = "
-      //     << feedback->pose.orientation.w
-      //     << ", " << feedback->pose.orientation.x
-      //     << ", " << feedback->pose.orientation.y
-      //     << ", " << feedback->pose.orientation.z
-      //     << "\nframe: " << feedback->header.frame_id
-      //     << " time: " << feedback->header.stamp.sec << "sec, "
-      //     << feedback->header.stamp.nsec << " nsec" );
+      imarker_callback_(feedback->pose, 1);  // 1 is a pose update
       break;
 
     case InteractiveMarkerFeedback::MOUSE_DOWN:
-      // ROS_INFO_STREAM( stream.str() << ": mouse down" << mouse_point_ss.str() << "." );
       break;
 
     case InteractiveMarkerFeedback::MOUSE_UP:
-      // ROS_INFO_STREAM("mouse up");
-
-      //parent_->processMarkerPose(feedback->pose, true);
-
+      imarker_callback_(feedback->pose, true);
       break;
   }
 
@@ -440,6 +424,13 @@ void RemoteControl::processFeedback(
     boost::unique_lock<boost::mutex> scoped_lock(interactive_mutex_);
     teleoperation_ready_ = true;
   }
+}
+
+void RemoteControl::updateMarkerPose(const geometry_msgs::Pose& pose)
+{
+  std::cout << "UPDATE pose \n" << pose << std::endl;
+  std::cout << "name: " << int_marker_.name << std::endl;
+  imarker_server_->setPose(int_marker_.name, pose);
 }
 
 }  // end namespace

@@ -17,7 +17,7 @@
 
 // Command line arguments
 #include <gflags/gflags.h>
-#include <moveit_manipulation/moveit_boilerplate.h>
+#include <moveit_manipulation/moveit_teleop.h>
 
 // ROS
 #include <ros/ros.h>
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
   srand(time(NULL));
 
   // Main program
-  moveit_manipulation::MoveItBoilerplate manager;
+  moveit_manipulation::MoveItTeleop manager;
 
   std::cout << std::endl;
   std::cout << "-------------------------------------------------------" << std::endl;
@@ -60,7 +60,7 @@ int main(int argc, char** argv)
       break;
     case 1:
       ROS_INFO_STREAM_NAMED("main", "Interactive marker teleoperation");
-      //manager.enableTeleoperation();
+      manager.enableTeleoperation();
       ros::spin();
       break;
     case 2:

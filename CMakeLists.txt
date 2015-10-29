@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(moveit_manipulation)
 
 # C++ 11
-set(CMAKE_CXX_FLAGS "-std=c++0x -Wall ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-std=c++11 -Wall ${CMAKE_CXX_FLAGS}")
 
 find_package(catkin REQUIRED COMPONENTS
   moveit_core
@@ -11,11 +11,13 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   controller_manager_msgs
   ros_param_utilities
+  dashboard_msgs
 )
 
 find_package(Eigen REQUIRED)
 find_package(Boost REQUIRED)
 
+# Gflags
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(Gflags REQUIRED)
 
@@ -26,15 +28,15 @@ catkin_package(
     moveit_visual_tools
     controller_manager_msgs
     ros_param_utilities
+    dashboard_msgs
   DEPENDS
     Eigen
   INCLUDE_DIRS 
     include
   LIBRARIES
-    jsoncpp
     fix_state_bounds
     manipulation    
-    visuals
+    moveit_boilerplate
 )
 
 ###########
@@ -111,7 +113,7 @@ target_link_libraries(trajectory_io
   ${Boost_LIBRARIES}
 )
 
-# Main logic of Picking
+# Reusable class for manipulation
 add_library(moveit_boilerplate
   src/moveit_boilerplate.cpp
 )
@@ -123,11 +125,22 @@ target_link_libraries(moveit_boilerplate
   ${Boost_LIBRARIES}
 )
 
-# Main Executable
-add_executable(main src/main.cpp)
-target_link_libraries(main
+# Teleop-specific functionality
+add_library(moveit_teleop
+  src/moveit_teleop.cpp
+)
+target_link_libraries(moveit_teleop  
   moveit_boilerplate
-  gflags
   ${catkin_LIBRARIES} 
   ${Boost_LIBRARIES}
+)
+
+## Declare a C++ executable
+add_executable(main src/main.cpp)
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(main
+  moveit_teleop
+  gflags
+  ${catkin_LIBRARIES}
 )

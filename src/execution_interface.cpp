@@ -115,7 +115,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
     ROS_DEBUG_STREAM_NAMED("execution_interface.trajectory", "Publishing:\n" << trajectory_msg);
 
   // Save to file
-  if (!run_fast)
+  if (!run_fast || false)
   {
     // Only save non-finger trajectories
     if (trajectory.joint_names.size() > 3)
@@ -452,9 +452,10 @@ bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &traj
     for (std::size_t j = 0; j < joint_trajectory.points[i].positions.size(); ++j)
     {
       // Output State
-      output_file << joint_trajectory.points[i].positions[j] << ","
-                  << joint_trajectory.points[i].velocities[j] << ",";
-      if (has_accelerations)
+      output_file << joint_trajectory.points[i].positions[j] << ",";
+      if (joint_trajectory.points[i].velocities.size())
+	output_file << joint_trajectory.points[i].velocities[j] << ",";
+      if (joint_trajectory.points[i].accelerations.size())
         output_file << joint_trajectory.points[i].accelerations[j] << ",";
     }
 

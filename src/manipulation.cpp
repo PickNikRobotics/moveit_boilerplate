@@ -36,9 +36,6 @@ Manipulation::Manipulation(planning_scene_monitor::PlanningSceneMonitorPtr plann
   , grasp_datas_(grasp_datas)
   , remote_control_(remote_control)
 {
-  // Debug tools for visualizing in Rviz
-  loadVisualTools();
-
   // Create initial robot state
   {
     planning_scene_monitor::LockedPlanningSceneRO scene(
@@ -51,6 +48,9 @@ Manipulation::Manipulation(planning_scene_monitor::PlanningSceneMonitorPtr plann
 
   // Set robot model
   robot_model_ = current_state_->getRobotModel();
+
+  // Debug tools for visualizing in Rviz
+  loadVisualTools();
 
   // Load execution interface
   execution_interface_.reset(new ExecutionInterface(remote_control_,
@@ -1376,7 +1376,8 @@ bool Manipulation::getRobotStateFromPose(const Eigen::Affine3d& ee_pose,
                                 attempts, timeout, constraint_fn))
     {
       visual_tools_->publishZArrow(ee_pose, rvt::RED);
-      ROS_WARN_STREAM_NAMED("manipulation", "Unable to find arm solution for desired pose");
+      static std::size_t warning_counter = 0;
+      ROS_WARN_STREAM_NAMED("manipulation", "Unable to find arm solution for desired pose " << warning_counter++);
       return false;
     }
   }  // end scoped pointer of locked planning scene

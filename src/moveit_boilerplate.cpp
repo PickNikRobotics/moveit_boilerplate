@@ -43,9 +43,9 @@ MoveItBoilerplate::MoveItBoilerplate()
   planning_scene_.reset(new planning_scene::PlanningScene(robot_model_));
 
   // Get package path
-  package_path_ = ros::package::getPath(PACKAGE_NAME);
+  package_path_ = ros::package::getPath(package_name_);
   if (package_path_.empty())
-    ROS_FATAL_STREAM_NAMED("product", "Unable to get " << PACKAGE_NAME << " package path");
+    ROS_FATAL_STREAM_NAMED("product", "Unable to get " << package_name_ << " package path");
 
   // Load manipulation data for our robot
   config_.reset(new ManipulationData());
@@ -591,16 +591,6 @@ void MoveItBoilerplate::publishCurrentState()
   planning_scene_monitor::LockedPlanningSceneRO scene(
       planning_scene_monitor_);  // Lock planning scene
   visual_tools_->publishRobotState(scene->getCurrentState(), rvt::PURPLE);
-}
-
-bool MoveItBoilerplate::getPlanningSceneService(moveit_msgs::GetPlanningScene::Request& req,
-                                          moveit_msgs::GetPlanningScene::Response& res)
-{
-  if (req.components.components & moveit_msgs::PlanningSceneComponents::TRANSFORMS)
-    planning_scene_monitor_->updateFrameTransforms();
-  planning_scene_monitor::LockedPlanningSceneRO ps(planning_scene_monitor_);
-  ps->getPlanningSceneMsg(res.scene, req.components);
-  return true;
 }
 
 bool MoveItBoilerplate::allowCollisions(JointModelGroup* arm_jmg)
