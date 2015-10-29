@@ -66,25 +66,6 @@ public:
                RemoteControlPtr remote_control, bool fake_execution);
 
   /**
-   * \brief Choose the grasp for the object
-   * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
-   * \return true on success
-   */
-  // bool chooseGrasp(WorkOrder work_order, JointModelGroup* arm_jmg,
-  //                  std::vector<moveit_grasps::GraspCandidatePtr> &qgrasp_candidates,
-  //                  bool verbose, moveit::core::RobotStatePtr seed_state =
-  //                  moveit::core::RobotStatePtr());
-
-  /**
-   * \brief Plan entire cartesian manipulation sequence
-   * \param input - description
-   * \return true on success
-   */
-  // bool planApproachLiftRetreat(moveit_grasps::GraspCandidatePtr grasp_candidate, bool
-  // verbose_cartesian_paths,
-  //                              WorkOrder& work_order);
-
-  /**
    * \brief Compute a cartesian path along waypoints
    * \return true on success
    */

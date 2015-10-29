@@ -12,8 +12,8 @@
    Desc:   Main logic of APC challenge
 */
 
-#ifndef MOVEIT_MANIPULATION__PICK_MANAGER
-#define MOVEIT_MANIPULATION__PICK_MANAGER
+#ifndef MOVEIT_MANIPULATION__MOVEIT_BOILERPLATE
+#define MOVEIT_MANIPULATION__MOVEIT_BOILERPLATE
 
 // MoveItManipulation
 #include <moveit_manipulation/namespaces.h>
@@ -27,14 +27,10 @@
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 
-// MoveIt!
-#include <moveit_msgs/GetPlanningScene.h>
-
 namespace moveit_manipulation
 {
 static const std::string ROBOT_DESCRIPTION = "robot_description";
 static const std::string JOINT_STATE_TOPIC = "/robot/joint_states";
-static const std::string PACKAGE_NAME = "moveit_manipulation";
 
 class MoveItBoilerplate
 {
@@ -151,12 +147,6 @@ public:
   void publishCurrentState();
 
   /**
-   * \brief Allow other nodes such as rviz to request the entire planning scene
-   */
-  bool getPlanningSceneService(moveit_msgs::GetPlanningScene::Request& req,
-                               moveit_msgs::GetPlanningScene::Response& res);
-
-  /**
    * \brief Disable collision checking for certain pairs
    */
   bool allowCollisions(JointModelGroup* arm_jmg);
@@ -188,7 +178,8 @@ public:
     return planning_scene_monitor_;
   }
 
-private:
+protected:
+
   // A shared node handle
   ros::NodeHandle nh_private_;
   ros::NodeHandle nh_root_;
@@ -204,6 +195,7 @@ private:
   planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
 
   // File path to ROS package on drive
+  std::string package_name_ = "moveit_manipulation";
   std::string package_path_;
 
   // Remote control for dealing with GUIs

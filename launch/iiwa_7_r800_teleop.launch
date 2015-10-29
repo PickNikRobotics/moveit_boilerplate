@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+
+ <!-- Load the URDF, SRDF and other .yaml configuration files on the param server -->
+  <include ns="moveit_manipulation" file="$(find iiwa_7_r800_moveit_config)/launch/planning_context.launch">
+    <arg name="load_robot_description" value="true"/>
+  </include>
+
+  <!-- GDB Debug Option -->
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" 
+	   value="gdb -x $(find moveit_manipulation)/launch/debug_settings.gdb --ex run --args" />
+
+  <!-- Command line arguments -->
+  <arg name="mode" default="1" />
+  <arg name="auto_step" default="false" />
+  <arg name="full_auto" default="false" />
+  <arg name="id" default="0" />
+  <arg name="fake_execution" default="0"/>
+  <arg name="pose" default=""/>
+
+  <!-- Planning Functionality -->
+  <include ns="moveit_manipulation" file="$(find iiwa_7_r800_moveit_config)/launch/planning_pipeline.launch.xml">
+    <arg name="pipeline" value="ompl" />
+  </include>
+
+  <arg name="allow_trajectory_execution" default="true"/>
+
+  <!-- Launch controller manager in this namespace -->
+  <include ns="moveit_manipulation" file="$(find iiwa_7_r800_moveit_config)/launch/trajectory_execution.launch.xml">
+    <arg name="moveit_manage_controllers" value="true" />
+    <arg name="moveit_controller_manager" value="iiwa_7_r800" unless="$(arg fake_execution)"/>
+    <arg name="moveit_controller_manager" value="fake" if="$(arg fake_execution)"/>
+  </include>
+
+  <!-- Main process -->
+  <node name="moveit_manipulation" pkg="moveit_manipulation" type="main" respawn="false" 
+	launch-prefix="$(arg launch_prefix)" output="screen"
+	args="--mode $(arg mode) --full_auto=$(arg full_auto) --auto_step=$(arg auto_step)
+	      --id $(arg id) --fake_execution $(arg fake_execution) --pose $(arg pose)">	      
+
+    <!-- Robot-specific settings -->
+    <rosparam command="load" file="$(find moveit_manipulation)/config/picknik_iiwa_7_r800.yaml"/>
+    <rosparam command="load" file="$(find moveit_manipulation)/config/picknik_debug_level.yaml"/>
+    <rosparam command="load" file="$(find iiwa_7_r800_moveit_config)/config/kinematics.yaml"/>
+    <rosparam command="load" file="$(find moveit_grasps)/config_robot/iiwa_7_r800_grasp_data.yaml"/>
+
+    <!-- Grasp Settings -->
+    <rosparam command="load" file="$(find moveit_grasps)/config/grasp_debug_level.yaml"/>    
+
+    <!-- Planner settings -->
+    <rosparam command="load" file="$(find moveit_manipulation)/config/moveit_ompl.yaml"/>
+  </node>
+
+</launch>

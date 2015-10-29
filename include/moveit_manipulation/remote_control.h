@@ -39,11 +39,8 @@
 #ifndef MOVEIT_MANIPULATION__REMOTE_CONTROL
 #define MOVEIT_MANIPULATION__REMOTE_CONTROL
 
-// MoveIt
-#include <moveit/macros/class_forward.h>
-
 // moveit_grasps
-#include <moveit_grasps/grasp_planner.h>
+//#include <moveit_grasps/grasp_planner.h>
 
 // ROS
 #include <ros/ros.h>
@@ -57,6 +54,7 @@
 
 namespace moveit_manipulation
 {
+typedef std::function<void(const geometry_msgs::Pose&, int)> InteractiveMarkerCallback;
 
 class RemoteControl
 {
@@ -117,17 +115,24 @@ public:
 
   /** \brief Return true if remote control is waiting for user input */
   bool isWaiting() { return is_waiting_; }
+
+  void setInteractiveMarkerCallback(InteractiveMarkerCallback callback)
+  {
+    imarker_callback_ = callback;
+  }
+
+  void updateMarkerPose(const geometry_msgs::Pose& pose);
+
 private:
   void make6DofMarker(bool fixed, unsigned int interaction_mode, const geometry_msgs::Pose& pose,
                       bool show_6dof);
-
+  
+  /** \brief Helper for geometric shape */
   visualization_msgs::InteractiveMarkerControl&
   makeBoxControl(visualization_msgs::InteractiveMarker& msg);
 
+  /** \brief Callback from interactive marker server */
   void processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
-
-  /** \brief Not sure what this does */
-  // void publishInteractiveMarkers(bool pose_update);
 
   // A shared node handle
   ros::NodeHandle nh_;
@@ -146,7 +151,9 @@ private:
   // Interactive markers
   boost::shared_ptr<interactive_markers::InteractiveMarkerServer> imarker_server_;
   interactive_markers::MenuHandler menu_handler_;
+  visualization_msgs::InteractiveMarker int_marker_;
   bool teleoperation_ready_ = true;
+  InteractiveMarkerCallback imarker_callback_;  // hook to parent class
 
   ros::Time throttle_time_;
   boost::mutex interactive_mutex_;
