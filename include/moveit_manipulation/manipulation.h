@@ -258,13 +258,6 @@ public:
                           double desired_retreat_distance, bool retreat,
                           bool ignore_collision = false);
 
-  /**
-   * \brief Pose in tool form
-   * \return true on success
-   */
-  bool executeToolPose(JointModelGroup* arm_jmg, Eigen::Affine3d& pose_world_to_tool,
-                       double duration);
-
   /** \brief Detect when an object has been hit, and retract */
   bool adjustPoseAndReject();
 
@@ -506,9 +499,6 @@ public:
    */
   bool showJointLimits(JointModelGroup* jmg);
 
-  /** \brief Quickly response to pose requests. Uses IK on dev computer, not embedded */
-  bool teleoperation(const Eigen::Affine3d& ee_pose, bool move, JointModelGroup* arm_jmg);
-
   /** \brief Respond to touch sensors on hand */
   bool beginTouchControl();
 
@@ -517,9 +507,6 @@ public:
 
   /** \brief Callback whenever new gelsight data recieved */
   void updateTouchControl(JointModelGroup* arm_jmg);
-
-  /** \brief Setup robot state for teleop */
-  bool enableTeleoperation();
 
   /** \brief Convert from world frame to base_link frame */
   void transformWorldToBase(Eigen::Affine3d& pose_world, Eigen::Affine3d& pose_base);
@@ -534,6 +521,12 @@ public:
   {
     return iterative_smoother_;
   }
+
+  /**
+   * \brief Allow other classes to publish to the start/goal robot visualizers
+   */
+  mvt::MoveItVisualToolsPtr getVisualStartState() { return visual_start_state_; }
+  mvt::MoveItVisualToolsPtr getVisualGoalState() { return visual_goal_state_; }
 
 protected:
   // A shared node handle
@@ -556,7 +549,6 @@ protected:
   // Allocated memory for robot state
   moveit::core::RobotStatePtr current_state_;
   moveit::core::RobotStatePtr first_state_in_trajectory_;  // for use with generateApproachPath()
-  moveit::core::RobotStatePtr teleop_state_;
 
   // Robot-sepcific data for the APC
   ManipulationDataPtr config_;

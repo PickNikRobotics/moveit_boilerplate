@@ -93,8 +93,8 @@ public:
 protected:
 
   // A shared node handle
-  ros::NodeHandle nh_private_;
-  ros::NodeHandle nh_root_;
+  ros::NodeHandle nh_;
+  //ros::NodeHandle nh_root_;
   boost::shared_ptr<tf::TransformListener> tf_;
 
   // For visualizing things in rviz

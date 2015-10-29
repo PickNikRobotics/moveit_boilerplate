@@ -41,6 +41,7 @@
 
 // Teleoperation
 #include <moveit_manipulation/moveit_boilerplate.h>
+#include <mutex>
 
 namespace moveit_manipulation
 {
@@ -52,11 +53,14 @@ public:
    */
   Teleoperation();
 
-  void enableTeleoperation();
+  /** \brief In separate thread from imarker & Ik solver, send joint commands */
+  void startTeleopStatePublishing();
 
-  geometry_msgs::Pose getInteractiveMarkerPose();
-
+  /** \brief Load markers and robot states necessary for teleoperation */
   void setupInteractiveMarker();
+
+  /** \brief Helper to get the current robot state's ee pose */
+  geometry_msgs::Pose getInteractiveMarkerPose();
 
   /**
    * \brief Callback from interactive markers
@@ -66,12 +70,39 @@ public:
    */
   void processMarkerPose(const geometry_msgs::Pose& pose, int mode);
 
+  /** \brief Quickly response to pose requests. Uses IK on dev computer, not embedded */
+  bool teleoperate(const Eigen::Affine3d& ee_pose, JointModelGroup* arm_jmg);
+
 private:
 
-  // Teleop
-  bool teleoperation_enabled_ = false;
+  // Pose of marker
   Eigen::Affine3d interactive_marker_pose_;
+  
+  // Flag to determine if new command needs to be sent to servos
+  bool has_new_state_ = false;
+
+  // Hook for RemoteControl class
   InteractiveMarkerCallback callback_;
+
+  // Maintain robot state at interactive marker (not the current robot state)
+  moveit::core::RobotStatePtr teleop_state_;
+  
+  // State to be sent to controllers, copied from teleop_state_
+  moveit::core::RobotStatePtr command_state_;
+
+  std::mutex state_mutex_;
+
+  // Teleoperation ---------------------------------------
+
+  // Tool offset
+  Eigen::Affine3d ee_offset_;
+
+  // Inverse Kinematics settings
+  double ik_consistency_limit_;
+  double ik_timeout_;  
+  double ik_attempts_;
+  std::vector<double> ik_consistency_limits_vector_;
+
 };  // end class
 
 }  // end namespace

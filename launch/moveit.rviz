@@ -10,7 +10,6 @@ Panels:
         - /OMPL Experience1/Namespaces1
         - /PlanningScene1/Scene Geometry1
         - /TF1/Frames1
-        - /InteractiveMarkers1
         - /InteractiveMarkers1/Status1
       Splitter Ratio: 0.414802
     Tree Height: 732
@@ -370,7 +369,7 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: moveit_rviz_plugin/Trajectory
-      Enabled: true
+      Enabled: false
       Links:
         All Links Enabled: true
         Expand Joint Details: false
@@ -435,9 +434,9 @@ Visualization Manager:
       Show Trail: false
       State Display Time: REALTIME
       Trajectory Topic: /moveit_manipulation/display_trajectory
-      Value: true
+      Value: false
     - Class: moveit_rviz_plugin/PlanningScene
-      Enabled: true
+      Enabled: false
       Move Group Namespace: ""
       Name: PlanningScene
       Planning Scene Topic: /moveit_manipulation/picknik_planning_scene
@@ -509,7 +508,7 @@ Visualization Manager:
         Robot Alpha: 0.5
         Show Robot Collision: false
         Show Robot Visual: false
-      Value: true
+      Value: false
     - Class: rviz/TF
       Enabled: false
       Frame Timeout: 15
@@ -620,22 +619,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 2.67157
+      Distance: 2.06887
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.206743
-        Y: 0.406874
+        X: -0.0107503
+        Y: 0.321947
         Z: 5.66244e-07
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.449796
+      Pitch: 0.444796
       Target Frame: robot_table_link
       Value: XYOrbit (rviz)
-      Yaw: 5.13859
+      Yaw: 4.76359
     Saved: ~
 Window Geometry:
   Displays:

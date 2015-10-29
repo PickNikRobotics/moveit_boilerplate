@@ -84,7 +84,7 @@ int main(int argc, char** argv)
       break;
     case 1:
       ROS_INFO_STREAM_NAMED("main", "Interactive marker teleoperation");
-      manager.enableTeleoperation();
+      manager.startTeleopStatePublishing();
       ros::spin();
       break;
     default:

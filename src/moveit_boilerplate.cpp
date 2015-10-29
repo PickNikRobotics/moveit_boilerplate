@@ -51,7 +51,7 @@ DEFINE_bool(fake_execution, false, "Fake execution of motions");
 DEFINE_int32(id, 0, "Identification number for various component modes");
 
 MoveItBoilerplate::MoveItBoilerplate()
-  : nh_private_("~")
+  : nh_("~")
 {
   // Warn of fake modes
   if (FLAGS_fake_execution)
@@ -76,7 +76,7 @@ MoveItBoilerplate::MoveItBoilerplate()
   config_->load(robot_model_, FLAGS_fake_execution, package_path_);
 
   // Create tf transformer
-  tf_.reset(new tf::TransformListener(nh_private_));
+  tf_.reset(new tf::TransformListener(nh_));
   // TODO: remove these lines, only an attempt to fix loadPlanningSceneMonitor bug
   ros::spinOnce();
 
@@ -90,15 +90,15 @@ MoveItBoilerplate::MoveItBoilerplate()
   loadVisualTools();
 
   // Load the remote control for dealing with GUIs
-  remote_control_.reset(new RemoteControl(nh_private_));
+  remote_control_.reset(new RemoteControl(nh_));
 
   // Load grasp data specific to our robot
   grasp_datas_[config_->right_arm_].reset(
-      new moveit_grasps::GraspData(nh_private_, config_->right_hand_name_, robot_model_));
+      new moveit_grasps::GraspData(nh_, config_->right_hand_name_, robot_model_));
 
   if (config_->dual_arm_)
     grasp_datas_[config_->left_arm_].reset(
-        new moveit_grasps::GraspData(nh_private_, config_->left_hand_name_, robot_model_));
+        new moveit_grasps::GraspData(nh_, config_->left_hand_name_, robot_model_));
 
   // Create manipulation manager
   manipulation_.reset(new Manipulation(planning_scene_monitor_, config_,

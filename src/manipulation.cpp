@@ -966,25 +966,6 @@ bool Manipulation::executeRetreatPath(JointModelGroup* arm_jmg, double desired_r
   return true;
 }
 
-bool Manipulation::executeToolPose(JointModelGroup* arm_jmg, Eigen::Affine3d& pose_world_to_tool,
-                                   double duration)
-{
-  // Move pose from tips of finger (tool) back to base of EE
-  Eigen::Affine3d pose_world_to_ee = pose_world_to_tool * config_->teleoperation_offset_;
-
-  // Show pose-rotation pose
-  visual_tools_->publishZArrow(pose_world_to_ee, rvt::GREY, rvt::REGULAR);
-
-  // Convert desired pose from 'world' frame to 'robot base' frame
-  // teleop_base_to_ee_ = base_to_world * teleop_world_to_ee_;
-  Eigen::Affine3d pose_base_to_ee;
-  transformWorldToBase(pose_world_to_ee, pose_base_to_ee);
-
-  // Move robot
-  execution_interface_->executePose(pose_base_to_ee, arm_jmg, duration);
-  return true;
-}
-
 bool Manipulation::executeCartesianPath(JointModelGroup* arm_jmg, const Eigen::Vector3d& direction,
                                         double desired_distance, double velocity_scaling_factor,
                                         bool reverse_path, bool ignore_collision)
@@ -2040,43 +2021,6 @@ bool Manipulation::showJointLimits(JointModelGroup* jmg)
       std::cout << MOVEIT_CONSOLE_COLOR_RESET;
   }
 
-  return true;
-}
-
-bool Manipulation::teleoperation(const Eigen::Affine3d& ee_pose, bool move,
-                                 JointModelGroup* arm_jmg)
-{
-  // NOTE this is in a separate thread, so we should only use visual_tools_ for
-  // debugging!
-
-  // Solve IK
-  // consistency_limits - if greater than 0, forces ik solver to only find solutions within that joint distance
-  double consistency_limit = 2.0;
-  if (!getRobotStateFromPose(ee_pose, teleop_state_, arm_jmg, consistency_limit))
-    return false;
-
-  // Execute robot pose
-  if (move)
-  {
-    const double velocity_scaling_factor = 1.0;
-    if (!moveDirectToState(teleop_state_, arm_jmg, velocity_scaling_factor))
-    {
-      ROS_ERROR_STREAM_NAMED("", "Failed to execute state");
-      return false;
-    }
-  }
-  else
-  {
-    // Visualize what we would have done
-    visual_goal_state_->publishRobotState(teleop_state_, rvt::BLUE);
-  }
-
-  return true;
-}
-
-bool Manipulation::enableTeleoperation()
-{
-  teleop_state_.reset(new moveit::core::RobotState(*getCurrentState()));
   return true;
 }
 

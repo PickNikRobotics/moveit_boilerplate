@@ -41,6 +41,7 @@
 
 // Parameter loading
 #include <ros_param_utilities/ros_param_utilities.h>
+
 #include <rviz_visual_tools/rviz_visual_tools.h>
 
 namespace moveit_manipulation
@@ -79,9 +80,9 @@ bool ManipulationData::load(robot_model::RobotModelPtr robot_model, bool fake_ex
     calibration_velocity_scaling_factor_ = 1.0;
   }
 
-  ros_param_utilities::getDoubleParameter(parent_name, nh_, "wait_before_grasp",
-                                          wait_before_grasp_);
-  ros_param_utilities::getDoubleParameter(parent_name, nh_, "wait_after_grasp", wait_after_grasp_);
+  // ros_param_utilities::getDoubleParameter(parent_name, nh_, "wait_before_grasp",
+  //                                         wait_before_grasp_);
+  // ros_param_utilities::getDoubleParameter(parent_name, nh_, "wait_after_grasp", wait_after_grasp_);
   // ros_param_utilities::getDoubleParameter(parent_name, nh_, "place_goal_down_distance_desired",
   //                                          place_goal_down_distance_desired_);
   // ros_param_utilities::getDoubleParameter(parent_name, nh_, "goal_bin_clearance",
@@ -124,13 +125,6 @@ bool ManipulationData::load(robot_model::RobotModelPtr robot_model, bool fake_ex
   ros_param_utilities::getDoubleParameters(parent_name, nh_, "test/test_pose", test_pose_doubles);
   ros_param_utilities::convertDoublesToEigen(parent_name, test_pose_doubles, test_pose_);
   // test_pose_ = rvt::RvizVisualTools::convertXYZRPY(test_pose_doubles_); // TODO
-
-  // Teleoperation tool offset
-  std::vector<double> teleoperation_offset_doubles;
-  ros_param_utilities::getDoubleParameters(parent_name, nh_, "teleoperation_offset",
-                                           teleoperation_offset_doubles);
-  ros_param_utilities::convertDoublesToEigen(parent_name, teleoperation_offset_doubles,
-                                             teleoperation_offset_);
 
   // Get grasp location doubles
   // std::vector<double> grasp_location_transform_doubles;

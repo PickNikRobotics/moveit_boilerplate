@@ -88,8 +88,8 @@ public:
   double calibration_velocity_scaling_factor_;
 
   // Wait variables
-  double wait_before_grasp_;
-  double wait_after_grasp_;
+  //double wait_before_grasp_;
+  //double wait_after_grasp_;
 
   // Distance variables
   double place_goal_down_distance_desired_;
@@ -140,11 +140,9 @@ public:
   std::string package_path_;
 
   // Location to grasp
-  Eigen::Affine3d grasp_location_transform_;
+  //Eigen::Affine3d grasp_location_transform_;
 
   std::string joint_state_topic_;
-
-  Eigen::Affine3d teleoperation_offset_;
 
 private:
   // A shared node handle

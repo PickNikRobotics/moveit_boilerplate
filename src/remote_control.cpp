@@ -43,9 +43,6 @@
 // Command line arguments
 #include <gflags/gflags.h>
 
-//#include <tf/transform_broadcaster.h>
-//#include <tf/tf.h>
-
 namespace moveit_manipulation
 {
 DEFINE_bool(auto_step, false, "Automatically go through each step");
@@ -228,21 +225,16 @@ void RemoteControl::initializeInteractiveMarkers(const geometry_msgs::Pose& pose
   // menu_handler_.insert("Submenu");
   // menu_handler_.insert(sub_menu_handle, "First Entry",
   //                      boost::bind(&RemoteControl::processFeedback, this, _1));
-  // menu_handler_.insert(sub_menu_handle, "Second Entry",
-  //                      boost::bind(&RemoteControl::processFeedback, this, _1));
-
-  // Get initial pose
 
   // Marker
   bool fixed = false;
-  bool show_6dof = true;
-  make6DofMarker(fixed, visualization_msgs::InteractiveMarkerControl::MENU, pose, show_6dof);
+  make6DofMarker(fixed, visualization_msgs::InteractiveMarkerControl::MENU, pose);
 
   imarker_server_->applyChanges();
 }
 
 void RemoteControl::make6DofMarker(bool fixed, unsigned int interaction_mode,
-                                   const geometry_msgs::Pose& pose, bool show_6dof)
+                                   const geometry_msgs::Pose& pose)
 {
   using namespace visualization_msgs;
 
@@ -251,7 +243,7 @@ void RemoteControl::make6DofMarker(bool fixed, unsigned int interaction_mode,
   int_marker_.pose = pose;
   int_marker_.scale = 0.1;
 
-  int_marker_.name = "simple_6dof";
+  int_marker_.name = "6dof_teleoperation";
   int_marker_.description = "MoveIt! Teleoperation";
 
   // insert a box
@@ -277,12 +269,9 @@ void RemoteControl::make6DofMarker(bool fixed, unsigned int interaction_mode,
     if (interaction_mode == InteractiveMarkerControl::MOVE_ROTATE_3D)
       mode_text = "MOVE_ROTATE_3D";
     int_marker_.name += "_" + mode_text;
-    int_marker_.description =
-        std::string("3D Control") + (show_6dof ? " + 6-DOF controls" : "") + "\n" + mode_text;
+    int_marker_.description = "EE Teleoperation";
   }
 
-  if (show_6dof)
-  {
     control.orientation.w = 1;
     control.orientation.x = 1;
     control.orientation.y = 0;
@@ -315,7 +304,6 @@ void RemoteControl::make6DofMarker(bool fixed, unsigned int interaction_mode,
     control.name = "move_y";
     control.interaction_mode = InteractiveMarkerControl::MOVE_AXIS;
     int_marker_.controls.push_back(control);
-  }
 
   imarker_server_->insert(int_marker_);
   imarker_server_->setCallback(int_marker_.name,
