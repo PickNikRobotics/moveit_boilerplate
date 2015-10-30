@@ -34,6 +34,23 @@
 
 /* Author: Dave Coleman <dave@dav.ee>
    Desc:   Realtime teleoperation capabilities using MoveIt!
+
+   Developer Notes:
+
+   *Update frequencies*
+    - Interactive Marker from Rviz ~30.3 hz
+    - KDL IK Solver speed ~3716 hz (0.000269 s)
+    - Command robot speed 200 hz
+
+   *Threads*
+    - Interactive marker subscriber callback thread
+      Writes desired pose to memory
+    - IK Solving thread
+      Takes latest desired pose and computes a valid RobotState
+    - Visualization thread
+      Publishes latest valid RobotState to Rviz for user feedback
+    - Command thread
+      Sends latest valid RobotState to hardware for execution
 */
 
 #ifndef MOVEIT_MANIPULATON__TELEOPERATION_
@@ -42,16 +59,20 @@
 // Teleoperation
 #include <moveit_manipulation/moveit_boilerplate.h>
 #include <mutex>
+#include <boost/thread/locks.hpp>
+#include <thread>
 
 namespace moveit_manipulation
 {
 class Teleoperation : public moveit_manipulation::MoveItBoilerplate
 {
 public:
-  /**
-   * \brief Constructor
-   */
+
+  /** \brief Constructor */
   Teleoperation();
+
+  /** \brief Desctructor */
+  virtual ~Teleoperation();
 
   /** \brief In separate thread from imarker & Ik solver, send joint commands */
   void startTeleopStatePublishing();
@@ -60,7 +81,7 @@ public:
   void setupInteractiveMarker();
 
   /** \brief Helper to get the current robot state's ee pose */
-  geometry_msgs::Pose getInteractiveMarkerPose();
+  geometry_msgs::Pose chooseNewIMarkerPose();
 
   /**
    * \brief Callback from interactive markers
@@ -71,26 +92,41 @@ public:
   void processMarkerPose(const geometry_msgs::Pose& pose, int mode);
 
   /** \brief Quickly response to pose requests. Uses IK on dev computer, not embedded */
-  bool teleoperate(const Eigen::Affine3d& ee_pose, JointModelGroup* arm_jmg);
+  void solveIKThread();
+  void solveIKThreadHelper();
+
+  /** \brief Publish the robot state to Rviz in a separate thread */
+  void visualizationThread(const ros::TimerEvent& e);
 
 private:
+  
+  // Desired planning group to work with
+  JointModelGroup* arm_jmg_;
 
   // Pose of marker
   Eigen::Affine3d interactive_marker_pose_;
+  Eigen::Affine3d desired_ee_pose_;
   
   // Flag to determine if new command needs to be sent to servos
-  bool has_new_state_ = false;
+  bool has_pose_to_ik_solve_ = false;
+  bool has_state_to_command_ = false;
+  bool has_state_to_visualize_ = false;
 
   // Hook for RemoteControl class
   InteractiveMarkerCallback callback_;
 
   // Maintain robot state at interactive marker (not the current robot state)
-  moveit::core::RobotStatePtr teleop_state_;
+  moveit::core::RobotStatePtr ik_teleop_state_;
   
-  // State to be sent to controllers, copied from teleop_state_
+  // State to be sent to controllers, copied from ik_teleop_state_
   moveit::core::RobotStatePtr command_state_;
 
-  std::mutex state_mutex_;
+  // State used to
+  boost::shared_mutex ik_state_mutex_;
+
+  // Visualization
+  double visualization_rate_; // hz
+  ros::Timer non_realtime_loop_;
 
   // Teleoperation ---------------------------------------
 
@@ -103,6 +139,12 @@ private:
   double ik_attempts_;
   std::vector<double> ik_consistency_limits_vector_;
 
+  // Inverse Kinematics stats
+  std::size_t total_ik_attempts_ = 0;
+  ros::Duration total_ik_duration_;
+
+  // IK thread
+  std::thread ik_thread_;
 };  // end class
 
 }  // end namespace

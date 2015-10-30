@@ -124,7 +124,7 @@ public:
   void updateMarkerPose(const geometry_msgs::Pose& pose);
 
 private:
-  void make6DofMarker(bool fixed, unsigned int interaction_mode, const geometry_msgs::Pose& pose);
+  void make6DofMarker(unsigned int interaction_mode, const geometry_msgs::Pose& pose);
   
   /** \brief Helper for geometric shape */
   visualization_msgs::InteractiveMarkerControl&

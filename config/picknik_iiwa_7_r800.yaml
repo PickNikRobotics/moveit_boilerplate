@@ -16,13 +16,10 @@ start_pose: home
 right_arm_dropoff_pose: home
 # left_arm_dropoff_pose: left_goal_bin_pose_DISABLED
 
-# Cartesian path config
+# Cartesian path config ------------------
 jump_threshold: 4
 
-# Safety
-# collision_wall_safety_margin: 0.01 # 0.02
-
-# Semantics
+# Semantics ------------------------------
 dual_arm: false
 right_hand_name: gripper
 left_hand_name: gripper_DISABLED
@@ -31,57 +28,25 @@ right_arm_only_name: arm
 left_arm_name: manipulator_DISABLED
 both_arms_name: manipulator_DISABLED
 
-# Topics
+# Topics ---------------------------------
 joint_state_topic: /iiwa_7_r800/joint_states
 
-# Test data
+# Test data ------------------------------
 test:
   test_joint_limit_joint: 1  # starts at 0, negative number means test all
   test_double: 0.05 # for anything
   # During development it is nice to have ability to tweak a value
   test_pose: [0.0, 0.0, -0.2, 0, 0, 0] # x,y,z,r,p,y
   
-# Tactile Sensor Data
-# sheer_force_threshold: 6
-# touch_teleop_max_translation_step: 0.005
-
-# Insertion
-# insertion_duration: 15 # sec
-# insertion_distance: 0.1 # meters
-# insertion_steps_per_meter: 1000 # discretization
-# insertion_touch_translation_step: 0.01
-
-# # Insertion haulting
-# sheer_force_rejection_max: 10
-
-# Insertion Demo Timing
-# insertion_updown_pause: 1 #sec
-# insertion_alter_pause: 1 #sec
-
-# Torque insertion capability
-# insertion_torque_max: 50 # cap all torque readings at this amount, absolute
-# insertion_torque_min: 20 # ignore torque readings below this amount, absolute
-# insertion_attempt_radius: 0.0000001 
-# insertion_attempt_distance: 0.0001 
-# insertion_attempt_distance_scale: 10000 # unused
-# insertion_torque_scale: -0.00075 # scale the torque of value (min, max) to an output rotation amount
-
-# # Insertion spiral
-# insertion_spiral_distance: 0.005
-
-# Automated Insertion test
-# automated_insertion_distance: 0.08 # meters
-# automated_retract_distance: 0.18 # meters
-# automated_insertion_theta: 0.78539816339 # degrees
-
-# Teleoperation ---------------------------
+# Teleoperation --------------------------
 teleoperation:
-  ik_consistency_limit: 0.5
-  ik_timeout: 0.005  # 0 falls back to default in kinematics.yaml
-  ik_attempts: 3 # 0 falls back to default in kinematics.yaml
+  ik_consistency_limit: 3.14 #3 0.5
+  ik_timeout: 0.1 #0.005  # 0 falls back to default in kinematics.yaml
+  ik_attempts: 1 # 0 falls back to default in kinematics.yaml
   ee_offset: [0.0, 0.0, -0.1, 0, 0, 0] # x,y,z,r,p,y  
+  visualization_rate: 30 # hz
 
-# Fix State Bounds
+# Fix State Bounds -----------------------
 start_state_max_dt: 0.5
 start_state_max_bounds_error: 0.05 # overrides verion in ompl_planning_pipeline.launch.xml
 

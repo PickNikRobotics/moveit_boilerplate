@@ -227,21 +227,19 @@ void RemoteControl::initializeInteractiveMarkers(const geometry_msgs::Pose& pose
   //                      boost::bind(&RemoteControl::processFeedback, this, _1));
 
   // Marker
-  bool fixed = false;
-  make6DofMarker(fixed, visualization_msgs::InteractiveMarkerControl::MENU, pose);
+  make6DofMarker(visualization_msgs::InteractiveMarkerControl::MENU, pose);
 
   imarker_server_->applyChanges();
 }
 
-void RemoteControl::make6DofMarker(bool fixed, unsigned int interaction_mode,
+void RemoteControl::make6DofMarker(unsigned int interaction_mode,
                                    const geometry_msgs::Pose& pose)
 {
   using namespace visualization_msgs;
 
-
   int_marker_.header.frame_id = "world";
   int_marker_.pose = pose;
-  int_marker_.scale = 0.1;
+  int_marker_.scale = 0.15;
 
   int_marker_.name = "6dof_teleoperation";
   int_marker_.description = "MoveIt! Teleoperation";
@@ -251,13 +249,6 @@ void RemoteControl::make6DofMarker(bool fixed, unsigned int interaction_mode,
   int_marker_.controls[0].interaction_mode = interaction_mode;
 
   InteractiveMarkerControl control;
-
-  if (fixed)
-  {
-    int_marker_.name += "_fixed";
-    int_marker_.description += "\n(fixed orientation)";
-    control.orientation_mode = InteractiveMarkerControl::FIXED;
-  }
 
   if (interaction_mode != InteractiveMarkerControl::NONE)
   {
@@ -272,38 +263,38 @@ void RemoteControl::make6DofMarker(bool fixed, unsigned int interaction_mode,
     int_marker_.description = "EE Teleoperation";
   }
 
-    control.orientation.w = 1;
-    control.orientation.x = 1;
-    control.orientation.y = 0;
-    control.orientation.z = 0;
-    control.name = "rotate_x";
-    control.interaction_mode = InteractiveMarkerControl::ROTATE_AXIS;
-    int_marker_.controls.push_back(control);
-    control.name = "move_x";
-    control.interaction_mode = InteractiveMarkerControl::MOVE_AXIS;
-    int_marker_.controls.push_back(control);
+  control.orientation.w = 1;
+  control.orientation.x = 1;
+  control.orientation.y = 0;
+  control.orientation.z = 0;
+  control.name = "rotate_x";
+  control.interaction_mode = InteractiveMarkerControl::ROTATE_AXIS;
+  int_marker_.controls.push_back(control);
+  control.name = "move_x";
+  control.interaction_mode = InteractiveMarkerControl::MOVE_AXIS;
+  int_marker_.controls.push_back(control);
 
-    control.orientation.w = 1;
-    control.orientation.x = 0;
-    control.orientation.y = 1;
-    control.orientation.z = 0;
-    control.name = "rotate_z";
-    control.interaction_mode = InteractiveMarkerControl::ROTATE_AXIS;
-    int_marker_.controls.push_back(control);
-    control.name = "move_z";
-    control.interaction_mode = InteractiveMarkerControl::MOVE_AXIS;
-    int_marker_.controls.push_back(control);
+  control.orientation.w = 1;
+  control.orientation.x = 0;
+  control.orientation.y = 1;
+  control.orientation.z = 0;
+  control.name = "rotate_z";
+  control.interaction_mode = InteractiveMarkerControl::ROTATE_AXIS;
+  int_marker_.controls.push_back(control);
+  control.name = "move_z";
+  control.interaction_mode = InteractiveMarkerControl::MOVE_AXIS;
+  int_marker_.controls.push_back(control);
 
-    control.orientation.w = 1;
-    control.orientation.x = 0;
-    control.orientation.y = 0;
-    control.orientation.z = 1;
-    control.name = "rotate_y";
-    control.interaction_mode = InteractiveMarkerControl::ROTATE_AXIS;
-    int_marker_.controls.push_back(control);
-    control.name = "move_y";
-    control.interaction_mode = InteractiveMarkerControl::MOVE_AXIS;
-    int_marker_.controls.push_back(control);
+  control.orientation.w = 1;
+  control.orientation.x = 0;
+  control.orientation.y = 0;
+  control.orientation.z = 1;
+  control.name = "rotate_y";
+  control.interaction_mode = InteractiveMarkerControl::ROTATE_AXIS;
+  int_marker_.controls.push_back(control);
+  control.name = "move_y";
+  control.interaction_mode = InteractiveMarkerControl::MOVE_AXIS;
+  int_marker_.controls.push_back(control);
 
   imarker_server_->insert(int_marker_);
   imarker_server_->setCallback(int_marker_.name,
@@ -390,7 +381,7 @@ void RemoteControl::processFeedback(
       if (feedback->menu_entry_id == 1)
       {
         std::cout << "RESET " << std::endl;
-	imarker_callback_(feedback->pose, 2);
+        imarker_callback_(feedback->pose, 2);
       }
       break;
 
