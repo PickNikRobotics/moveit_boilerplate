@@ -97,25 +97,17 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
 
   bool run_fast = true;
 
+  // Debug
   if (!run_fast)
     ROS_INFO_STREAM_NAMED("execution_interface", "Executing trajectory with "
                                                      << trajectory.points.size() << " waypoints");
-
-  // Jacob only: Remove acceleration command
-  if (false)
-  {
-    for (std::size_t i = 0; i < trajectory.points.size(); ++i)
-    {
-      trajectory.points[i].accelerations.clear();
-    }
-  }
 
   // Debug
   if (!run_fast)
     ROS_DEBUG_STREAM_NAMED("execution_interface.trajectory", "Publishing:\n" << trajectory_msg);
 
   // Save to file
-  if (false && !run_fast)
+  if (!run_fast)
   {
     // Only save non-finger trajectories
     if (trajectory.joint_names.size() > 3)
@@ -124,7 +116,6 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
       saveTrajectory(trajectory_msg, jmg->getName() + "_trajectory_" +
                                          boost::lexical_cast<std::string>(trajectory_count++) +
                                          ".csv");
-      // saveTrajectory(trajectory_msg, "trajectory.csv");
     }
   }
 
@@ -214,23 +205,27 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
     ROS_INFO_STREAM_NAMED("execution_interface", "Executing trajectory....");
   }
 
+  std::cout << "clear " << std::endl;
+
   // Reset trajectory manager
   trajectory_execution_manager_->clear();
 
+  std::cout << "push and execute " << std::endl;
+
   // Send new trajectory
-  if (trajectory_execution_manager_->push(trajectory_msg))
+  //if (trajectory_execution_manager_->push(trajectory_msg))
+  if (trajectory_execution_manager_->pushAndExecute(trajectory_msg))
   {
-    trajectory_execution_manager_->execute();
+    //trajectory_execution_manager_->execute();
 
     // Optionally wait for completion
     if (wait_for_execution)
     {
       waitForExecution();
     }
-    else
+    else if (!run_fast)
     {
-      if (!run_fast)
-        ROS_INFO_STREAM_NAMED("exceution_interface", "Not waiting for execution to finish");
+      ROS_INFO_STREAM_NAMED("exceution_interface", "Not waiting for execution to finish");
     }
   }
   else

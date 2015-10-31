@@ -75,7 +75,15 @@ public:
   virtual ~Teleoperation();
 
   /** \brief In separate thread from imarker & Ik solver, send joint commands */
-  void startTeleopStatePublishing();
+  void commandJointsThread();
+  void commandJointsThreadHelper();
+
+  /** \brief Quickly response to pose requests. Uses IK on dev computer, not embedded */
+  void solveIKThread();
+  void solveIKThreadHelper();
+
+  /** \brief Publish the robot state to Rviz in a separate thread */
+  void visualizationThread(const ros::TimerEvent& e);
 
   /** \brief Load markers and robot states necessary for teleoperation */
   void setupInteractiveMarker();
@@ -91,60 +99,66 @@ public:
    */
   void processMarkerPose(const geometry_msgs::Pose& pose, int mode);
 
-  /** \brief Quickly response to pose requests. Uses IK on dev computer, not embedded */
-  void solveIKThread();
-  void solveIKThreadHelper();
-
-  /** \brief Publish the robot state to Rviz in a separate thread */
-  void visualizationThread(const ros::TimerEvent& e);
-
 private:
   
   // Desired planning group to work with
   JointModelGroup* arm_jmg_;
 
-  // Pose of marker
-  Eigen::Affine3d interactive_marker_pose_;
-  Eigen::Affine3d desired_ee_pose_;
-  
   // Flag to determine if new command needs to be sent to servos
   bool has_pose_to_ik_solve_ = false;
   bool has_state_to_command_ = false;
   bool has_state_to_visualize_ = false;
 
-  // Hook for RemoteControl class
-  InteractiveMarkerCallback callback_;
+  // Debug values
+  bool debug_ik_rate_ = false;
+  bool debug_command_rate_ = false;
 
-  // Maintain robot state at interactive marker (not the current robot state)
-  moveit::core::RobotStatePtr ik_teleop_state_;
-  
-  // State to be sent to controllers, copied from ik_teleop_state_
-  moveit::core::RobotStatePtr command_state_;
-
-  // State used to
-  boost::shared_mutex ik_state_mutex_;
-
-  // Visualization
+  // Visualization -------------------------------------
   double visualization_rate_; // hz
   ros::Timer non_realtime_loop_;
 
-  // Teleoperation ---------------------------------------
+  // Teleoperation -------------------------------------
+
+  // Hook for RemoteControl class
+  InteractiveMarkerCallback callback_;
 
   // Tool offset
   Eigen::Affine3d ee_offset_;
 
-  // Inverse Kinematics settings
+  // Pose of marker
+  Eigen::Affine3d interactive_marker_pose_;
+  Eigen::Affine3d desired_ee_pose_;
+  
+  // Inverse Kinematics -------------------------------
+  std::thread ik_thread_;
+
+  // State used to
+  boost::shared_mutex ik_state_mutex_;
+
+  // Maintain robot state at interactive marker (not the current robot state)
+  moveit::core::RobotStatePtr ik_teleop_state_;
+  
+  // Settings
   double ik_consistency_limit_;
   double ik_timeout_;  
   double ik_attempts_;
   std::vector<double> ik_consistency_limits_vector_;
 
-  // Inverse Kinematics stats
+  // Stats
   std::size_t total_ik_attempts_ = 0;
   ros::Duration total_ik_duration_;
 
-  // IK thread
-  std::thread ik_thread_;
+  // Joint Command -----------------------------------
+  std::thread command_joints_thread_;
+  moveit_msgs::RobotTrajectory trajectory_msg_;
+
+  // State to be sent to controllers, copied from ik_teleop_state_
+  moveit::core::RobotStatePtr command_state_;
+
+  // Stats
+  std::size_t total_commands_ = 0;
+  ros::Duration total_command_duration_;
+
 };  // end class
 
 }  // end namespace

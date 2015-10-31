@@ -76,20 +76,7 @@ int main(int argc, char** argv)
   std::cout << std::endl;
   std::cout << "-------------------------------------------------------" << std::endl;
 
-  switch (FLAGS_mode)
-  {
-    case 0:
-      ROS_INFO_STREAM_NAMED("main", "Do nothing");
-      ros::spin();
-      break;
-    case 1:
-      ROS_INFO_STREAM_NAMED("main", "Interactive marker teleoperation");
-      manager.startTeleopStatePublishing();
-      ros::spin();
-      break;
-    default:
-      ROS_WARN_STREAM_NAMED("main", "Unkown mode: " << FLAGS_mode);
-  }
+  ros::spin();
 
   // Shutdown
   std::cout << std::endl << std::endl << std::endl;

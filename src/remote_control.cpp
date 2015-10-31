@@ -227,13 +227,12 @@ void RemoteControl::initializeInteractiveMarkers(const geometry_msgs::Pose& pose
   //                      boost::bind(&RemoteControl::processFeedback, this, _1));
 
   // Marker
-  make6DofMarker(visualization_msgs::InteractiveMarkerControl::MENU, pose);
+  make6DofMarker(pose);
 
   imarker_server_->applyChanges();
 }
 
-void RemoteControl::make6DofMarker(unsigned int interaction_mode,
-                                   const geometry_msgs::Pose& pose)
+void RemoteControl::make6DofMarker(const geometry_msgs::Pose& pose)                                   
 {
   using namespace visualization_msgs;
 
@@ -246,23 +245,9 @@ void RemoteControl::make6DofMarker(unsigned int interaction_mode,
 
   // insert a box
   makeBoxControl(int_marker_);
-  int_marker_.controls[0].interaction_mode = interaction_mode;
+  int_marker_.controls[0].interaction_mode = visualization_msgs::InteractiveMarkerControl::MENU;
 
   InteractiveMarkerControl control;
-
-  if (interaction_mode != InteractiveMarkerControl::NONE)
-  {
-    std::string mode_text;
-    if (interaction_mode == InteractiveMarkerControl::MOVE_3D)
-      mode_text = "MOVE_3D";
-    if (interaction_mode == InteractiveMarkerControl::ROTATE_3D)
-      mode_text = "ROTATE_3D";
-    if (interaction_mode == InteractiveMarkerControl::MOVE_ROTATE_3D)
-      mode_text = "MOVE_ROTATE_3D";
-    int_marker_.name += "_" + mode_text;
-    int_marker_.description = "EE Teleoperation";
-  }
-
   control.orientation.w = 1;
   control.orientation.x = 1;
   control.orientation.y = 0;
@@ -299,8 +284,7 @@ void RemoteControl::make6DofMarker(unsigned int interaction_mode,
   imarker_server_->insert(int_marker_);
   imarker_server_->setCallback(int_marker_.name,
                                boost::bind(&RemoteControl::processFeedback, this, _1));
-  if (interaction_mode != visualization_msgs::InteractiveMarkerControl::NONE)
-    menu_handler_.apply(*imarker_server_, int_marker_.name);
+  menu_handler_.apply(*imarker_server_, int_marker_.name);
 }
 
 visualization_msgs::InteractiveMarkerControl&
