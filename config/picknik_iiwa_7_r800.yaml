@@ -45,7 +45,7 @@ teleoperation:
   ik_attempts: 1 # 0 falls back to default in kinematics.yaml
   ee_offset: [0.0, 0.0, -0.1, 0, 0, 0] # x,y,z,r,p,y  
   visualization_rate: 30 # hz
-  execution_delay: 0.1 # seconds, how long it takes to execute a trajectory onto hardware
+  execution_delay: 0.0 # seconds, how long it takes to execute a trajectory onto hardware
   debug:
     ik_rate: false
     command_rate: true

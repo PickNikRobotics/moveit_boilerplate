@@ -11,6 +11,9 @@
 // Parameter loading
 #include <ros_param_utilities/ros_param_utilities.h>
 
+// MoveIt
+#include <moveit/robot_state/conversions.h>
+
 namespace moveit_manipulation
 {
 Teleoperation::Teleoperation()
@@ -98,8 +101,7 @@ void Teleoperation::commandJointsThread()
     // Optionally end timer
     if (debug_command_rate_)
     {
-      ros::Time end_time = ros::Time::now();
-      ros::Duration duration = (end_time - begin_time);
+      ros::Duration duration = (ros::Time::now() - begin_time);
       total_command_duration_ += duration;
       total_commands_++;
 
@@ -112,41 +114,48 @@ void Teleoperation::commandJointsThread()
 
 void Teleoperation::commandJointsThreadHelper()
 {
+  std::cout << std::endl;
+  std::cout << std::endl;
+  std::cout << "-------------------------------------------------------" << std::endl;
+  std::cout << std::endl;
+  std::cout << std::endl;
+
   // Get predicted state of robot in near future
+  bool found_point = false;
   if (trajectory_msg_.joint_trajectory.points.size() > 1) // has previous trajectory
   {
     // How far in the future to grab a trajectory point
     ros::Duration time_from_last_trajectory = ros::Time::now() - trajectory_msg_timestamp_ + execution_delay_;
 
     // Loop through previous points until the predicted current one is found
-    bool found_point = false;
     for (std::size_t i = 0; i < trajectory_msg_.joint_trajectory.points.size(); ++i)
     {
       if (trajectory_msg_.joint_trajectory.points[i].time_from_start > time_from_last_trajectory)
       {
-        const trajectory_msgs::JointTrajectoryPoint &point = trajectory_msg_.joint_trajectory.points[i];
+        //const trajectory_msgs::JointTrajectoryPoint &point = trajectory_msg_.joint_trajectory.points[i];
         //std::cout << "Point: \n" << point << std::endl;
-        ROS_WARN_STREAM_NAMED("temp","predicted point is " << i << " out of " << trajectory_msg_.joint_trajectory.points.size());
+        ROS_INFO_STREAM_NAMED("teleoperation","Predicted point is " << i << " out of " << trajectory_msg_.joint_trajectory.points.size());
 
+        //std::cout << "sending joint trajectory: \n" << trajectory_msg_.joint_trajectory << std::endl;
 
-        if (!moveit::core::jointTrajPointToRobotState(trajectory_msg_, i, *start_state_))
+        if (!moveit::core::jointTrajPointToRobotState(trajectory_msg_.joint_trajectory, i, *start_state_))
         {
-          ROS_ERROR_STREAM_NAMED("temp","Error converting trajectory point to robot state");
+          ROS_ERROR_STREAM_NAMED("teleoperation","Error converting trajectory point to robot state");
           return;
         }
+
+        //manipulation_->getVisualGoalState()->publishRobotState(getCurrentState(), rvt::ORANGE);
 
         found_point = true;
         break;
       }
-    }
-    if (!found_point)
-    {
-      ROS_ERROR_STREAM_NAMED("temp","Did not find an predicted current trajectory point. Using current state");
-      start_state_ = getCurrentState();
-    }
+    } // for loop
   }
-  else
-    ROS_WARN_STREAM_NAMED("temp","DOES NOT HAVE PREVIOUS TRAJECTORY");
+  if (!found_point)
+  {
+    ROS_WARN_STREAM_NAMED("teleoperation","Did not find an predicted current trajectory point. Using current state");
+    *start_state_ = *getCurrentState(); // deep copy
+  }
 
   // Plan from start to goal
   EigenSTL::vector_Affine3d waypoints;
@@ -163,10 +172,14 @@ void Teleoperation::commandJointsThreadHelper()
 
   //ROS_INFO_STREAM_NAMED("teleoperation", "Created " << cartesian_traj.size() << " cartesian_traj"); 
 
+  // Replace first RobotState with one that has current velocity and accelerations
+  cartesian_traj.front() = start_state_;
+
   // Get trajectory message
-  double velocity_scaling_factor = 0.9;
+  const double velocity_scaling_factor = 0.8;
+  const bool use_interpolation = false;
   if (!manipulation_->convertRobotStatesToTrajectory(cartesian_traj, trajectory_msg_, arm_jmg_,
-                                                     velocity_scaling_factor))
+                                                     velocity_scaling_factor, use_interpolation))
   {
     ROS_ERROR_STREAM_NAMED("teleoperation", "Failed to convert to parameterized trajectory");
     return;
@@ -221,7 +234,7 @@ void Teleoperation::commandJointsThreadHelper2()
 
     // Add current state to trajectory
     double dummy_dt = 1.0;
-    robot_traj->addPrefixWayPoint(getCurrentState(), dummy_dt);
+    robot_traj->addPrefixWayPoint(getCurrentState(), dummy_dt); // TODO getCurrentState() is dangerous
 
     // Debug
     if (false)
@@ -306,8 +319,7 @@ void Teleoperation::solveIKThread()
     // Optionally end timer
     if (debug_ik_rate_)
     {
-      ros::Time end_time = ros::Time::now();
-      ros::Duration duration = (end_time - begin_time);
+      ros::Duration duration = (ros::Time::now() - begin_time);
       total_ik_duration_ += duration;
       total_ik_attempts_++;
 
@@ -425,8 +437,14 @@ bool Teleoperation::computeCartesianWaypointPath(
     */
     //moveit::core::GroupStateValidityCallbackFn constraint_fn;
 
-    // Test
+    // Create a temp state that doesn't have velocity or accelerations
     moveit::core::RobotState temp_state(*start_state);
+
+    // Clear both the velocities and accelerations because this state is copied for the cartesian path
+    // but the vel & accel are left the original (incorrect) values
+    std::vector<double> zero_variables(temp_state.getVariableCount(), 0.0);
+    temp_state.setVariableVelocities(zero_variables);
+    temp_state.setVariableAccelerations(zero_variables);
 
     // Compute Cartesian Path
     cartesian_traj.clear();
@@ -483,6 +501,7 @@ void Teleoperation::visualizationThread(const ros::TimerEvent& e)
   {
     // boost::shared_lock<boost::shared_mutex> lock(ik_state_mutex_);
     visual_tools_->publishRobotState(command_state_, rvt::BLUE);
+    manipulation_->getVisualStartState()->publishRobotState(start_state_, rvt::GREEN);
   }
 }
 

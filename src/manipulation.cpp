@@ -1318,6 +1318,9 @@ bool Manipulation::convertRobotStatesToTrajectory(
     robot_traj->addSuffixWayPoint(robot_state_traj[k], duration_from_previous);
   }
 
+  if (robot_traj->getFirstWayPoint().hasVelocities())
+    ROS_DEBUG_STREAM_NAMED("manipulation.convert","First waypoint has velocity");
+
   // Interpolate any path with two few points
   if (use_interpolation)
   {
@@ -1333,11 +1336,21 @@ bool Manipulation::convertRobotStatesToTrajectory(
     }
   }
 
+  bool debug = false;
+  if (debug)
+  {
+    // Convert trajectory to a message
+    robot_traj->getRobotTrajectoryMsg(trajectory_msg);
+    std::cout << "Before Iterative smoother: " << trajectory_msg << std::endl;
+  }
+
   // Perform iterative parabolic smoothing
   iterative_smoother_.computeTimeStamps(*robot_traj, velocity_scaling_factor);
 
   // Convert trajectory to a message
   robot_traj->getRobotTrajectoryMsg(trajectory_msg);
+
+  //std::cout << "After Iterative smoother: " << trajectory_msg << std::endl;
 
   return true;
 }
