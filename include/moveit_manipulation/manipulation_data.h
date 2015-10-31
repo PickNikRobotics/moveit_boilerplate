@@ -100,10 +100,6 @@ public:
   std::string start_pose_;  // where to move robot to initially. should be for both arms if
                             // applicable
 
-  // TODO - delete these two
-  std::string right_arm_dropoff_pose_;  // where to discard picked items
-  std::string left_arm_dropoff_pose_;   // where to discard picked items
-
   std::string right_hand_name_;
   std::string left_hand_name_;
   std::string right_arm_name_;

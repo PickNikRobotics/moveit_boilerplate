@@ -251,4 +251,11 @@ bool MoveItBoilerplate::allowCollisions(JointModelGroup* arm_jmg)
   return true;
 }
 
+moveit::core::RobotStatePtr MoveItBoilerplate::getCurrentState()
+{
+  // Pass down to the exection interface layer so that we can catch the getCurrentState with a fake
+  // one if we are unit testing  
+  return manipulation_->getExecutionInterface()->getCurrentState();
+}
+
 }  // end namespace

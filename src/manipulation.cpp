@@ -1696,8 +1696,7 @@ bool Manipulation::statesEqual(const moveit::core::RobotState& s1,
 moveit::core::RobotStatePtr Manipulation::getCurrentState()
 {
   // Pass down to the exection interface layer so that we can catch the getCurrentState with a fake
-  // one
-  // if we are unit testing
+  // one if we are unit testing  
   current_state_ = execution_interface_->getCurrentState();
   return current_state_;
 }
@@ -2045,11 +2044,13 @@ void Manipulation::loadVisualTools()
   visual_start_state_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(),
                                                  "/moveit_manipulation/markers2", planning_scene_monitor_));
   visual_start_state_->loadRobotStatePub("/moveit_manipulation/robot_start_state");
+  visual_start_state_->hideRobot();
 
   // Robot Goal State
   visual_goal_state_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(),
                                                  "/moveit_manipulation/markers3", planning_scene_monitor_));
   visual_goal_state_->loadRobotStatePub("/moveit_manipulation/robot_goal_state");
+  visual_goal_state_->hideRobot();
 }
 
 

@@ -91,10 +91,6 @@ bool ManipulationData::load(robot_model::RobotModelPtr robot_model, bool fake_ex
 
   // Load robot semantics
   ros_param_utilities::getStringParameter(parent_name, nh_, "start_pose", start_pose_);
-  ros_param_utilities::getStringParameter(parent_name, nh_, "right_arm_dropoff_pose",
-                                          right_arm_dropoff_pose_);
-  ros_param_utilities::getStringParameter(parent_name, nh_, "left_arm_dropoff_pose",
-                                          left_arm_dropoff_pose_);
   ros_param_utilities::getStringParameter(parent_name, nh_, "right_hand_name", right_hand_name_);
   ros_param_utilities::getStringParameter(parent_name, nh_, "left_hand_name", left_hand_name_);
   ros_param_utilities::getStringParameter(parent_name, nh_, "right_arm_name", right_arm_name_);

@@ -77,6 +77,15 @@ public:
   /** \brief In separate thread from imarker & Ik solver, send joint commands */
   void commandJointsThread();
   void commandJointsThreadHelper();
+  void commandJointsThreadHelper2(); // old version
+
+  /**
+   * \brief Compute a cartesian path along waypoints
+   * \return true on success
+   */
+  bool computeCartesianWaypointPath(JointModelGroup* arm_jmg, const moveit::core::RobotStatePtr start_state,                                    
+                                    const EigenSTL::vector_Affine3d& waypoints, 
+                                    std::vector<moveit::core::RobotStatePtr> &cartesian_traj);
 
   /** \brief Quickly response to pose requests. Uses IK on dev computer, not embedded */
   void solveIKThread();
@@ -84,9 +93,6 @@ public:
 
   /** \brief Publish the robot state to Rviz in a separate thread */
   void visualizationThread(const ros::TimerEvent& e);
-
-  /** \brief Load markers and robot states necessary for teleoperation */
-  void setupInteractiveMarker();
 
   /** \brief Helper to get the current robot state's ee pose */
   geometry_msgs::Pose chooseNewIMarkerPose();
@@ -97,7 +103,13 @@ public:
    * \param mode - 1 is regular - recieve new pose, 
    *               2 is reset imarker
    */
-  void processMarkerPose(const geometry_msgs::Pose& pose, int mode);
+  void processIMarkerPose(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+
+  /** \brief Create smooth path from start to goal poses */
+  void planCartesianPath();
+
+  /** \brief Helper transform function */
+  Eigen::Affine3d offsetEEPose(const geometry_msgs::Pose &pose) const;
 
 private:
   
@@ -126,8 +138,10 @@ private:
   Eigen::Affine3d ee_offset_;
 
   // Pose of marker
-  Eigen::Affine3d interactive_marker_pose_;
   Eigen::Affine3d desired_ee_pose_;
+  Eigen::Affine3d start_ee_pose_;
+  Eigen::Affine3d goal_ee_pose_;
+  moveit::core::RobotStatePtr start_state_;
   
   // Inverse Kinematics -------------------------------
   std::thread ik_thread_;

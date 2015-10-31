@@ -220,7 +220,9 @@ void RemoteControl::initializeInteractiveMarkers(const geometry_msgs::Pose& pose
 
   // Menu
   menu_handler_.insert("Reset", boost::bind(&RemoteControl::processFeedback, this, _1));
-  // menu_handler_.insert("Second Entry", boost::bind(&RemoteControl::processFeedback, this, _1));
+  menu_handler_.insert("Set Start", boost::bind(&RemoteControl::processFeedback, this, _1));
+  menu_handler_.insert("Set Goal", boost::bind(&RemoteControl::processFeedback, this, _1));
+  menu_handler_.insert("Cartesian Plan", boost::bind(&RemoteControl::processFeedback, this, _1));
   // interactive_markers::MenuHandler::EntryHandle sub_menu_handle =
   // menu_handler_.insert("Submenu");
   // menu_handler_.insert(sub_menu_handle, "First Entry",
@@ -312,17 +314,9 @@ RemoteControl::makeBoxControl(visualization_msgs::InteractiveMarker& msg)
 }
 
 void RemoteControl::processFeedback(
-    const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback)
+				    const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback)
 {
   using namespace visualization_msgs;
-
-  // Check that we didn't process another request too recently
-  // if (ros::Time::now() - throttle_time_ < ros::Duration(0.1)) {
-  //   ROS_WARN_STREAM_NAMED("remote_control","Skipping message because last one was procesed too
-  //   recently");
-  //   return;
-  // }
-  // throttle_time_ = ros::Time::now(); // remember last time we procesed feedback
 
   {
     boost::unique_lock<boost::mutex> scoped_lock(interactive_mutex_);
@@ -333,55 +327,10 @@ void RemoteControl::processFeedback(
     teleoperation_ready_ = false;
   }
 
-  // Check that this feedback isn't too old
-  // if (feedback->header.stamp < ros::Time::now() - )  {
-  // ROS_DEBUG_STREAM_NAMED("remote_control","Skipped because old " << feedback->header.stamp << "
-  // now: " << ros::Time::now());
-  //   return;
-  // }
-  // std::cout << "not skipped " << std::endl;
+  // Redirect
+  imarker_callback_(feedback);
 
-  // Check that previous call has finished
-
-  // std::ostringstream stream;
-  // stream << "Feedback from marker '" << feedback->marker_name << "' "
-  //        << " / control '" << feedback->control_name << "'";
-
-  // std::ostringstream mouse_point_ss;
-  // if( feedback->mouse_point_valid )
-  // {
-  //   mouse_point_ss << " at " << feedback->mouse_point.x
-  //                  << ", " << feedback->mouse_point.y
-  //                  << ", " << feedback->mouse_point.z
-  //                  << " in frame " << feedback->header.frame_id;
-  // }
-
-  switch (feedback->event_type)
-  {
-    case InteractiveMarkerFeedback::BUTTON_CLICK:
-      break;
-
-    case InteractiveMarkerFeedback::MENU_SELECT:
-      if (feedback->menu_entry_id == 1)
-      {
-        std::cout << "RESET " << std::endl;
-        imarker_callback_(feedback->pose, 2);
-      }
-      break;
-
-    case InteractiveMarkerFeedback::POSE_UPDATE:
-      imarker_callback_(feedback->pose, 1);  // 1 is a pose update
-      break;
-
-    case InteractiveMarkerFeedback::MOUSE_DOWN:
-      break;
-
-    case InteractiveMarkerFeedback::MOUSE_UP:
-      imarker_callback_(feedback->pose, true);
-      break;
-  }
-
-  imarker_server_->applyChanges();
+  //imarker_server_->applyChanges();
 
   {
     boost::unique_lock<boost::mutex> scoped_lock(interactive_mutex_);

@@ -85,10 +85,16 @@ public:
    */
   bool allowCollisions(JointModelGroup* arm_jmg);
 
-  planning_scene_monitor::PlanningSceneMonitorPtr getPlanningSceneMonitor() const
+  /**
+   * \brief Use the planning scene to get the robot's current state
+   */
+  moveit::core::RobotStatePtr getCurrentState();
+
+  /*planning_scene_monitor::PlanningSceneMonitorPtr getPlanningSceneMonitor() const
   {
     return planning_scene_monitor_;
   }
+  */
 
 protected:
 

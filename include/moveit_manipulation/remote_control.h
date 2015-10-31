@@ -54,7 +54,7 @@
 
 namespace moveit_manipulation
 {
-typedef std::function<void(const geometry_msgs::Pose&, int)> InteractiveMarkerCallback;
+typedef std::function<void(const visualization_msgs::InteractiveMarkerFeedbackConstPtr&)> InteractiveMarkerCallback;
 
 class RemoteControl
 {
@@ -124,7 +124,7 @@ public:
   void updateMarkerPose(const geometry_msgs::Pose& pose);
 
 private:
-  void make6DofMarker(unsigned int interaction_mode, const geometry_msgs::Pose& pose);
+  void make6DofMarker(const geometry_msgs::Pose& pose);
   
   /** \brief Helper for geometric shape */
   visualization_msgs::InteractiveMarkerControl&
