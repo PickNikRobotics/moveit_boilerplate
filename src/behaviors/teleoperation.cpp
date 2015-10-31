@@ -11,8 +11,6 @@
 // Parameter loading
 #include <ros_param_utilities/ros_param_utilities.h>
 
-// C++
-
 namespace moveit_manipulation
 {
 Teleoperation::Teleoperation()
@@ -31,6 +29,7 @@ Teleoperation::Teleoperation()
   getDoubleParameter(parent_name, teleop_nh, "ik_timeout", ik_timeout_);
   getDoubleParameter(parent_name, teleop_nh, "ik_attempts", ik_attempts_);
   getDoubleParameter(parent_name, teleop_nh, "visualization_rate", visualization_rate_);
+  getDurationParameter(parent_name, teleop_nh, "execution_delay", execution_delay_);
   getBoolParameter(parent_name, teleop_nh, "debug/ik_rate", debug_ik_rate_);
   getBoolParameter(parent_name, teleop_nh, "debug/command_rate", debug_command_rate_);
 
@@ -45,9 +44,6 @@ Teleoperation::Teleoperation()
 
   // Choose planning group
   arm_jmg_ = config_->right_arm_;
-
-  // Assign joint names
-  trajectory_msg_.joint_trajectory.joint_names = arm_jmg_->getActiveJointModelNames();
 
   // In separate thread from imarker & Ik solver, send joint commands
   ROS_INFO_STREAM_NAMED("teleoperation", "Teleoperation state command loop ready");
@@ -116,14 +112,50 @@ void Teleoperation::commandJointsThread()
 
 void Teleoperation::commandJointsThreadHelper()
 {
+  // Get predicted state of robot in near future
+  if (trajectory_msg_.joint_trajectory.points.size() > 1) // has previous trajectory
+  {
+    // How far in the future to grab a trajectory point
+    ros::Duration time_from_last_trajectory = ros::Time::now() - trajectory_msg_timestamp_ + execution_delay_;
+
+    // Loop through previous points until the predicted current one is found
+    bool found_point = false;
+    for (std::size_t i = 0; i < trajectory_msg_.joint_trajectory.points.size(); ++i)
+    {
+      if (trajectory_msg_.joint_trajectory.points[i].time_from_start > time_from_last_trajectory)
+      {
+        const trajectory_msgs::JointTrajectoryPoint &point = trajectory_msg_.joint_trajectory.points[i];
+        //std::cout << "Point: \n" << point << std::endl;
+        ROS_WARN_STREAM_NAMED("temp","predicted point is " << i << " out of " << trajectory_msg_.joint_trajectory.points.size());
+
+
+        if (!moveit::core::jointTrajPointToRobotState(trajectory_msg_, i, *start_state_))
+        {
+          ROS_ERROR_STREAM_NAMED("temp","Error converting trajectory point to robot state");
+          return;
+        }
+
+        found_point = true;
+        break;
+      }
+    }
+    if (!found_point)
+    {
+      ROS_ERROR_STREAM_NAMED("temp","Did not find an predicted current trajectory point. Using current state");
+      start_state_ = getCurrentState();
+    }
+  }
+  else
+    ROS_WARN_STREAM_NAMED("temp","DOES NOT HAVE PREVIOUS TRAJECTORY");
+
   // Plan from start to goal
   EigenSTL::vector_Affine3d waypoints;
   waypoints.push_back(desired_ee_pose_);
 
   std::vector<moveit::core::RobotStatePtr> cartesian_traj;
-
-  // TODO make current state be in the future
-  if (!computeCartesianWaypointPath(arm_jmg_, getCurrentState(), waypoints, cartesian_traj))
+  
+  // Plan smooth cartesian path using IK only
+  if (!computeCartesianWaypointPath(arm_jmg_, start_state_, waypoints, cartesian_traj))
   {
     ROS_WARN_STREAM_NAMED("teleoperation", "Unable to plan cartesian path");
     return;
@@ -144,6 +176,7 @@ void Teleoperation::commandJointsThreadHelper()
 
   // Execute
   const bool wait_for_execution = false;
+  trajectory_msg_timestamp_ = ros::Time::now();
   if (!manipulation_->getExecutionInterface()->executeTrajectory(trajectory_msg_, arm_jmg_,
                                                                  wait_for_execution))
   {
@@ -155,6 +188,9 @@ void Teleoperation::commandJointsThreadHelper2()
 {
   // Wait for previous trajectory to finish
   // manipulation_->getExecutionInterface()->waitForExecution();
+
+  // Assign joint names
+  //trajectory_msg_.joint_trajectory.joint_names = arm_jmg_->getActiveJointModelNames();
 
   // Initialize trajectory message
   // TODO move this into constructor??

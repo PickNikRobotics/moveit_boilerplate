@@ -205,12 +205,8 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
     ROS_INFO_STREAM_NAMED("execution_interface", "Executing trajectory....");
   }
 
-  std::cout << "clear " << std::endl;
-
   // Reset trajectory manager
   trajectory_execution_manager_->clear();
-
-  std::cout << "push and execute " << std::endl;
 
   // Send new trajectory
   //if (trajectory_execution_manager_->push(trajectory_msg))

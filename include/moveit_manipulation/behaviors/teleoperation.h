@@ -165,6 +165,8 @@ private:
   // Joint Command -----------------------------------
   std::thread command_joints_thread_;
   moveit_msgs::RobotTrajectory trajectory_msg_;
+  ros::Time trajectory_msg_timestamp_; // when the last trajectory message was sent
+  ros::Duration execution_delay_; // Tuneable parameter for how long it takes to execute a trajectory onto hardware
 
   // State to be sent to controllers, copied from ik_teleop_state_
   moveit::core::RobotStatePtr command_state_;

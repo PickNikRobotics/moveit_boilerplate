@@ -127,6 +127,15 @@ public:
   /** \brief Debug tools for visualizing in Rviz */
   void loadVisualTools();
 
+  /** \brief Pass through accessor function */
+  trajectory_execution_manager::TrajectoryExecutionManagerPtr getTrajectoryExecutionManager()
+  {
+    // Ensure that execution manager has been loaded
+    loadExecutionManager();
+
+    return trajectory_execution_manager_;
+  }
+
 private:
   bool checkTrajectoryController(ros::ServiceClient &service_client,
                                  const std::string &hardware_name, bool has_ee = false);
