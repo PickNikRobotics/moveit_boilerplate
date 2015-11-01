@@ -16,21 +16,19 @@
 
 namespace moveit_manipulation
 {
-Teleoperation::Teleoperation()
-  : MoveItBoilerplate()
+Teleoperation::Teleoperation() : MoveItBoilerplate()
 {
   // Load rosparams
   const std::string parent_name = "teleoperation";  // for namespacing logging messages
-  std::vector<double> offset_doubles;
-
   ros::NodeHandle teleop_nh("~/teleoperation");
-
   using namespace ros_param_utilities;
-  getDoubleParameters(parent_name, teleop_nh, "ee_offset", offset_doubles);
-  convertDoublesToEigen(parent_name, offset_doubles, ee_offset_);
+  getAffine3dParameter(parent_name, teleop_nh, "ee_offset", ee_offset_);
   getDoubleParameter(parent_name, teleop_nh, "ik_consistency_limit", ik_consistency_limit_);
   getDoubleParameter(parent_name, teleop_nh, "ik_timeout", ik_timeout_);
   getDoubleParameter(parent_name, teleop_nh, "ik_attempts", ik_attempts_);
+  getDoubleParameter(parent_name, teleop_nh, "ik_cartesian_max_step", ik_cartesian_max_step_);
+  getDoubleParameter(parent_name, teleop_nh, "ik_cartesian_jump_threshold",
+                     ik_cartesian_jump_threshold_);
   getDoubleParameter(parent_name, teleop_nh, "visualization_rate", visualization_rate_);
   getDurationParameter(parent_name, teleop_nh, "execution_delay", execution_delay_);
   getBoolParameter(parent_name, teleop_nh, "debug/ik_rate", debug_ik_rate_);
@@ -49,7 +47,10 @@ Teleoperation::Teleoperation()
   arm_jmg_ = config_->right_arm_;
 
   // End effector parent link (arm tip for ik solving)
-  const moveit::core::LinkModel* ik_tip_link_ = grasp_datas_[arm_jmg]->parent_link_;
+  ik_tip_link_ = grasp_datas_[arm_jmg_]->parent_link_;
+  
+  // Compute cartesian command input
+  cartesian_desired_waypoints_.resize(1);
 
   // Check for kinematic solver
   if (!arm_jmg_->canSetStateFromIK(ik_tip_link_->getName()))
@@ -61,9 +62,9 @@ Teleoperation::Teleoperation()
   ROS_INFO_STREAM_NAMED("teleoperation", "Teleoperation state command loop ready");
 
   // Load robot states
-  start_state_.reset(new moveit::core::RobotState(*getCurrentState()));
-  ik_teleop_state_.reset(new moveit::core::RobotState(*start_state_));
-  command_state_.reset(new moveit::core::RobotState(*start_state_));
+  start_planning_state_.reset(new moveit::core::RobotState(*getCurrentState()));
+  //ik_teleop_state_.reset(new moveit::core::RobotState(*start_planning_state_));
+  visualize_goal_state_.reset(new moveit::core::RobotState(*start_planning_state_));
 
   // Show interactive marker
   remote_control_->initializeInteractiveMarkers(chooseNewIMarkerPose());
@@ -78,7 +79,7 @@ Teleoperation::Teleoperation()
 
   // Create threads for IK solving and commanding joints
   ik_thread_ = std::thread(&Teleoperation::solveIKThread, this);
-  // command_joints_thread_ = std::thread(&Teleoperation::commandJointsThread, this);
+  command_joints_thread_ = std::thread(&Teleoperation::commandJointsThread, this);
 }
 
 Teleoperation::~Teleoperation()
@@ -114,28 +115,27 @@ void Teleoperation::commandJointsThread()
       total_command_duration_ += duration;
       total_commands_++;
 
-      std::cout << "Command duration: " << duration.toSec()
-                << ", average duration: " << total_command_duration_.toSec() / total_commands_
-                << std::endl;
+      ROS_INFO_STREAM_NAMED("teleoperation","Command duration: " << duration.toSec()
+                            << ", average duration: " << total_command_duration_.toSec() / total_commands_);
     }
   }
 }
 
 void Teleoperation::commandJointsThreadHelper()
 {
-  std::cout << std::endl;
-  std::cout << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-  std::cout << std::endl;
-  std::cout << std::endl;
-
   // std::cout << "Output traj:\n " << trajectory_msg_ << std::endl;
+
+  // Get read-only mutex lock
+  {
+    boost::shared_lock<boost::shared_mutex> lock(trajectory_msg_mutex_);
+    trajectory_msg_copy_ = trajectory_msg_;  // Make a copy of datastructure
+  }
 
   // Execute
   const bool wait_for_execution = false;
   trajectory_msg_timestamp_ = ros::Time::now();
-  if (!planning_interface_->getExecutionInterface()->executeTrajectory(trajectory_msg_, arm_jmg_,
-                                                                       wait_for_execution))
+  if (!planning_interface_->getExecutionInterface()->executeTrajectory(trajectory_msg_copy_,
+                                                                       arm_jmg_, wait_for_execution))
   {
     ROS_ERROR_STREAM_NAMED("teleoperation", "Failed to execute trajectory");
   }
@@ -163,9 +163,9 @@ void Teleoperation::commandJointsThreadHelper2()
 
   // Get read-only mutex lock
   {
-    // boost::shared_lock<boost::shared_mutex> lock(ik_state_mutex_);
+    // boost::shared_lock<boost::shared_mutex> lock(trajectory_msg_mutex_);
     // Assign joint values
-    command_state_->copyJointGroupPositions(arm_jmg_,
+    visualize_goal_state_->copyJointGroupPositions(arm_jmg_,
                                             trajectory_msg_.joint_trajectory.points[0].positions);
   }
 
@@ -206,9 +206,9 @@ dangerous
     }
 
     // Perform iterative parabolic smoothing
-    const double max_velocity_scaling_factor = 0.8;
+    const double max_vel_scaling_factor = 0.8;
     planning_interface_->getIterativeSmoother().computeTimeStamps(*robot_traj,
-                                                            max_velocity_scaling_factor);
+                                                            max_vel_scaling_factor);
 
     // Convert trajectory back to a message
     robot_traj->getRobotTrajectoryMsg(trajectory_msg_);
@@ -271,9 +271,9 @@ void Teleoperation::solveIKThread()
       total_ik_duration_ += duration;
       total_ik_attempts_++;
 
-      std::cout << "IK duration: " << duration.toSec()
-                << ", average duration: " << total_ik_duration_.toSec() / total_ik_attempts_
-                << ", attempts: " << ik_attempts_ << ", timeout: " << ik_timeout_ << std::endl;
+      ROS_INFO_STREAM_NAMED("teleoperation","IK duration: " << duration.toSec()
+                            << ", average duration: " << total_ik_duration_.toSec() / total_ik_attempts_
+                            << ", attempts: " << ik_attempts_ << ", timeout: " << ik_timeout_);
     }
   }
 }
@@ -296,19 +296,18 @@ void Teleoperation::solveIKThreadHelper()
         // const trajectory_msgs::JointTrajectoryPoint &point =
         // trajectory_msg_.joint_trajectory.points[i];
         // std::cout << "Point: \n" << point << std::endl;
-        ROS_INFO_STREAM_NAMED("teleoperation",
-                              "Predicted point is "
-                                  << i << " out of "
-                                  << trajectory_msg_.joint_trajectory.points.size());
+        ROS_INFO_STREAM_NAMED("teleoperation", "Predicted point is "
+                                                   << i << " out of "
+                                                   << trajectory_msg_.joint_trajectory.points.size());
 
         // std::cout << "sending joint trajectory: \n" << trajectory_msg_.joint_trajectory <<
         // std::endl;
 
         if (!moveit::core::jointTrajPointToRobotState(trajectory_msg_.joint_trajectory, i,
-                                                      *start_state_))
+                                                      *start_planning_state_))
         {
-          ROS_ERROR_STREAM_NAMED("teleoperation",
-                                 "Error converting trajectory point to robot state");
+          ROS_ERROR_STREAM_NAMED("teleoperation", "Error converting trajectory point to robot "
+                                                  "state");
           return;
         }
 
@@ -319,22 +318,32 @@ void Teleoperation::solveIKThreadHelper()
         break;
       }
     }  // for loop
-  }
-  if (!found_point)
+    if (!found_point)
+    {
+      ROS_WARN_STREAM_NAMED("teleoperation", "Did not find an predicted current trajectory point out of " << trajectory_msg_.joint_trajectory.points.size() << " points." <<
+                            "Using current state");
+      *start_planning_state_ = *getCurrentState();  // deep copy
+    }
+  } 
+  else
   {
-    ROS_WARN_STREAM_NAMED("teleoperation", "Did not find an predicted current trajectory point. "
-                                           "Using current state");
-    *start_state_ = *getCurrentState();  // deep copy
+    ROS_WARN_STREAM_NAMED("teleoperation", "No previous trajectory points exist (first iteration?). "
+                                           "Using current state");    
+    *start_planning_state_ = *getCurrentState();  // deep copy
   }
 
-  // Plan from start to goal
-  EigenSTL::vector_Affine3d waypoints;
-  waypoints.push_back(desired_ee_pose_);  // This is our command input from the imarkers
+
+  // Get read-only mutex lock
+  {
+    boost::shared_lock<boost::shared_mutex> lock(desired_ee_pose_mutex_);    
+    // Command input from the imarkers
+    cartesian_desired_waypoints_.front() = desired_ee_pose_;  
+  }
 
   std::vector<moveit::core::RobotStatePtr> cartesian_traj;
 
   // Plan smooth cartesian path using IK only
-  if (!computeCartesianWaypointPath(arm_jmg_, start_state_, waypoints, cartesian_traj))
+  if (!computeCartesianWaypointPath(start_planning_state_, cartesian_desired_waypoints_, cartesian_traj))
   {
     ROS_WARN_STREAM_NAMED("teleoperation", "Unable to plan cartesian path TODO");
     // TODO - still execute as much as possible
@@ -345,25 +354,18 @@ void Teleoperation::solveIKThreadHelper()
   // cartesian_traj");
 
   // Replace first RobotState with one that has current velocity and accelerations
-  cartesian_traj.front() = start_state_;
+  cartesian_traj.front() = start_planning_state_;
 
   // Get trajectory message
-  const double velocity_scaling_factor = 0.8;
-  const bool use_interpolation = false;
-  if (!planning_interface_->convertRobotStatesToTrajectory(cartesian_traj, trajectory_msg_,
-                                                           arm_jmg_, velocity_scaling_factor,
-                                                           use_interpolation))
+  const double vel_scaling_factor = 0.8;
+  if (!convertRobotStatesToTrajectory(cartesian_traj, trajectory_msg_, vel_scaling_factor))
   {
     ROS_ERROR_STREAM_NAMED("teleoperation", "Failed to convert to parameterized trajectory");
     return;
   }
 
-  // Get write mutex lock
-  {
-    // boost::lock_guard<boost::shared_mutex> lock(ik_state_mutex_);
-    // Copy solution to command RobotState
-    *command_state_ = *cartesian_traj.back();  // deep copy
-  }
+  // Copy solution to command RobotState
+  *visualize_goal_state_ = *cartesian_traj.back();  // deep copy
 
   // Tell other threads new state is ready to be used
   has_state_to_command_ = true;
@@ -409,9 +411,9 @@ void Teleoperation::solveIKThreadHelper2() // old version
 
   // Get write mutex lock
   {
-    // boost::lock_guard<boost::shared_mutex> lock(ik_state_mutex_);
+    // boost::lock_guard<boost::shared_mutex> lock(trajectory_msg_mutex_);
     // Copy solution to command RobotState
-    *command_state_ = *ik_teleop_state_;  // deep copy
+    *visualize_goal_state_ = *ik_teleop_state_;  // deep copy
   }
 
   // Tell other threads new state is ready to be used
@@ -420,12 +422,11 @@ void Teleoperation::solveIKThreadHelper2() // old version
 }
 */
 
-bool Teleoperation::computeCartesianWaypointPath(
-    JointModelGroup* arm_jmg, const moveit::core::RobotStatePtr start_state,
-    const EigenSTL::vector_Affine3d& waypoints,
-    std::vector<moveit::core::RobotStatePtr>& cartesian_traj)
+bool Teleoperation::computeCartesianWaypointPath(const moveit::core::RobotStatePtr start_state,
+                                                 const EigenSTL::vector_Affine3d& waypoints,
+                                                 std::vector<moveit::core::RobotStatePtr>& cartesian_traj)
 {
-  // Cartesiansettings
+  // Cartesian settings
   // const bool collision_checking_verbose = false;
   // const bool only_check_self_collision = false;
   const bool global_reference_frame = true;  // Reference frame setting
@@ -443,7 +444,7 @@ bool Teleoperation::computeCartesianWaypointPath(
   double last_valid_percentage;
 
   std::size_t attempts = 0;
-  static const std::size_t MAX_IK_ATTEMPTS = 2;
+  static const std::size_t MAX_IK_ATTEMPTS = ik_attempts_;
   bool valid_path_found = false;
   while (attempts < MAX_IK_ATTEMPTS)
   {
@@ -464,19 +465,19 @@ bool Teleoperation::computeCartesianWaypointPath(
     // Compute Cartesian Path
     cartesian_traj.clear();
     last_valid_percentage = cartesian_state.computeCartesianPath(
-        arm_jmg, cartesian_traj, ik_tip_link_, waypoints, global_reference_frame, max_step,
+        arm_jmg_, cartesian_traj, ik_tip_link_, waypoints, global_reference_frame,
+        ik_cartesian_max_step_,
         ik_cartesian_jump_threshold_);  //, constraint_fn, kinematics::KinematicsQueryOptions());
 
-    ROS_DEBUG_STREAM_NAMED("teleoperation",
-                           "Cartesian last_valid_percentage: "
-                               << last_valid_percentage
-                               << " number of points in trajectory: " << cartesian_traj.size());
+    // clang-format off
+    ROS_DEBUG_STREAM_NAMED("teleoperation", "Cartesian last_valid_percentage: " << last_valid_percentage 
+                           << " number of points in trajectory: " << cartesian_traj.size());  // clang-format on
 
     double min_allowed_valid_percentage = 0.9;
     if (last_valid_percentage == 0)
     {
-      ROS_DEBUG_STREAM_NAMED("teleoperation",
-                             "Failed to computer cartesian path: last_valid_percentage is 0");
+      ROS_DEBUG_STREAM_NAMED("teleoperation", "Failed to computer cartesian path: "
+                                              "last_valid_percentage is 0");
     }
     else if (last_valid_percentage < min_allowed_valid_percentage)
     {
@@ -502,6 +503,68 @@ bool Teleoperation::computeCartesianWaypointPath(
   return true;
 }
 
+bool Teleoperation::convertRobotStatesToTrajectory(
+    const std::vector<moveit::core::RobotStatePtr>& robot_state_traj,
+    moveit_msgs::RobotTrajectory& trajectory_msg, const double& vel_scaling_factor,
+    bool use_interpolation)
+{
+  ROS_DEBUG_STREAM_NAMED("teleoperation.superdebug", "convertRobotStatesToTrajectory()");
+
+  // Copy the vector of RobotStates to a RobotTrajectory
+  robot_trajectory::RobotTrajectoryPtr robot_traj(
+      new robot_trajectory::RobotTrajectory(robot_model_, arm_jmg_));
+
+  // -----------------------------------------------------------------------------------------------
+  // Convert to RobotTrajectory datatype
+  for (std::size_t k = 0; k < robot_state_traj.size(); ++k)
+  {
+    double duration_from_previous = 1;  // this is overwritten and unimportant
+    robot_traj->addSuffixWayPoint(robot_state_traj[k], duration_from_previous);
+  }
+
+  if (robot_traj->getFirstWayPoint().hasVelocities())
+    ROS_DEBUG_STREAM_NAMED("teleoperation.convert", "First waypoint has velocity");
+
+  static const std::size_t MIN_TRAJECTORY_POINTS = 5;
+  if (robot_traj->getWayPointCount() < MIN_TRAJECTORY_POINTS)
+  {
+    ROS_INFO_STREAM_NAMED("teleoperation", "Too few points (" << robot_traj->getWayPointCount()
+                                                              << ")");
+  }
+
+  // Interpolate any path with two few points
+  if (use_interpolation)
+  {
+    // Interpolate between each point
+    // double discretization = 0.25;
+    // interpolate(robot_traj, discretization);
+  }
+
+  bool debug = false;
+  if (debug)
+  {
+    // Convert trajectory to a message
+    moveit_msgs::RobotTrajectory trajectory_msg_debug;
+    robot_traj->getRobotTrajectoryMsg(trajectory_msg_debug);
+    std::cout << "Before Iterative smoother: " << trajectory_msg_debug << std::endl;
+  }
+
+  // Perform iterative parabolic smoothing
+  planning_interface_->getIterativeSmoother().computeTimeStamps(*robot_traj, vel_scaling_factor);
+
+  // Get write mutex lock
+  {
+    boost::lock_guard<boost::shared_mutex> lock(trajectory_msg_mutex_);
+
+    // Convert trajectory to a message
+    robot_traj->getRobotTrajectoryMsg(trajectory_msg);
+  }
+
+  // std::cout << "After Iterative smoother: " << trajectory_msg << std::endl;
+
+  return true;
+}
+
 void Teleoperation::visualizationThread(const ros::TimerEvent& e)
 {
   // Check if there is anything to visualize
@@ -510,12 +573,8 @@ void Teleoperation::visualizationThread(const ros::TimerEvent& e)
 
   has_state_to_visualize_ = false;
 
-  // Get read-only mutex lock
-  {
-    // boost::shared_lock<boost::shared_mutex> lock(ik_state_mutex_);
-    visual_tools_->publishRobotState(command_state_, rvt::BLUE);
-    planning_interface_->getVisualStartState()->publishRobotState(start_state_, rvt::GREEN);
-  }
+  visual_tools_->publishRobotState(visualize_goal_state_, rvt::BLUE);
+  planning_interface_->getVisualStartState()->publishRobotState(start_planning_state_, rvt::GREEN);
 }
 
 geometry_msgs::Pose Teleoperation::chooseNewIMarkerPose()
@@ -554,27 +613,26 @@ void Teleoperation::processIMarkerPose(
           break;
         case 2:  // Start
           ROS_INFO_STREAM_NAMED("teleoperation", "Set start state");
-          start_ee_pose_ = offsetEEPose(feedback->pose);
-          visual_tools_->publishZArrow(start_ee_pose_, rvt::GREEN);
+          // start_ee_pose_ = offsetEEPose(feedback->pose);
+          // visual_tools_->publishZArrow(start_ee_pose_, rvt::GREEN);
 
-          // Save start state // TODO thread safety?
-          *start_state_ = *ik_teleop_state_;  // deep copy
+          // // Save start state // TODO thread safety?
+          // *start_planning_state_ = *ik_teleop_state_;  // deep copy
 
-          // Show Robot State
-          planning_interface_->getVisualStartState()->publishRobotState(start_state_, rvt::GREEN);
+          // // Show Robot State
+          // planning_interface_->getVisualStartState()->publishRobotState(start_planning_state_, rvt::GREEN);
           break;
         case 3:  // Goal
           ROS_INFO_STREAM_NAMED("teleoperation", "Set goal state");
-          goal_ee_pose_ = offsetEEPose(feedback->pose);
-          visual_tools_->publishZArrow(goal_ee_pose_, rvt::ORANGE);
+          // goal_ee_pose_ = offsetEEPose(feedback->pose);
+          // visual_tools_->publishZArrow(goal_ee_pose_, rvt::ORANGE);
 
-          // Show Robot State // TODO thread safety?
-          planning_interface_->getVisualGoalState()->publishRobotState(ik_teleop_state_,
-                                                                       rvt::ORANGE);
+          // // Show Robot State // TODO thread safety?
+          // planning_interface_->getVisualGoalState()->publishRobotState(ik_teleop_state_, rvt::ORANGE);
           break;
         case 4:  // Plan cartesian
           ROS_INFO_STREAM_NAMED("teleoperation", "Plan cartesian");
-          planCartesianPath();
+          //planCartesianPath();
           break;
         default:
           ROS_WARN_STREAM_NAMED("teleoperation", "Unknown menu id");
@@ -587,50 +645,53 @@ void Teleoperation::processIMarkerPose(
 
     // --------------------------------------------------------------------------
     case InteractiveMarkerFeedback::POSE_UPDATE:
-    case InteractiveMarkerFeedback::MOUSE_UP:
-
-      // Get pose
-      desired_ee_pose_ = offsetEEPose(feedback->pose);
+      // Get write mutex lock
+      {
+        boost::lock_guard<boost::shared_mutex> lock(desired_ee_pose_mutex_);
+        desired_ee_pose_ = offsetEEPose(feedback->pose);
+      }
 
       // Mark pose as ready for ik solving
       has_pose_to_ik_solve_ = true;
+      break;
 
+    case InteractiveMarkerFeedback::MOUSE_UP:
       break;
   }
 }
 
-void Teleoperation::planCartesianPath()
-{
-  // Plan from start to goal
-  EigenSTL::vector_Affine3d waypoints;
-  waypoints.push_back(goal_ee_pose_);
+// void Teleoperation::planCartesianPath()
+// {
+//   // Plan from start to goal
+//   EigenSTL::vector_Affine3d waypoints;
+//   waypoints.push_back(goal_ee_pose_);
 
-  std::vector<moveit::core::RobotStatePtr> cartesian_traj;
+//   std::vector<moveit::core::RobotStatePtr> cartesian_traj;
 
-  if (computeCartesianWaypointPath(arm_jmg_, start_state_, waypoints, cartesian_traj))
-  {
-    ROS_WARN_STREAM_NAMED("teleoperation", "Unable to plan cartesian path");
-  }
+//   if (computeCartesianWaypointPath(start_planning_state_, waypoints, cartesian_traj))
+//   {
+//     ROS_WARN_STREAM_NAMED("teleoperation", "Unable to plan cartesian path");
+//   }
 
-  ROS_INFO_STREAM_NAMED("teleoperation", "Created " << cartesian_traj.size() << " cartesian_traj");
+//   ROS_INFO_STREAM_NAMED("teleoperation", "Created " << cartesian_traj.size() << " cartesian_traj");
 
-  // Publish trajectory
-  // for (std::size_t i = 0; i < cartesian_traj.size(); ++i)
-  // {
-  //   visual_tools_->publishRobotState(cartesian_traj[i]);
-  //   ros::Duration(0.01).sleep();
-  // }
+//   // Publish trajectory
+//   // for (std::size_t i = 0; i < cartesian_traj.size(); ++i)
+//   // {
+//   //   visual_tools_->publishRobotState(cartesian_traj[i]);
+//   //   ros::Duration(0.01).sleep();
+//   // }
 
-  // Visualize trajectory in Rviz display
-  const bool wait_for_trajetory = false;
-  const double speed = 0.01;
-  visual_tools_->publishTrajectoryPath(cartesian_traj, arm_jmg_, speed, wait_for_trajetory);
-}
+//   // Visualize trajectory in Rviz display
+//   const bool wait_for_trajetory = false;
+//   const double speed = 0.01;
+//   visual_tools_->publishTrajectoryPath(cartesian_traj, arm_jmg_, speed, wait_for_trajetory);
+// }
 
 Eigen::Affine3d Teleoperation::offsetEEPose(const geometry_msgs::Pose& pose) const
 {
-  Eigen::Affine3d marker_pose =
-      visual_tools_->convertPose(pose);  // TODO convertPose is not thread safe
+  // TODO convertPose is not thread safe
+  Eigen::Affine3d marker_pose = visual_tools_->convertPose(pose);
 
   // Offset ee pose forward, because interactive marker is a special thing in front of hand
   return marker_pose * ee_offset_;

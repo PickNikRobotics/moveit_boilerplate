@@ -42,15 +42,15 @@ test:
 teleoperation:
   ik_consistency_limit: 3.14 #3 0.5
   ik_timeout: 0.1 #0.005  # 0 falls back to default in kinematics.yaml
-  ik_attempts: 1 # 0 falls back to default in kinematics.yaml
+  ik_attempts: 2 # 0 falls back to default in kinematics.yaml
   ik_cartesian_max_step: 0.01 # Resolution of trajectory, the maximum distance in Cartesian space between consecutive points on the resulting path  
   ik_cartesian_jump_threshold: 4 # Threshold for preventing consequtive joint values from 'jumping' by a large amount in joint space
   ee_offset: [0.0, 0.0, -0.1, 0, 0, 0] # x,y,z,r,p,y  
   visualization_rate: 30 # hz
   execution_delay: 0.0 # seconds, how long it takes to execute a trajectory onto hardware
   debug:
-    ik_rate: false
-    command_rate: true
+    ik_rate: true # measure timing
+    command_rate: true # measure timing
 
 # Fix State Bounds -----------------------
 start_state_max_dt: 0.5
