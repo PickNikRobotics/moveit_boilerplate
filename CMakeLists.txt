@@ -35,7 +35,7 @@ catkin_package(
     include
   LIBRARIES
     fix_state_bounds
-    manipulation    
+    planning_interface    
     moveit_boilerplate
 )
 
@@ -89,12 +89,12 @@ target_link_libraries(execution_interface
   ${Boost_LIBRARIES}
 )
 
-# Manipulation pipeline library
-add_library(manipulation
-  src/manipulation.cpp
+# Planning_interface library
+add_library(planning_interface
+  src/planning_interface.cpp
 )
-add_dependencies(manipulation moveit_manipulation_generate_messages_cpp)
-target_link_libraries(manipulation
+add_dependencies(planning_interface moveit_manipulation_generate_messages_cpp)
+target_link_libraries(planning_interface
   manipulation_data
   execution_interface
   remote_control  
@@ -108,18 +108,18 @@ add_library(trajectory_io
   src/trajectory_io.cpp
 )
 target_link_libraries(trajectory_io
-  manipulation
+  planning_interface
   ${catkin_LIBRARIES} 
   ${Boost_LIBRARIES}
 )
 
-# Reusable class for manipulation
+# Reusable class for MoveIt!
 add_library(moveit_boilerplate
   src/moveit_boilerplate.cpp
 )
 target_link_libraries(moveit_boilerplate
   trajectory_io
-  manipulation
+  planning_interface
   gflags
   ${catkin_LIBRARIES} 
   ${Boost_LIBRARIES}

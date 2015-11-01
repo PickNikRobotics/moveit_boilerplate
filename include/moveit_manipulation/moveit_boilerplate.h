@@ -41,7 +41,7 @@
 
 // MoveItManipulation
 #include <moveit_manipulation/namespaces.h>
-#include <moveit_manipulation/manipulation.h>
+#include <moveit_manipulation/planning_interface.h>
 #include <moveit_manipulation/trajectory_io.h>
 #include <moveit_manipulation/manipulation_data.h>
 #include <moveit_manipulation/remote_control.h>
@@ -120,7 +120,7 @@ protected:
   RemoteControlPtr remote_control_;
 
   // Main worker
-  ManipulationPtr manipulation_;
+  PlanningInterfacePtr planning_interface_;
 
   // Robot-sepcific data
   ManipulationDataPtr config_;

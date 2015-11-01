@@ -17,7 +17,7 @@ right_arm_dropoff_pose: home
 # left_arm_dropoff_pose: left_goal_bin_pose_DISABLED
 
 # Cartesian path config ------------------
-jump_threshold: 4
+jump_threshold: 4 # REMOVE
 
 # Semantics ------------------------------
 dual_arm: false
@@ -43,6 +43,8 @@ teleoperation:
   ik_consistency_limit: 3.14 #3 0.5
   ik_timeout: 0.1 #0.005  # 0 falls back to default in kinematics.yaml
   ik_attempts: 1 # 0 falls back to default in kinematics.yaml
+  ik_cartesian_max_step: 0.01 # Resolution of trajectory, the maximum distance in Cartesian space between consecutive points on the resulting path  
+  ik_cartesian_jump_threshold: 4 # Threshold for preventing consequtive joint values from 'jumping' by a large amount in joint space
   ee_offset: [0.0, 0.0, -0.1, 0, 0, 0] # x,y,z,r,p,y  
   visualization_rate: 30 # hz
   execution_delay: 0.0 # seconds, how long it takes to execute a trajectory onto hardware

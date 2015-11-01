@@ -77,7 +77,6 @@ public:
   /** \brief In separate thread from imarker & Ik solver, send joint commands */
   void commandJointsThread();
   void commandJointsThreadHelper();
-  void commandJointsThreadHelper2(); // old version
 
   /**
    * \brief Compute a cartesian path along waypoints
@@ -151,11 +150,14 @@ private:
 
   // Maintain robot state at interactive marker (not the current robot state)
   moveit::core::RobotStatePtr ik_teleop_state_;
-  
+  const moveit::core::LinkModel* ik_tip_link_;  
   // Settings
   double ik_consistency_limit_;
   double ik_timeout_;  
   double ik_attempts_;
+  double ik_cartesian_max_step_; // Resolution of trajectory, the maximum distance in Cartesian space between consecutive points on the resulting path  
+  double ik_cartesian_jump_threshold_;   // Threshold for preventing consequtive joint values from 'jumping' by a large amount in joint space
+  
   std::vector<double> ik_consistency_limits_vector_;
 
   // Stats

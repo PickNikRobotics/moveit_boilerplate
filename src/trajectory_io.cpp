@@ -51,10 +51,10 @@
 namespace moveit_manipulation
 {
 TrajectoryIO::TrajectoryIO(RemoteControlPtr remote_control, ManipulationDataPtr config, 
-			   ManipulationPtr manipulation, mvt::MoveItVisualToolsPtr visual_tools)
+			   PlanningInterfacePtr planning_interface, mvt::MoveItVisualToolsPtr visual_tools)
   : remote_control_(remote_control)
   , config_(config)
-  , manipulation_(manipulation)
+  , planning_interface_(planning_interface)
   , visual_tools_(visual_tools)
 {
 }
@@ -68,7 +68,7 @@ bool TrajectoryIO::playbackTrajectoryFromFile(const std::string& file_name,
   ROS_DEBUG_STREAM_NAMED("manipultion", "Loading trajectory from file " << file_name);
 
   std::string line;
-  moveit::core::RobotStatePtr current_state = manipulation_->getCurrentState();
+  moveit::core::RobotStatePtr current_state = planning_interface_->getCurrentState();
 
   robot_trajectory::RobotTrajectoryPtr robot_traj(
       new robot_trajectory::RobotTrajectory(current_state->getRobotModel(), arm_jmg));
@@ -97,10 +97,10 @@ bool TrajectoryIO::playbackTrajectoryFromFile(const std::string& file_name,
 
   // Interpolate between each point
   double discretization = 0.25;
-  manipulation_->interpolate(robot_traj, discretization);
+  planning_interface_->interpolate(robot_traj, discretization);
 
   // Perform iterative parabolic smoothing
-  manipulation_->getIterativeSmoother().computeTimeStamps(*robot_traj, velocity_scaling_factor);
+  planning_interface_->getIterativeSmoother().computeTimeStamps(*robot_traj, velocity_scaling_factor);
 
   // Convert trajectory to a message
   moveit_msgs::RobotTrajectory trajectory_msg;
@@ -116,7 +116,7 @@ bool TrajectoryIO::playbackTrajectoryFromFile(const std::string& file_name,
   bool execute_trajectory = true;
   bool check_validity = true;
   ROS_INFO_STREAM_NAMED("trajectory_io", "Moving to start state of trajectory");
-  if (!manipulation_->move(current_state, robot_traj->getFirstWayPointPtr(), arm_jmg,
+  if (!planning_interface_->move(current_state, robot_traj->getFirstWayPointPtr(), arm_jmg,
                            config_->main_velocity_scaling_factor_, verbose, execute_trajectory,
                            check_validity))
   {
@@ -130,7 +130,7 @@ bool TrajectoryIO::playbackTrajectoryFromFile(const std::string& file_name,
   std::cout << "-------------------------------------------------------" << std::endl;
 
   // Execute
-  if (!manipulation_->getExecutionInterface()->executeTrajectory(trajectory_msg, arm_jmg))
+  if (!planning_interface_->getExecutionInterface()->executeTrajectory(trajectory_msg, arm_jmg))
   {
     ROS_ERROR_STREAM_NAMED("trajectory_io", "Failed to execute trajectory");
     return false;
@@ -200,11 +200,14 @@ bool TrajectoryIO::playbackWaypointsFromFile(const std::string& file_name, Joint
   }
 
   // Plan and move
-  if (!manipulation_->moveCartesianWaypointPath(arm_jmg, waypoints))
-  {
-    ROS_ERROR_STREAM_NAMED("trajectory_io", "Error executing path");
-    return false;
-  }
+  // TODO restore this function
+  ROS_WARN_STREAM_NAMED("temp","Currently function for execution has been removed!");
+  return false;
+  // if (!planning_interface_->moveCartesianWaypointPath(arm_jmg, waypoints))
+  // {
+  //   ROS_ERROR_STREAM_NAMED("trajectory_io", "Error executing path");
+  //   return false;
+  // }
 
   return true;
 }
@@ -230,7 +233,7 @@ bool TrajectoryIO::recordTrajectoryToFile(const std::string& file_path)
   {
     ROS_INFO_STREAM_THROTTLE_NAMED(1, "trajectory_io", "Recording waypoint #" << counter++);
 
-    moveit::core::robotStateToStream(*manipulation_->getCurrentState(), output_file,
+    moveit::core::robotStateToStream(*planning_interface_->getCurrentState(), output_file,
                                      include_header);
 
     ros::Duration(0.25).sleep();

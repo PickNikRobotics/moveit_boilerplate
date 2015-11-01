@@ -48,6 +48,15 @@ Teleoperation::Teleoperation()
   // Choose planning group
   arm_jmg_ = config_->right_arm_;
 
+  // End effector parent link (arm tip for ik solving)
+  const moveit::core::LinkModel* ik_tip_link_ = grasp_datas_[arm_jmg]->parent_link_;
+
+  // Check for kinematic solver
+  if (!arm_jmg_->canSetStateFromIK(ik_tip_link_->getName()))
+    ROS_ERROR_STREAM_NAMED("teloperation", "No IK Solver loaded - make sure "
+                                           "moveit_config/kinamatics.yaml is loaded in this "
+                                           "namespace");
+
   // In separate thread from imarker & Ik solver, send joint commands
   ROS_INFO_STREAM_NAMED("teleoperation", "Teleoperation state command loop ready");
 
@@ -61,7 +70,7 @@ Teleoperation::Teleoperation()
 
   // Set a callback function
   remote_control_->setInteractiveMarkerCallback(
-                                                std::bind(&Teleoperation::processIMarkerPose, this, std::placeholders::_1));
+      std::bind(&Teleoperation::processIMarkerPose, this, std::placeholders::_1));
 
   // Create thread for publishing to rviz
   non_realtime_loop_ = nh_.createTimer(ros::Duration(1.0 / visualization_rate_),
@@ -69,7 +78,7 @@ Teleoperation::Teleoperation()
 
   // Create threads for IK solving and commanding joints
   ik_thread_ = std::thread(&Teleoperation::solveIKThread, this);
-  command_joints_thread_ = std::thread(&Teleoperation::commandJointsThread, this);
+  // command_joints_thread_ = std::thread(&Teleoperation::commandJointsThread, this);
 }
 
 Teleoperation::~Teleoperation()
@@ -85,7 +94,7 @@ void Teleoperation::commandJointsThread()
   {
     if (!has_state_to_command_)
     {
-      usleep(10); // 10000 = 1 sec
+      usleep(10);  // 10000 = 1 sec
       continue;
     }
     has_state_to_command_ = false;
@@ -120,87 +129,23 @@ void Teleoperation::commandJointsThreadHelper()
   std::cout << std::endl;
   std::cout << std::endl;
 
-  // Get predicted state of robot in near future
-  bool found_point = false;
-  if (trajectory_msg_.joint_trajectory.points.size() > 1) // has previous trajectory
-  {
-    // How far in the future to grab a trajectory point
-    ros::Duration time_from_last_trajectory = ros::Time::now() - trajectory_msg_timestamp_ + execution_delay_;
-
-    // Loop through previous points until the predicted current one is found
-    for (std::size_t i = 0; i < trajectory_msg_.joint_trajectory.points.size(); ++i)
-    {
-      if (trajectory_msg_.joint_trajectory.points[i].time_from_start > time_from_last_trajectory)
-      {
-        //const trajectory_msgs::JointTrajectoryPoint &point = trajectory_msg_.joint_trajectory.points[i];
-        //std::cout << "Point: \n" << point << std::endl;
-        ROS_INFO_STREAM_NAMED("teleoperation","Predicted point is " << i << " out of " << trajectory_msg_.joint_trajectory.points.size());
-
-        //std::cout << "sending joint trajectory: \n" << trajectory_msg_.joint_trajectory << std::endl;
-
-        if (!moveit::core::jointTrajPointToRobotState(trajectory_msg_.joint_trajectory, i, *start_state_))
-        {
-          ROS_ERROR_STREAM_NAMED("teleoperation","Error converting trajectory point to robot state");
-          return;
-        }
-
-        //manipulation_->getVisualGoalState()->publishRobotState(getCurrentState(), rvt::ORANGE);
-
-        found_point = true;
-        break;
-      }
-    } // for loop
-  }
-  if (!found_point)
-  {
-    ROS_WARN_STREAM_NAMED("teleoperation","Did not find an predicted current trajectory point. Using current state");
-    *start_state_ = *getCurrentState(); // deep copy
-  }
-
-  // Plan from start to goal
-  EigenSTL::vector_Affine3d waypoints;
-  waypoints.push_back(desired_ee_pose_);
-
-  std::vector<moveit::core::RobotStatePtr> cartesian_traj;
-  
-  // Plan smooth cartesian path using IK only
-  if (!computeCartesianWaypointPath(arm_jmg_, start_state_, waypoints, cartesian_traj))
-  {
-    ROS_WARN_STREAM_NAMED("teleoperation", "Unable to plan cartesian path");
-    return;
-  }
-
-  //ROS_INFO_STREAM_NAMED("teleoperation", "Created " << cartesian_traj.size() << " cartesian_traj"); 
-
-  // Replace first RobotState with one that has current velocity and accelerations
-  cartesian_traj.front() = start_state_;
-
-  // Get trajectory message
-  const double velocity_scaling_factor = 0.8;
-  const bool use_interpolation = false;
-  if (!manipulation_->convertRobotStatesToTrajectory(cartesian_traj, trajectory_msg_, arm_jmg_,
-                                                     velocity_scaling_factor, use_interpolation))
-  {
-    ROS_ERROR_STREAM_NAMED("teleoperation", "Failed to convert to parameterized trajectory");
-    return;
-  }
-
-  //std::cout << "Output traj:\n " << trajectory_msg_ << std::endl;
+  // std::cout << "Output traj:\n " << trajectory_msg_ << std::endl;
 
   // Execute
   const bool wait_for_execution = false;
   trajectory_msg_timestamp_ = ros::Time::now();
-  if (!manipulation_->getExecutionInterface()->executeTrajectory(trajectory_msg_, arm_jmg_,
-                                                                 wait_for_execution))
+  if (!planning_interface_->getExecutionInterface()->executeTrajectory(trajectory_msg_, arm_jmg_,
+                                                                       wait_for_execution))
   {
     ROS_ERROR_STREAM_NAMED("teleoperation", "Failed to execute trajectory");
   }
 }
 
+/*
 void Teleoperation::commandJointsThreadHelper2()
 {
   // Wait for previous trajectory to finish
-  // manipulation_->getExecutionInterface()->waitForExecution();
+  // planning_interface_->getExecutionInterface()->waitForExecution();
 
   // Assign joint names
   //trajectory_msg_.joint_trajectory.joint_names = arm_jmg_->getActiveJointModelNames();
@@ -229,12 +174,14 @@ void Teleoperation::commandJointsThreadHelper2()
   {
     // Add more waypoints
     robot_trajectory::RobotTrajectoryPtr robot_traj(
-                                                    new robot_trajectory::RobotTrajectory(robot_model_, arm_jmg_));
+                                                    new
+robot_trajectory::RobotTrajectory(robot_model_, arm_jmg_));
     robot_traj->setRobotTrajectoryMsg(*getCurrentState(), trajectory_msg_);
 
     // Add current state to trajectory
     double dummy_dt = 1.0;
-    robot_traj->addPrefixWayPoint(getCurrentState(), dummy_dt); // TODO getCurrentState() is dangerous
+    robot_traj->addPrefixWayPoint(getCurrentState(), dummy_dt); // TODO getCurrentState() is
+dangerous
 
     // Debug
     if (false)
@@ -247,7 +194,7 @@ void Teleoperation::commandJointsThreadHelper2()
 
     // Interpolate
     double discretization = 0.1;
-    manipulation_->interpolate(robot_traj, discretization);
+    planning_interface_->interpolate(robot_traj, discretization);
 
     // Debug
     if (false)
@@ -260,7 +207,7 @@ void Teleoperation::commandJointsThreadHelper2()
 
     // Perform iterative parabolic smoothing
     const double max_velocity_scaling_factor = 0.8;
-    manipulation_->getIterativeSmoother().computeTimeStamps(*robot_traj,
+    planning_interface_->getIterativeSmoother().computeTimeStamps(*robot_traj,
                                                             max_velocity_scaling_factor);
 
     // Convert trajectory back to a message
@@ -290,12 +237,13 @@ void Teleoperation::commandJointsThreadHelper2()
 
   // Execute
   const bool wait_for_execution = false;
-  if (!manipulation_->getExecutionInterface()->executeTrajectory(trajectory_msg_, arm_jmg_,
+  if (!planning_interface_->getExecutionInterface()->executeTrajectory(trajectory_msg_, arm_jmg_,
                                                                  wait_for_execution))
   {
     ROS_ERROR_STREAM_NAMED("teleoperation", "Failed to execute trajectory");
   }
 }
+*/
 
 void Teleoperation::solveIKThread()
 {
@@ -303,7 +251,7 @@ void Teleoperation::solveIKThread()
   {
     if (!has_pose_to_ik_solve_)
     {
-      usleep(10); // 10000 = 1 sec
+      usleep(10);  // 10000 = 1 sec
       continue;
     }
     has_pose_to_ik_solve_ = false;
@@ -332,6 +280,99 @@ void Teleoperation::solveIKThread()
 
 void Teleoperation::solveIKThreadHelper()
 {
+  // Get predicted state of robot in near future
+  bool found_point = false;
+  if (trajectory_msg_.joint_trajectory.points.size() > 1)  // has previous trajectory
+  {
+    // How far in the future to grab a trajectory point
+    ros::Duration time_from_last_trajectory =
+        ros::Time::now() - trajectory_msg_timestamp_ + execution_delay_;
+
+    // Loop through previous points until the predicted current one is found
+    for (std::size_t i = 0; i < trajectory_msg_.joint_trajectory.points.size(); ++i)
+    {
+      if (trajectory_msg_.joint_trajectory.points[i].time_from_start > time_from_last_trajectory)
+      {
+        // const trajectory_msgs::JointTrajectoryPoint &point =
+        // trajectory_msg_.joint_trajectory.points[i];
+        // std::cout << "Point: \n" << point << std::endl;
+        ROS_INFO_STREAM_NAMED("teleoperation",
+                              "Predicted point is "
+                                  << i << " out of "
+                                  << trajectory_msg_.joint_trajectory.points.size());
+
+        // std::cout << "sending joint trajectory: \n" << trajectory_msg_.joint_trajectory <<
+        // std::endl;
+
+        if (!moveit::core::jointTrajPointToRobotState(trajectory_msg_.joint_trajectory, i,
+                                                      *start_state_))
+        {
+          ROS_ERROR_STREAM_NAMED("teleoperation",
+                                 "Error converting trajectory point to robot state");
+          return;
+        }
+
+        // planning_interface_->getVisualGoalState()->publishRobotState(getCurrentState(),
+        // rvt::ORANGE);
+
+        found_point = true;
+        break;
+      }
+    }  // for loop
+  }
+  if (!found_point)
+  {
+    ROS_WARN_STREAM_NAMED("teleoperation", "Did not find an predicted current trajectory point. "
+                                           "Using current state");
+    *start_state_ = *getCurrentState();  // deep copy
+  }
+
+  // Plan from start to goal
+  EigenSTL::vector_Affine3d waypoints;
+  waypoints.push_back(desired_ee_pose_);  // This is our command input from the imarkers
+
+  std::vector<moveit::core::RobotStatePtr> cartesian_traj;
+
+  // Plan smooth cartesian path using IK only
+  if (!computeCartesianWaypointPath(arm_jmg_, start_state_, waypoints, cartesian_traj))
+  {
+    ROS_WARN_STREAM_NAMED("teleoperation", "Unable to plan cartesian path TODO");
+    // TODO - still execute as much as possible
+    return;
+  }
+
+  // ROS_INFO_STREAM_NAMED("teleoperation", "Created " << cartesian_traj.size() << "
+  // cartesian_traj");
+
+  // Replace first RobotState with one that has current velocity and accelerations
+  cartesian_traj.front() = start_state_;
+
+  // Get trajectory message
+  const double velocity_scaling_factor = 0.8;
+  const bool use_interpolation = false;
+  if (!planning_interface_->convertRobotStatesToTrajectory(cartesian_traj, trajectory_msg_,
+                                                           arm_jmg_, velocity_scaling_factor,
+                                                           use_interpolation))
+  {
+    ROS_ERROR_STREAM_NAMED("teleoperation", "Failed to convert to parameterized trajectory");
+    return;
+  }
+
+  // Get write mutex lock
+  {
+    // boost::lock_guard<boost::shared_mutex> lock(ik_state_mutex_);
+    // Copy solution to command RobotState
+    *command_state_ = *cartesian_traj.back();  // deep copy
+  }
+
+  // Tell other threads new state is ready to be used
+  has_state_to_command_ = true;
+  has_state_to_visualize_ = true;
+}
+
+/*
+void Teleoperation::solveIKThreadHelper2() // old version
+{
   // Debug settings
   static bool collision_checking_verbose = false;
   if (collision_checking_verbose)
@@ -351,8 +392,7 @@ void Teleoperation::solveIKThreadHelper()
 
     // Solve IK problem for arm
     // TODO desired_ee_pose_ may not be thread safe?
-    const moveit::core::LinkModel* ik_tip_link = grasp_datas_[arm_jmg_]->parent_link_;
-    if (!ik_teleop_state_->setFromIK(arm_jmg_, desired_ee_pose_, ik_tip_link->getName(),
+    if (!ik_teleop_state_->setFromIK(arm_jmg_, desired_ee_pose_, ik_tip_link_->getName(),
                                      ik_consistency_limits_vector_, ik_attempts_,
                                      ik_timeout_))  //, constraint_fn))
     {
@@ -378,53 +418,37 @@ void Teleoperation::solveIKThreadHelper()
   has_state_to_command_ = true;
   has_state_to_visualize_ = true;
 }
+*/
 
 bool Teleoperation::computeCartesianWaypointPath(
     JointModelGroup* arm_jmg, const moveit::core::RobotStatePtr start_state,
-    const EigenSTL::vector_Affine3d& waypoints, std::vector<moveit::core::RobotStatePtr> &cartesian_traj)    
+    const EigenSTL::vector_Affine3d& waypoints,
+    std::vector<moveit::core::RobotStatePtr>& cartesian_traj)
 {
-  // End effector parent link (arm tip for ik solving)
-  const moveit::core::LinkModel* ik_tip_link = grasp_datas_[arm_jmg]->parent_link_;
+  // Cartesiansettings
+  // const bool collision_checking_verbose = false;
+  // const bool only_check_self_collision = false;
+  const bool global_reference_frame = true;  // Reference frame setting
 
-  // Resolution of trajectory
-  const double max_step = 0.01;  // The maximum distance in Cartesian space between consecutive
-                                 // points on the resulting path
+  // Create a temp state that doesn't have velocity or accelerations
+  moveit::core::RobotState cartesian_state(*start_state);
 
-  // Jump threshold for preventing consequtive joint values from 'jumping' by a large amount in
-  // joint space
-  const double jump_threshold = config_->jump_threshold_;  // aka jump factor
-
-  // Collision setting
-  //const bool collision_checking_verbose = false;
-  //const bool only_check_self_collision = false;
-
-  // Reference frame setting
-  const bool global_reference_frame = true;
-
-  // Check for kinematic solver
-  if (!arm_jmg->canSetStateFromIK(ik_tip_link->getName()))
-  {
-    ROS_ERROR_STREAM_NAMED("manipulation.waypoints", "No IK Solver loaded - make sure "
-                                                     "moveit_config/kinamatics.yaml is loaded in "
-                                                     "this namespace");
-    return false;
-  }
+  // Clear both the velocities and accelerations because this state is copied for the cartesian path
+  // but the vel & accel are left the original (incorrect) values
+  std::vector<double> zero_variables(cartesian_state.getVariableCount(), 0.0);
+  cartesian_state.setVariableVelocities(zero_variables);
+  cartesian_state.setVariableAccelerations(zero_variables);
 
   // Results
   double last_valid_percentage;
 
   std::size_t attempts = 0;
-  static const std::size_t MAX_IK_ATTEMPTS = 5;
+  static const std::size_t MAX_IK_ATTEMPTS = 2;
   bool valid_path_found = false;
   while (attempts < MAX_IK_ATTEMPTS)
   {
     if (attempts > 0)
-    {
-      // std::cout << std::endl;
-      // std::cout << "-------------------------------------------------------" << std::endl;
-      ROS_DEBUG_STREAM_NAMED("manipulation.waypoints", "Attempting IK solution, attempt # "
-                                                           << attempts + 1);
-    }
+      ROS_DEBUG_STREAM_NAMED("teleoperation", "Attempting IK solution, attempt # " << attempts + 1);
     attempts++;
 
     // Collision check
@@ -435,45 +459,35 @@ bool Teleoperation::computeCartesianWaypointPath(
         &isStateValid, static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get(),
         collision_checking_verbose, only_check_self_collision, visual_tools_, _1, _2, _3);
     */
-    //moveit::core::GroupStateValidityCallbackFn constraint_fn;
-
-    // Create a temp state that doesn't have velocity or accelerations
-    moveit::core::RobotState temp_state(*start_state);
-
-    // Clear both the velocities and accelerations because this state is copied for the cartesian path
-    // but the vel & accel are left the original (incorrect) values
-    std::vector<double> zero_variables(temp_state.getVariableCount(), 0.0);
-    temp_state.setVariableVelocities(zero_variables);
-    temp_state.setVariableAccelerations(zero_variables);
+    // moveit::core::GroupStateValidityCallbackFn constraint_fn;
 
     // Compute Cartesian Path
     cartesian_traj.clear();
-    last_valid_percentage = temp_state.computeCartesianPath(
-        arm_jmg, cartesian_traj, ik_tip_link, waypoints, global_reference_frame, max_step,
-        jump_threshold); //, constraint_fn, kinematics::KinematicsQueryOptions());
+    last_valid_percentage = cartesian_state.computeCartesianPath(
+        arm_jmg, cartesian_traj, ik_tip_link_, waypoints, global_reference_frame, max_step,
+        ik_cartesian_jump_threshold_);  //, constraint_fn, kinematics::KinematicsQueryOptions());
 
-    ROS_DEBUG_STREAM_NAMED("manipulation.waypoints", "Cartesian last_valid_percentage: "
-                                                         << last_valid_percentage
-                                                         << " number of points in trajectory: "
-                                                         << cartesian_traj.size());
+    ROS_DEBUG_STREAM_NAMED("teleoperation",
+                           "Cartesian last_valid_percentage: "
+                               << last_valid_percentage
+                               << " number of points in trajectory: " << cartesian_traj.size());
 
     double min_allowed_valid_percentage = 0.9;
     if (last_valid_percentage == 0)
     {
-      ROS_DEBUG_STREAM_NAMED("manipulation.waypoints",
+      ROS_DEBUG_STREAM_NAMED("teleoperation",
                              "Failed to computer cartesian path: last_valid_percentage is 0");
     }
     else if (last_valid_percentage < min_allowed_valid_percentage)
     {
-      ROS_DEBUG_STREAM_NAMED("manipulation.waypoints",
-                             "Resulting cartesian path is less than "
-                                 << min_allowed_valid_percentage
-                                 << " % of the desired distance, % valid: "
-                                 << last_valid_percentage);
+      ROS_DEBUG_STREAM_NAMED("teleoperation", "Resulting cartesian path is less than "
+                                                  << min_allowed_valid_percentage
+                                                  << " % of the desired distance, % valid: "
+                                                  << last_valid_percentage);
     }
     else
     {
-      ROS_DEBUG_STREAM_NAMED("manipulation.waypoints", "Found valid cartesian path");
+      ROS_DEBUG_STREAM_NAMED("teleoperation", "Found valid cartesian path");
       valid_path_found = true;
       return true;
     }
@@ -481,9 +495,8 @@ bool Teleoperation::computeCartesianWaypointPath(
 
   if (!valid_path_found)
   {
-    ROS_INFO_STREAM_NAMED("manipulation.waypoints",
-                          "UNABLE to find valid waypoint cartesian path after " << MAX_IK_ATTEMPTS
-                                                                                << " attempts");
+    ROS_INFO_STREAM_NAMED("teleoperation", "UNABLE to find valid waypoint cartesian path after "
+                                               << MAX_IK_ATTEMPTS << " attempts");
     return false;
   }
   return true;
@@ -501,7 +514,7 @@ void Teleoperation::visualizationThread(const ros::TimerEvent& e)
   {
     // boost::shared_lock<boost::shared_mutex> lock(ik_state_mutex_);
     visual_tools_->publishRobotState(command_state_, rvt::BLUE);
-    manipulation_->getVisualStartState()->publishRobotState(start_state_, rvt::GREEN);
+    planning_interface_->getVisualStartState()->publishRobotState(start_state_, rvt::GREEN);
   }
 }
 
@@ -511,7 +524,8 @@ geometry_msgs::Pose Teleoperation::chooseNewIMarkerPose()
   if (!getCurrentState())
     ROS_ERROR_STREAM_NAMED("teleoperation", "No current state");
 
-  Eigen::Affine3d imarker_start_pose = getCurrentState()->getGlobalLinkTransform(grasp_datas_[arm_jmg_]->parent_link_);                                                                                 
+  Eigen::Affine3d imarker_start_pose =
+      getCurrentState()->getGlobalLinkTransform(grasp_datas_[arm_jmg_]->parent_link_);
 
   // Move marker to tip of fingers
   imarker_start_pose = imarker_start_pose * ee_offset_.inverse();
@@ -520,7 +534,7 @@ geometry_msgs::Pose Teleoperation::chooseNewIMarkerPose()
 }
 
 void Teleoperation::processIMarkerPose(
-                                       const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback)
+    const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback)
 {
   using namespace visualization_msgs;
 
@@ -528,7 +542,7 @@ void Teleoperation::processIMarkerPose(
   {
     case InteractiveMarkerFeedback::BUTTON_CLICK:
       break;
-      // --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
 
     case InteractiveMarkerFeedback::MENU_SELECT:
       switch (feedback->menu_entry_id)
@@ -547,7 +561,7 @@ void Teleoperation::processIMarkerPose(
           *start_state_ = *ik_teleop_state_;  // deep copy
 
           // Show Robot State
-          manipulation_->getVisualStartState()->publishRobotState(start_state_, rvt::GREEN);
+          planning_interface_->getVisualStartState()->publishRobotState(start_state_, rvt::GREEN);
           break;
         case 3:  // Goal
           ROS_INFO_STREAM_NAMED("teleoperation", "Set goal state");
@@ -555,7 +569,8 @@ void Teleoperation::processIMarkerPose(
           visual_tools_->publishZArrow(goal_ee_pose_, rvt::ORANGE);
 
           // Show Robot State // TODO thread safety?
-          manipulation_->getVisualGoalState()->publishRobotState(ik_teleop_state_, rvt::ORANGE);
+          planning_interface_->getVisualGoalState()->publishRobotState(ik_teleop_state_,
+                                                                       rvt::ORANGE);
           break;
         case 4:  // Plan cartesian
           ROS_INFO_STREAM_NAMED("teleoperation", "Plan cartesian");
@@ -565,12 +580,12 @@ void Teleoperation::processIMarkerPose(
           ROS_WARN_STREAM_NAMED("teleoperation", "Unknown menu id");
       }
       break;
-      // --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
 
     case InteractiveMarkerFeedback::MOUSE_DOWN:
       break;
 
-      // --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
     case InteractiveMarkerFeedback::POSE_UPDATE:
     case InteractiveMarkerFeedback::MOUSE_UP:
 
@@ -598,7 +613,6 @@ void Teleoperation::planCartesianPath()
   }
 
   ROS_INFO_STREAM_NAMED("teleoperation", "Created " << cartesian_traj.size() << " cartesian_traj");
-                        
 
   // Publish trajectory
   // for (std::size_t i = 0; i < cartesian_traj.size(); ++i)
@@ -610,13 +624,13 @@ void Teleoperation::planCartesianPath()
   // Visualize trajectory in Rviz display
   const bool wait_for_trajetory = false;
   const double speed = 0.01;
-  visual_tools_->publishTrajectoryPath(cartesian_traj, arm_jmg_, speed, wait_for_trajetory);                                       
+  visual_tools_->publishTrajectoryPath(cartesian_traj, arm_jmg_, speed, wait_for_trajetory);
 }
 
 Eigen::Affine3d Teleoperation::offsetEEPose(const geometry_msgs::Pose& pose) const
 {
   Eigen::Affine3d marker_pose =
-    visual_tools_->convertPose(pose);  // TODO convertPose is not thread safe
+      visual_tools_->convertPose(pose);  // TODO convertPose is not thread safe
 
   // Offset ee pose forward, because interactive marker is a special thing in front of hand
   return marker_pose * ee_offset_;

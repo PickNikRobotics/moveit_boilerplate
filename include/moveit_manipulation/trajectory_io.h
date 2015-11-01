@@ -40,7 +40,7 @@
 #define MOVEIT_MANIPULATION__TRAJECTORY_IO
 
 // PickNik
-#include <moveit_manipulation/manipulation.h>
+#include <moveit_manipulation/planning_interface.h>
 #include <moveit_manipulation/namespaces.h>
 
 namespace moveit_manipulation
@@ -52,7 +52,7 @@ public:
    * \brief Constructor
    */
   TrajectoryIO(RemoteControlPtr remote_control, ManipulationDataPtr config,
-               ManipulationPtr manipulation, mvt::MoveItVisualToolsPtr visual_tools);
+               PlanningInterfacePtr planning_interface, mvt::MoveItVisualToolsPtr visual_tools);
 
   /**
    * \brief Read a joint trajectory from CSV and execute on robot
@@ -116,7 +116,7 @@ private:
   // Common classes in moveit_manipulation
   RemoteControlPtr remote_control_;
   ManipulationDataPtr config_;
-  ManipulationPtr manipulation_;
+  PlanningInterfacePtr planning_interface_;
   mvt::MoveItVisualToolsPtr visual_tools_;
 
 };  // end class

@@ -22,27 +22,27 @@ void MoveItTeleop::enableTeleoperation()
 {
   ROS_INFO_STREAM_NAMED("pick_manager", "Teleoperation enabled");
   teleoperation_enabled_ = true;
-  manipulation_->enableTeleoperation();
+  planning_interface_->enableTeleoperation();
 
   // TEST - measure the offset between blue tool frame and ROS tool frame
   if (false)
   {
     moveit::core::RobotStatePtr before_state(
-        new moveit::core::RobotState(*manipulation_->getCurrentState()));
+        new moveit::core::RobotState(*planning_interface_->getCurrentState()));
 
     JointModelGroup* arm_jmg = config_->dual_arm_ ? config_->both_arms_ : config_->right_arm_;
 
     const Eigen::Affine3d world_to_desired = interactive_marker_pose_;
     const Eigen::Affine3d& world_to_base =
-        manipulation_->getCurrentState()->getGlobalLinkTransform("base_link");
+        planning_interface_->getCurrentState()->getGlobalLinkTransform("base_link");
     Eigen::Affine3d base_to_desired = world_to_base.inverse() * world_to_desired;
 
     // New Method
-    manipulation_->getExecutionInterface()->executePose(base_to_desired, arm_jmg);
+    planning_interface_->getExecutionInterface()->executePose(base_to_desired, arm_jmg);
 
     ros::Duration(1.0).sleep();
     moveit::core::RobotStatePtr after_state(
-        new moveit::core::RobotState(*manipulation_->getCurrentState()));
+        new moveit::core::RobotState(*planning_interface_->getCurrentState()));
 
     // Now find the difference between EE poses
     visual_tools_->printTransform(
@@ -56,7 +56,7 @@ void MoveItTeleop::enableTeleoperation()
 geometry_msgs::Pose MoveItTeleop::getInteractiveMarkerPose() 
 {
   JointModelGroup* arm_jmg = config_->dual_arm_ ? config_->both_arms_ : config_->right_arm_;  
-  interactive_marker_pose_ = manipulation_->getCurrentState()->getGlobalLinkTransform(grasp_datas_[arm_jmg]->parent_link_);
+  interactive_marker_pose_ = planning_interface_->getCurrentState()->getGlobalLinkTransform(grasp_datas_[arm_jmg]->parent_link_);
   visual_tools_->printTransform(interactive_marker_pose_);
   
   // Move marker to tip of fingers
@@ -107,15 +107,15 @@ void MoveItTeleop::processMarkerPose(const geometry_msgs::Pose& pose, int mode)
 
   // Convert pose to frame of robot base
   const Eigen::Affine3d& world_to_base =
-      manipulation_->getCurrentState()->getGlobalLinkTransform("base_link");
+      planning_interface_->getCurrentState()->getGlobalLinkTransform("base_link");
   Eigen::Affine3d base_to_desired = world_to_base.inverse() * ee_pose;
 
   // IK on robot method (faster)
-  // manipulation_->getExecutionInterface()->executePose(base_to_desired, arm_jmg);
+  // planning_interface_->getExecutionInterface()->executePose(base_to_desired, arm_jmg);
 
   // IK on dev computer method
   bool move = true;
-  manipulation_->teleoperation(ee_pose, move, arm_jmg);
+  planning_interface_->teleoperation(ee_pose, move, arm_jmg);
 }
 
 }  // end namespace

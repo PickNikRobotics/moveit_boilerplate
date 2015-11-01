@@ -33,11 +33,13 @@
  *********************************************************************/
 
 /* Author: Dave Coleman <dave@dav.ee>
-   Desc:   Manage the manipulation of MoveIt
+   Desc:   Helper functions for using the planning and manipulation 
+           facilities in MoveIt! with better introspection and feedback
+           tools
 */
 
-#ifndef MOVEIT_MANIPULATION__MANIPULATION
-#define MOVEIT_MANIPULATION__MANIPULATION
+#ifndef MOVEIT_MANIPULATION__PLANNING_INTERFACE_
+#define MOVEIT_MANIPULATION__PLANNING_INTERFACE_
 
 // MoveItManipulation
 #include <moveit_manipulation/namespaces.h>
@@ -57,52 +59,25 @@
 
 // Grasp generation
 #include <moveit_grasps/grasp_data.h>
-#include <moveit_grasps/grasp_filter.h>
-#include <moveit_grasps/grasp_planner.h>
 
 namespace planning_pipeline
 {
 MOVEIT_CLASS_FORWARD(PlanningPipeline);
 }
 
-namespace moveit_grasps
-{
-// MOVEIT_CLASS_FORWARD(GraspGenerator);
-// TODO add more here
-}
-
 namespace moveit_manipulation
 {
-MOVEIT_CLASS_FORWARD(Manipulation);
+MOVEIT_CLASS_FORWARD(PlanningInterface);
 
-// TODO move these, last minute sloppiness
-// static const double MIN_JOINT_POSITION = 0.0;
-// static const double MAX_JOINT_POSITION = 0.742;
-
-class Manipulation
+class PlanningInterface
 {
 public:
   /**
    * \brief Constructor
    */
-  Manipulation(planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor,               
+  PlanningInterface(planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor,               
                ManipulationDataPtr config, moveit_grasps::GraspDatas grasp_datas,
                RemoteControlPtr remote_control, bool fake_execution);
-
-  /**
-   * \brief Compute a cartesian path along waypoints
-   * \return true on success
-   */
-  bool computeCartesianWaypointPath(
-      JointModelGroup* arm_jmg, moveit::core::RobotStatePtr start_state,
-      const EigenSTL::vector_Affine3d& waypoints,
-      std::vector<std::vector<moveit::core::RobotStatePtr>>& robot_state_trajectory);
-
-  /**
-   * \brief Find a path that accomplishes waypoints and execute all together
-   * \return true on success
-   */
-  bool moveCartesianWaypointPath(JointModelGroup* arm_jmg, EigenSTL::vector_Affine3d waypoints);
 
   /**
    * \brief Move to any pose as defined in the SRDF
@@ -194,38 +169,6 @@ public:
   /** \brief Move real fast */
   bool moveDirectToState(const moveit::core::RobotStatePtr goal_state, JointModelGroup* jmg,
                          double velocity_scaling_factor);
-
-  /**
-   * \brief Using the current EE pose and the goal grasp pose, move forward into the target object
-   * \param chosen - the grasp we are using
-   * \return true on success
-   */
-  bool executeApproachPath(moveit_grasps::GraspCandidatePtr chosen);
-
-  /**
-   * \brief Using the current EE pose and the goal grasp pose, move forward into the target object
-   * \param chosen - the grasp we are using
-   * \return true on success
-   */
-  bool executeSavedCartesianPath(moveit_grasps::GraspCandidatePtr chosen, std::size_t segment_id);
-
-  /**
-   * \brief Using the current EE pose and the goal grasp pose, move forward into the target object
-   * \return true on success
-   */
-  bool executeSavedCartesianPath(const moveit_grasps::GraspTrajectories& segmented_cartesian_traj,
-                                 const moveit::core::JointModelGroup* arm_jmg,
-                                 std::size_t segment_id);
-
-  /**
-   * \brief Generate the straight line path from pregrasp to grasp
-   * \param chosen - all the data on the chosen grasp
-   * \return true on success
-   */
-  bool generateApproachPath(moveit_grasps::GraspCandidatePtr chosen,
-                            moveit_msgs::RobotTrajectory& approach_trajectory_msg,
-                            const moveit::core::RobotStatePtr pre_grasp_state,
-                            const moveit::core::RobotStatePtr the_grasp, bool verbose);
 
   /**
    * \brief After grasping an object, lift object up slightly using IK
@@ -421,25 +364,6 @@ public:
   bool displayExperienceDatabase(JointModelGroup* arm_jmg);
 
   /**
-   * \brief Visulization function
-   * \param input - description
-   * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
-   * \return true on success
-   */
-  // bool visualizeGrasps(std::vector<moveit_grasps::GraspCandidatePtr> grasp_candidates, const
-  // moveit::core::JointModelGroup *arm_jmg,
-  //                     bool show_cartesian_path = true);
-
-  /**
-   * \brief Visalize ik solutions
-   * \param input - description
-   * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
-   * \return true on success
-   */
-  bool visualizeIKSolutions(std::vector<moveit_grasps::GraspCandidatePtr> grasp_candidates,
-                            const moveit::core::JointModelGroup* arm_jmg, double display_time = 2);
-
-  /**
    * \brief Update the current_state_ RobotState with latest from planning scene
    */
   moveit::core::RobotStatePtr getCurrentState();
@@ -474,12 +398,6 @@ public:
    * \return true on success
    */
   bool generateRandomProductPoses();
-
-  /**
-   * \brief Get pose from TF for any frame
-   * \return true on success
-   */
-  bool getPose(Eigen::Affine3d& pose, const std::string& frame_name);
 
   /**
    * \brief Get max value of a joint that has only one variable
@@ -572,9 +490,9 @@ protected:
   std::ofstream logging_file_;
 
   // Grasp generator
-  moveit_grasps::GraspGeneratorPtr grasp_generator_;
-  moveit_grasps::GraspFilterPtr grasp_filter_;
-  moveit_grasps::GraspPlannerPtr grasp_planner_;
+  // moveit_grasps::GraspGeneratorPtr grasp_generator_;
+  // moveit_grasps::GraspFilterPtr grasp_filter_;
+  // moveit_grasps::GraspPlannerPtr grasp_planner_;
 
   // State modification helper
   FixStateBounds fix_state_bounds_;

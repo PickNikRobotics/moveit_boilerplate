@@ -100,12 +100,12 @@ MoveItBoilerplate::MoveItBoilerplate()
     grasp_datas_[config_->left_arm_].reset(
         new moveit_grasps::GraspData(nh_, config_->left_hand_name_, robot_model_));
 
-  // Create manipulation manager
-  manipulation_.reset(new Manipulation(planning_scene_monitor_, config_,
+  // Create helper class for planning and manipulation
+  planning_interface_.reset(new PlanningInterface(planning_scene_monitor_, config_,
                                        grasp_datas_, remote_control_, FLAGS_fake_execution));
 
   // Load trajectory IO class
-  trajectory_io_.reset(new TrajectoryIO(remote_control_, config_, manipulation_, visual_tools_));
+  //trajectory_io_.reset(new TrajectoryIO(remote_control_, config_, planning_interface_, visual_tools_));
 
   // Show interactive marker
   //setupInteractiveMarker();
@@ -138,7 +138,7 @@ bool MoveItBoilerplate::checkSystemReady()
   }
 
   // Check trajectory execution manager
-  if (!manipulation_->getExecutionInterface()->checkExecutionManager())
+  if (!planning_interface_->getExecutionInterface()->checkExecutionManager())
   {
     ROS_FATAL_STREAM_NAMED("moveit_boilerplate", "Trajectory controllers unable to connect");
     return false;
@@ -255,7 +255,7 @@ moveit::core::RobotStatePtr MoveItBoilerplate::getCurrentState()
 {
   // Pass down to the exection interface layer so that we can catch the getCurrentState with a fake
   // one if we are unit testing  
-  return manipulation_->getExecutionInterface()->getCurrentState();
+  return planning_interface_->getExecutionInterface()->getCurrentState();
 }
 
 }  // end namespace
