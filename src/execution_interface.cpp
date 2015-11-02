@@ -64,11 +64,8 @@ ExecutionInterface::ExecutionInterface(
   // Debug tools for visualizing in Rviz
   loadVisualTools();
 
-  // Check that controllers are ready
-  zaber_list_controllers_client_ = nh_.serviceClient<controller_manager_msgs::ListControllers>(
-      "/jacob/zaber/controller_manager/list_controllers");
-  kinova_list_controllers_client_ = nh_.serviceClient<controller_manager_msgs::ListControllers>(
-      "/jacob/kinova/controller_manager/list_controllers");
+  // Ensure that execution manager has been loaded
+  loadExecutionManager();
 
   cartesian_command_pub_ =
       nh_.advertise<cartesian_msgs::CartesianCommand>("/r3/cartesian_command", 1000);
@@ -136,10 +133,13 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
                                 << trajectory.points.size()
                                 << " points or because is end effector");
 
-    // Visualize trajectory in Rviz
-    bool wait_for_trajetory = false;
-    visual_tools_->publishTrajectoryPath(trajectory_msg, getCurrentState(),
-                                                   wait_for_trajetory);
+    if (false)
+    {
+      // Visualize trajectory in Rviz
+      bool wait_for_trajetory = false;
+      visual_tools_->publishTrajectoryPath(trajectory_msg, getCurrentState(),
+                                           wait_for_trajetory);
+    }
   }
 
   // Debug: check for errors in trajectory
@@ -181,9 +181,6 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
       std::cout << std::endl;
     }
   }
-
-  // Ensure that execution manager has been loaded
-  loadExecutionManager();
 
   // Check if in unit testing mode
   if (unit_testing_enabled_)
@@ -301,30 +298,6 @@ bool ExecutionInterface::checkExecutionManager()
     ROS_ERROR_STREAM_NAMED("execution_interface",
                            "Robot does not have the desired controllers active");
     return false;
-  }
-
-  // Check that correct controllers are running
-  // TODO - make this not jacob-specific
-  if (false)
-  {
-    bool has_error = true;
-
-    while (has_error && ros::ok())
-    {
-      has_error = false;
-      if (!checkTrajectoryController(zaber_list_controllers_client_, "zaber"))
-      {
-        has_error = true;
-      }
-
-      bool has_ee = true;
-      if (!checkTrajectoryController(kinova_list_controllers_client_, "kinova", has_ee))
-      {
-        has_error = true;
-      }
-
-      ros::Duration(0.5).sleep();
-    }
   }
 
   return true;

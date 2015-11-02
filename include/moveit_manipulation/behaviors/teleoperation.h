@@ -55,6 +55,23 @@
     - Command thread
         Desc:  Sends latest valid RobotState to hardware for execution
         Speed: Command robot speed 200 hz
+
+    - Latency from Action Server Trajectory Goal to ros_control/JointTrajectoryController
+        Speed: Average 0.000932027 s (1072.9 hz)
+
+    - Joint Trajectory Controller
+        Speed: 200 hz (0.005 s)
+
+   *Trajectory Interruption*
+    - 0.00636  @200hz state_publish_rate   Recieve desired controller state
+    - 0.00340  @1000hz state_publish_rate  Recieve desired controller state
+    - 0.00418  Cartesian IK Plan
+    - 0.000169 Command Thread
+    - 0.000932 ROS Msg Latency
+    - 0.005    Controller
+    - 0.0666   Avg time step between waypoints
+
+    TODO interpolate between waypoints!!
 */
 
 #ifndef MOVEIT_MANIPULATON__TELEOPERATION_
@@ -62,12 +79,20 @@
 
 // Teleoperation
 #include <moveit_manipulation/moveit_boilerplate.h>
+
+// C++
 #include <mutex>
 #include <boost/thread/locks.hpp>
 #include <thread>
 
+// ROS
+#include <control_msgs/JointTrajectoryControllerState.h>
+
 namespace moveit_manipulation
 {
+
+typedef control_msgs::JointTrajectoryControllerState ControllerState;
+
 class Teleoperation : public moveit_manipulation::MoveItBoilerplate
 {
 public:
@@ -77,6 +102,10 @@ public:
   /** \brief Desctructor */
   virtual ~Teleoperation();
 
+  /** \brief Quickly response to pose requests. Uses IK on dev computer, not embedded */
+  void solveIKThread();
+  void solveIKThreadHelper();
+
   /** \brief In separate thread from imarker & Ik solver, send joint commands */
   void commandJointsThread();
   void commandJointsThreadHelper();
@@ -85,23 +114,18 @@ public:
    * \brief Compute a cartesian path along waypoints
    * \return true on success
    */
-  bool computeCartesianWaypointPath(const moveit::core::RobotStatePtr start_state,
-                                    const EigenSTL::vector_Affine3d& waypoints,
-                                    std::vector<moveit::core::RobotStatePtr>& cartesian_traj);
+  bool computeCartWaypointPath(const moveit::core::RobotStatePtr start_state,
+                               const EigenSTL::vector_Affine3d& waypoints,
+                               std::vector<moveit::core::RobotStatePtr>& cart_traj);
 
   /**
    * \brief Convert and parameterize a trajectory with velocity information
-   * \param vel_scaling_factor - the percent of max speed all joints should be allowed to
    * utilize
    * \return true on success
    */
   bool convertRobotStatesToTrajectory(const std::vector<moveit::core::RobotStatePtr>& robot_state_traj,
                                       moveit_msgs::RobotTrajectory& trajectory_msg,
-                                      const double& vel_scaling_factor, bool use_interpolation = false);
-
-  /** \brief Quickly response to pose requests. Uses IK on dev computer, not embedded */
-  void solveIKThread();
-  void solveIKThreadHelper();
+                                      bool use_interpolation = false);
 
   /** \brief Publish the robot state to Rviz in a separate thread */
   void visualizationThread(const ros::TimerEvent& e);
@@ -117,11 +141,17 @@ public:
    */
   void processIMarkerPose(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
 
-  /** \brief Create smooth path from start to goal poses */
-  //void planCartesianPath();
+  /** \brief Callback from ROS message */
+  void stateCB(const ControllerState::ConstPtr& state);
+  
+  /** \brief Update a robot state based on the desired controller state */
+  void getDesiredState(moveit::core::RobotStatePtr& robot_state);
 
   /** \brief Helper transform function */
   Eigen::Affine3d offsetEEPose(const geometry_msgs::Pose& pose) const;
+
+  /** \brief Compare two Eigen poses */
+  bool posesEqual(const Eigen::Affine3d& pose1, const Eigen::Affine3d& pose2);
 
 private:
   // Desired planning group to work with
@@ -135,6 +165,16 @@ private:
   // Debug values
   bool debug_ik_rate_ = false;
   bool debug_command_rate_ = false;
+  bool debug_generated_traj_rate_ = false;
+
+  // State Subscriber -------------------------------------
+
+  // Listener to state of controller
+  ros::Subscriber state_sub_;
+
+  // Cache of last recieved state
+  control_msgs::JointTrajectoryControllerState controller_state_;
+  boost::shared_mutex controller_state_mutex_;
 
   // Teleoperation -------------------------------------
 
@@ -152,21 +192,22 @@ private:
   Eigen::Affine3d goal_ee_pose_;
   moveit::core::RobotStatePtr start_planning_state_;
 
-  // Inverse Kinematics -------------------------------
+  // Cartesian Inverse Kinematics -------------------------------
   std::thread ik_thread_;
+  double compute_ik_delay_; // microseconds, how often to check for a new input pose
 
   // Maintain robot state at interactive marker (not the current robot state)
-  //moveit::core::RobotStatePtr ik_teleop_state_;
   const moveit::core::LinkModel* ik_tip_link_;
-  EigenSTL::vector_Affine3d cartesian_desired_waypoints_;
+  EigenSTL::vector_Affine3d cart_desired_waypoints_;
   // Settings
   double ik_consistency_limit_;
   double ik_timeout_;
   double ik_attempts_;
-  double ik_cartesian_max_step_;  // Resolution of trajectory, the maximum distance in Cartesian
-                                  // space between consecutive points on the resulting path
-  double ik_cartesian_jump_threshold_;  // Threshold for preventing consequtive joint values from
-                                        // 'jumping' by a large amount in joint space
+  double ik_cart_max_step_;  // Resolution of trajectory, the maximum distance in Cartesian space
+                             // between consecutive points on the resulting path
+  double ik_cart_jump_threshold_;  // Threshold for preventing consequtive joint values from
+                                   // 'jumping' by a large amount in joint space
+  double vel_scaling_factor_; // 0-1
 
   std::vector<double> ik_consistency_limits_vector_;
 
@@ -176,6 +217,7 @@ private:
 
   // Joint Command -----------------------------------
   std::thread command_joints_thread_;
+  double command_new_trajectory_delay_; // microseconds, how often to send new joint commands
   moveit_msgs::RobotTrajectory trajectory_msg_;
   moveit_msgs::RobotTrajectory trajectory_msg_copy_;
   boost::shared_mutex trajectory_msg_mutex_;
@@ -190,7 +232,7 @@ private:
 
   // Visualization -------------------------------------
   double visualization_rate_;  // hz
-  ros::Timer non_realtime_loop_;
+  ros::Timer non_realtime_loop_; // TODO make this like the others
 
   // State to visualize in Rviz, also the current goal state
   moveit::core::RobotStatePtr visualize_goal_state_;
