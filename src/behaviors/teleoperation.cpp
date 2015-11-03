@@ -448,12 +448,12 @@ bool Teleoperation::convertRobotStatesToTrajectory(
   }
 
   // Interpolate any path with two few points
-  /*  if (use_interpolation || true)
+  if (use_interpolation && false)
   {
     // Interpolate between each point
     double discretization = 0.25;
-    manipulation_->interpolate(robot_traj, discretization);
-    }*/
+    planning_interface_->interpolate(robot_traj, discretization);
+  }
 
   bool debug = false;
   if (debug)
