@@ -104,7 +104,7 @@ public:
 
   /** \brief Quickly response to pose requests. Uses IK on dev computer, not embedded */
   void solveIKThread();
-  void solveIKThreadHelper();
+  bool solveIKThreadHelper();
 
   /** \brief In separate thread from imarker & Ik solver, send joint commands */
   void commandJointsThread();
@@ -143,6 +143,7 @@ public:
 
   /** \brief Callback from ROS message */
   void stateCB(const ControllerState::ConstPtr& state);
+  void stateCBHelper();
   
   /** \brief Update a robot state based on the desired controller state */
   void getDesiredState(moveit::core::RobotStatePtr& robot_state);
@@ -175,7 +176,8 @@ private:
   // Cache of last recieved state
   control_msgs::JointTrajectoryControllerState controller_state_;
   boost::shared_mutex controller_state_mutex_;
-
+  ControllerState::ConstPtr controller_state2_; // temp?
+  bool is_processing_ = false;
   // Teleoperation -------------------------------------
 
   // Hook for RemoteControl class

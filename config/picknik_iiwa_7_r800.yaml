@@ -42,7 +42,7 @@ test:
 teleoperation:
   compute_ik_freq: 10 # hz, how often to compute a new cartesian path using IK
   command_freq: 1000 # hz, how often to send new ROS messages to ros_controllers
-  vel_scaling_factor: 0.75
+  vel_scaling_factor: 0.5
   ik_consistency_limit: 3.14 #3 0.5
   ik_timeout: 0.1 #0.005  # 0 falls back to default in kinematics.yaml
   ik_attempts: 2 # 0 falls back to default in kinematics.yaml
@@ -50,7 +50,8 @@ teleoperation:
   ik_cart_jump_threshold: 4 # Threshold for preventing consequtive joint values from 'jumping' by a large amount in joint space
   ee_offset: [0.0, 0.0, -0.1, 0, 0, 0] # x,y,z,r,p,y  
   visualization_rate: 30 # hz
-  execution_delay: 0.0 # seconds, how long it takes to execute a trajectory onto hardware
+  execution_delay: 1 # seconds, how long it takes to execute a trajectory onto hardware
+  interpolation
   debug:
     ik_rate: true # measure timing
     command_rate: true # measure timing

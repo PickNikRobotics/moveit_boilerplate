@@ -100,8 +100,8 @@ Teleoperation::Teleoperation() : MoveItBoilerplate()
                                        &Teleoperation::visualizationThread, this);
 
   // Create threads for IK solving and commanding joints
-  ik_thread_ = std::thread(&Teleoperation::solveIKThread, this);
-  command_joints_thread_ = std::thread(&Teleoperation::commandJointsThread, this);
+  //ik_thread_ = std::thread(&Teleoperation::solveIKThread, this);
+  //command_joints_thread_ = std::thread(&Teleoperation::commandJointsThread, this);
 }
 
 Teleoperation::~Teleoperation()
@@ -145,15 +145,16 @@ void Teleoperation::solveIKThread()
   }
 }
 
-void Teleoperation::solveIKThreadHelper()
+bool Teleoperation::solveIKThreadHelper()
 {
   // Get predicted state of robot in near future
   bool found_point = false;
   if (false && trajectory_msg_.joint_trajectory.points.size() > 1)  // has previous trajectory
   {
+    ROS_WARN_STREAM_NAMED("temp","trajectory_msg_timestamp_ is disabled!");
     // How far in the future to grab a trajectory point
     ros::Duration time_from_last_trajectory =
-      ros::Time::now() - trajectory_msg_timestamp_ + execution_delay_;
+      ros::Time::now() - trajectory_msg_timestamp_;
 
     // Loop through previous points until the predicted current one is found
     for (std::size_t i = 0; i < trajectory_msg_.joint_trajectory.points.size(); ++i)
@@ -169,7 +170,7 @@ void Teleoperation::solveIKThreadHelper()
         {
           ROS_ERROR_STREAM_NAMED("teleoperation", "Error converting trajectory point to robot "
                                  "state");
-          return;
+          return false;
         }
 
         // planning_interface_->getVisualGoalState()->publishRobotState(getCurrentState(),
@@ -211,7 +212,7 @@ void Teleoperation::solveIKThreadHelper()
                  cart_desired_waypoints_.front()))
   {
     ROS_WARN_STREAM_NAMED("teleoperation", "Robot already at desired pose, ignoring command");
-    return;
+    return false;
   }
 
   std::vector<moveit::core::RobotStatePtr> cart_traj;
@@ -221,7 +222,7 @@ void Teleoperation::solveIKThreadHelper()
   {
     ROS_WARN_STREAM_NAMED("teleoperation", "Unable to plan cartesian path TODO");
     // TODO - still execute as much as possible
-    return;
+    return false;
   }
 
   // ROS_INFO_STREAM_NAMED("teleoperation", "Created " << cart_traj.size() << "
@@ -234,7 +235,7 @@ void Teleoperation::solveIKThreadHelper()
   if (!convertRobotStatesToTrajectory(cart_traj, trajectory_msg_))
   {
     ROS_ERROR_STREAM_NAMED("teleoperation", "Failed to convert to parameterized trajectory");
-    return;
+    return false;
   }
 
   // Statistics on generated trajectory
@@ -257,6 +258,7 @@ void Teleoperation::solveIKThreadHelper()
   // Tell other threads new state is ready to be used
   has_state_to_command_ = true;
   has_state_to_visualize_ = true;
+  return true;
 }
 
 void Teleoperation::commandJointsThread()
@@ -299,14 +301,14 @@ void Teleoperation::commandJointsThreadHelper()
   //std::cout << "Sending commanded trajectory:\n " << trajectory_msg_ << std::endl;
 
   // Get read-only mutex lock
-  {
-    boost::shared_lock<boost::shared_mutex> lock(trajectory_msg_mutex_);
-    trajectory_msg_copy_ = trajectory_msg_;  // Make a copy of datastructure
-  }
+  // {
+  //   boost::shared_lock<boost::shared_mutex> lock(trajectory_msg_mutex_);
+  //   trajectory_msg_copy_ = trajectory_msg_;  // Make a copy of datastructure
+  // }
 
   // Fix message 'Dropping first 1 trajectory point(s) out of 35, as they occur before the current time.' from ros_control
   bool use_first_waypoint_offset = false; // prevent first waypoint from being skipped
-  trajectory_msgs::JointTrajectory &traj = trajectory_msg_copy_.joint_trajectory;
+  trajectory_msgs::JointTrajectory &traj = trajectory_msg_.joint_trajectory;
   if (traj.points.size() > 1)
     ROS_INFO_STREAM_NAMED("temp","second point (point 1) is at time offset " << traj.points[1].time_from_start.toSec());
   if (use_first_waypoint_offset)
@@ -317,19 +319,25 @@ void Teleoperation::commandJointsThreadHelper()
   }
   else
   {
-    //traj.points.erase(traj.points.begin()); // remove first element
+    traj.points.erase(traj.points.begin()); // remove first element
   }
 
 
-  trajectory_msg_copy_.joint_trajectory.header.stamp = ros::Time::now();
+  trajectory_msg_.joint_trajectory.header.stamp = controller_state2_->header.stamp; //ros::Time::now();
 
   // Debug
-  //std::cout << "Sending commanded trajectory:\n " << trajectory_msg_copy_ << std::endl;
+  //std::cout << "Sending commanded trajectory: \n" << trajectory_msg_ << std::endl;
+  // std::cout << "Sending commanded trajectory:" << std::endl;
+  // std::cout << trajectory_msg_.joint_trajectory.header;
+  // if (trajectory_msg_.joint_trajectory.points.size() > 0)
+  //   std::cout << trajectory_msg_.joint_trajectory.points[0];
+  // if (trajectory_msg_.joint_trajectory.points.size() > 1)
+  //   std::cout << trajectory_msg_.joint_trajectory.points[1];
 
   // Execute
   const bool wait_for_execution = false;
-  trajectory_msg_timestamp_ = ros::Time::now();
-  if (!planning_interface_->getExecutionInterface()->executeTrajectory(trajectory_msg_copy_,
+  //trajectory_msg_timestamp_ = ros::Time::now();
+  if (!planning_interface_->getExecutionInterface()->executeTrajectory(trajectory_msg_,
                                                                        arm_jmg_, wait_for_execution))
   {
     ROS_ERROR_STREAM_NAMED("teleoperation", "Failed to execute trajectory");
@@ -345,26 +353,27 @@ bool Teleoperation::computeCartWaypointPath(const moveit::core::RobotStatePtr st
   // const bool only_check_self_collision = false;
   const bool global_reference_frame = true;  // Reference frame setting
 
-  // Create a temp state that doesn't have velocity or accelerations
-  moveit::core::RobotState cart_state(*start_state);
-
-  // Clear both the velocities and accelerations because this state is copied for the cartesian path
-  // but the vel & accel are left the original (incorrect) values
-  std::vector<double> zero_variables(cart_state.getVariableCount(), 0.0);
-  cart_state.setVariableVelocities(zero_variables);
-  cart_state.setVariableAccelerations(zero_variables);
-
   // Results
   double last_valid_percentage;
 
   std::size_t attempts = 0;
   static const std::size_t MAX_IK_ATTEMPTS = ik_attempts_;
-  bool valid_path_found = false;
+
   while (attempts < MAX_IK_ATTEMPTS)
   {
     if (attempts > 0)
       ROS_DEBUG_STREAM_NAMED("teleoperation", "Attempting IK solution, attempt # " << attempts + 1);
     attempts++;
+
+    // Create a temp state that doesn't have velocity or accelerations
+    moveit::core::RobotState cart_state(*start_state);
+
+    // Clear both the velocities and accelerations because this state is copied for the cartesian path
+    // but the vel & accel are left the original (incorrect) values
+    std::vector<double> zero_variables(cart_state.getVariableCount(), 0.0);
+    cart_state.setVariableVelocities(zero_variables);
+    cart_state.setVariableAccelerations(zero_variables);
+
 
     // Collision check
     /*
@@ -389,7 +398,7 @@ bool Teleoperation::computeCartWaypointPath(const moveit::core::RobotStatePtr st
     double min_allowed_valid_percentage = 0.9;
     if (last_valid_percentage == 0)
     {
-      ROS_DEBUG_STREAM_NAMED("teleoperation", "Failed to computer cartesian path: "
+      ROS_WARN_STREAM_NAMED("teleoperation", "Failed to computer cartesian path: "
                              "last_valid_percentage is 0");
     }
     else if (last_valid_percentage < min_allowed_valid_percentage)
@@ -402,18 +411,13 @@ bool Teleoperation::computeCartWaypointPath(const moveit::core::RobotStatePtr st
     else
     {
       ROS_DEBUG_STREAM_NAMED("teleoperation", "Found valid cartesian path");
-      valid_path_found = true;
       return true;
     }
   }  // end while AND scoped pointer of locked planning scenep
 
-  if (!valid_path_found)
-  {
-    // ROS_INFO_STREAM_NAMED("teleoperation", "UNABLE to find valid waypoint cartesian path after "
-    //                       << MAX_IK_ATTEMPTS << " attempts"); 
-    return false;
-  }
-  return true;
+  ROS_INFO_STREAM_NAMED("teleoperation", "UNABLE to find valid waypoint cartesian path after "
+                        << MAX_IK_ATTEMPTS << " attempts"); 
+  return false;
 }
 
 bool Teleoperation::convertRobotStatesToTrajectory(
@@ -444,12 +448,12 @@ bool Teleoperation::convertRobotStatesToTrajectory(
   }
 
   // Interpolate any path with two few points
-  // if (use_interpolation)
-  // {
-  //   // Interpolate between each point
-  //   // double discretization = 0.25;
-  //   // interpolate(robot_traj, discretization);
-  // }
+  /*  if (use_interpolation || true)
+  {
+    // Interpolate between each point
+    double discretization = 0.25;
+    manipulation_->interpolate(robot_traj, discretization);
+    }*/
 
   bool debug = false;
   if (debug)
@@ -573,36 +577,96 @@ void Teleoperation::processIMarkerPose(
   }
 }
 
-void Teleoperation::stateCB(const ControllerState::ConstPtr& state)                            
+void Teleoperation::stateCB(const ControllerState::ConstPtr& state)
 {  
-  // DTC compare timestamps HACK
-  ros::Duration diff = ros::Time::now() - state->header.stamp;
-  static ros::Duration total;
-  static std::size_t count = 0;
-  total += diff;
-  count++;
-  std::cout << "Latency: " << diff.toSec() << " Averge: " << total.toSec() / count << std::endl;
-  
   // Get write mutex lock
-  //boost::lock_guard<boost::shared_mutex> lock(controller_state_mutex_);
-  controller_state_ = *state;
+  {
+    boost::lock_guard<boost::shared_mutex> lock(controller_state_mutex_);
+    if (is_processing_)
+    {
+      //ROS_WARN_STREAM_NAMED("temp","SKIPPING a controller state callback");
+      return;
+    }
+    is_processing_ = true;
+  }
+
+  // Copy pointer
+  controller_state2_ = state;
+
+  // Run pipeline
+  stateCBHelper();
+
+  // Get write mutex lock
+  {
+    boost::lock_guard<boost::shared_mutex> lock(controller_state_mutex_);
+    is_processing_ = false;
+  }
+}
+
+void Teleoperation::stateCBHelper()
+{
+  // TODO thread safe?
+  if (!has_pose_to_ik_solve_)
+  {
+    //ROS_WARN_STREAM_NAMED("temp","SKIPPING because no ik pose to solve");
+    return;
+  }
+  has_pose_to_ik_solve_ = false;
+
+  // Optionally start timer
+  ros::Time begin_time;
+  if (debug_command_rate_)
+    begin_time = ros::Time::now();
+
+  // Plan IK Path
+  if (!solveIKThreadHelper())
+  {
+    ROS_WARN_STREAM_NAMED("temp","aborting because no path found");
+    return;
+  }
+
+  // Throttle how many to process
+  static std::size_t count = 0;
+  count++;
+  if (count % std::size_t(execution_delay_.toSec()) == 0)
+  {
+    // Send trajectory for execution
+    commandJointsThreadHelper();
+  }
+
+  // Optionally end timer
+  if (debug_command_rate_)
+  {
+    ros::Duration duration = (ros::Time::now() - begin_time);
+    total_command_duration_ += duration;
+    total_commands_++;
+
+    double average_duration = total_command_duration_.toSec() / total_commands_;
+    ROS_WARN_STREAM_NAMED("teleoperation",
+                           "COMMAND duration: " << std::fixed << duration.toSec()
+                           << "\t avg duration: " << std::fixed << average_duration
+                           << "\t avg freq: " << std::fixed << (1.0 / average_duration) << " hz");
+  }
+
 }
 
 void Teleoperation::getDesiredState(moveit::core::RobotStatePtr& robot_state)
 {
+  // TODO controller_state2_ check that exists
+
   // Get read-only mutex lock
-  boost::shared_lock<boost::shared_mutex> lock(controller_state_mutex_);
+  //boost::shared_lock<boost::shared_mutex> lock(controller_state_mutex_);
 
   // NOTE: THE FOLLOWING CODE IS MODIFIED FROM moveit_ros/planning/planning_scene_monitor/src/current_state_monitor.cpp
   // For each joint
   const double error = std::numeric_limits<double>::epsilon();
-  const std::size_t num_joints = controller_state_.joint_names.size();
+  const std::size_t num_joints = controller_state2_->joint_names.size();
   for (std::size_t i = 0; i < num_joints; ++i)
   {
-    const robot_model::JointModel* jm = robot_model_->getJointModel(controller_state_.joint_names[i]);
+    const robot_model::JointModel* jm = robot_model_->getJointModel(controller_state2_->joint_names[i]);
     if (!jm)
     {
-      ROS_WARN_STREAM_ONCE("Unrecognized joint in joint_state message " << controller_state_.joint_names[i]);
+      ROS_WARN_STREAM_ONCE("Unrecognized joint in joint_state message " << controller_state2_->joint_names[i]);
       continue;
     }
     // ignore fixed joints, multi-dof joints (they should not even be in the message)
@@ -613,22 +677,22 @@ void Teleoperation::getDesiredState(moveit::core::RobotStatePtr& robot_state)
     }
 
     // Do not update joint if position is the same
-    if (robot_state->getJointPositions(jm)[0] != controller_state_.desired.positions[i])
+    if (robot_state->getJointPositions(jm)[0] != controller_state2_->desired.positions[i])
     {
       // Copy
-      robot_state->setJointPositions(jm, &(controller_state_.desired.positions[i]));
+      robot_state->setJointPositions(jm, &(controller_state2_->desired.positions[i]));
 
       // check if velocities exist
-      if (num_joints == controller_state_.desired.velocities.size())
+      if (num_joints == controller_state2_->desired.velocities.size())
       {
         // Copy
-        robot_state->setJointVelocities(jm, &(controller_state_.desired.velocities[i]));
+        robot_state->setJointVelocities(jm, &(controller_state2_->desired.velocities[i]));
 
         // check if effort exist. assume they are not useful if no velocities were passed in
-        if (num_joints == controller_state_.desired.effort.size())
+        if (num_joints == controller_state2_->desired.effort.size())
         {
           // Copy
-          robot_state->setJointEfforts(jm, &(controller_state_.desired.effort[i]));
+          robot_state->setJointEfforts(jm, &(controller_state2_->desired.effort[i]));
         }
       }
 
@@ -640,10 +704,10 @@ void Teleoperation::getDesiredState(moveit::core::RobotStatePtr& robot_state)
       const robot_model::VariableBounds &b = jm->getVariableBounds()[0]; // only one variable in the joint, so we get its bounds
         
       // if the read variable is 'almost' within bounds (up to error_ difference), then consider it to be within bounds
-      if (controller_state_.desired.positions[i] < b.min_position_ && controller_state_.desired.positions[i] >= b.min_position_ - error)
+      if (controller_state2_->desired.positions[i] < b.min_position_ && controller_state2_->desired.positions[i] >= b.min_position_ - error)
         robot_state->setJointPositions(jm, &b.min_position_);
       else
-        if (controller_state_.desired.positions[i] > b.max_position_ && controller_state_.desired.positions[i] <= b.max_position_ + error)
+        if (controller_state2_->desired.positions[i] > b.max_position_ && controller_state2_->desired.positions[i] <= b.max_position_ + error)
           robot_state->setJointPositions(jm, &b.max_position_);
     }
   }
