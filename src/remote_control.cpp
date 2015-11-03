@@ -220,9 +220,9 @@ void RemoteControl::initializeInteractiveMarkers(const geometry_msgs::Pose& pose
 
   // Menu
   menu_handler_.insert("Reset", boost::bind(&RemoteControl::processFeedback, this, _1));
-  menu_handler_.insert("Set Start", boost::bind(&RemoteControl::processFeedback, this, _1));
-  menu_handler_.insert("Set Goal", boost::bind(&RemoteControl::processFeedback, this, _1));
-  menu_handler_.insert("Cartesian Plan", boost::bind(&RemoteControl::processFeedback, this, _1));
+  menu_handler_.insert("Save Pose", boost::bind(&RemoteControl::processFeedback, this, _1));
+  //menu_handler_.insert("Set Goal", boost::bind(&RemoteControl::processFeedback, this, _1));
+  //menu_handler_.insert("Cartesian Plan", boost::bind(&RemoteControl::processFeedback, this, _1));
   // interactive_markers::MenuHandler::EntryHandle sub_menu_handle =
   // menu_handler_.insert("Submenu");
   // menu_handler_.insert(sub_menu_handle, "First Entry",

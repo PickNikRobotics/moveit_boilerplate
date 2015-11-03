@@ -190,9 +190,8 @@ private:
   Eigen::Affine3d desired_ee_pose_;
   boost::shared_mutex desired_ee_pose_mutex_;
 
-  Eigen::Affine3d start_ee_pose_;
-  Eigen::Affine3d goal_ee_pose_;
-  moveit::core::RobotStatePtr start_planning_state_;
+  // State to start cartesian planning from
+  moveit::core::RobotStatePtr start_planning_state_; 
 
   // Cartesian Inverse Kinematics -------------------------------
   std::thread ik_thread_;

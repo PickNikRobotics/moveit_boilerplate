@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_visual_tools
   cmake_modules
   controller_manager_msgs
-  ros_param_utilities
+  ros_param_shortcuts
   dashboard_msgs
 )
 
@@ -27,7 +27,7 @@ catkin_package(
     moveit_grasps
     moveit_visual_tools
     controller_manager_msgs
-    ros_param_utilities
+    ros_param_shortcuts
     dashboard_msgs
   DEPENDS
     Eigen

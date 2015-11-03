@@ -27,7 +27,7 @@
   <build_depend>ompl</build_depend>
   <build_depend>dashboard_msgs</build_depend>
   <build_depend>controller_manager_msgs</build_depend>
-  <build_depend>ros_param_utilities</build_depend>  
+  <build_depend>ros_param_shortcuts</build_depend>  
   <build_depend>libgflags-dev</build_depend>
 
   <run_depend>moveit_core</run_depend>
@@ -39,6 +39,6 @@
   <run_depend>dashboard_msgs</run_depend>
   <run_depend>joy</run_depend>
   <run_depend>controller_manager_msgs</run_depend>
-  <run_depend>ros_param_utilities</run_depend>
+  <run_depend>ros_param_shortcuts</run_depend>
 
 </package>

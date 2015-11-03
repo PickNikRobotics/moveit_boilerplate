@@ -9,7 +9,7 @@
 #include <moveit_manipulation/behaviors/teleoperation.h>
 
 // Parameter loading
-#include <ros_param_utilities/ros_param_utilities.h>
+#include <ros_param_shortcuts/ros_param_shortcuts.h>
 
 // MoveIt
 #include <moveit/robot_state/conversions.h>
@@ -21,23 +21,23 @@ Teleoperation::Teleoperation() : MoveItBoilerplate()
   // Load rosparams
   const std::string parent_name = "teleoperation";  // for namespacing logging messages
   ros::NodeHandle teleop_nh("~/teleoperation");
-  using namespace ros_param_utilities;
+  using namespace ros_param_shortcuts;
   double command_freq;
   double compute_ik_freq;
-  getAffine3dParameter(parent_name, teleop_nh, "ee_offset", ee_offset_);
-  getDoubleParameter(parent_name, teleop_nh, "compute_ik_freq", compute_ik_freq);                     
-  getDoubleParameter(parent_name, teleop_nh, "command_freq", command_freq);                     
-  getDoubleParameter(parent_name, teleop_nh, "ik_consistency_limit", ik_consistency_limit_);
-  getDoubleParameter(parent_name, teleop_nh, "ik_timeout", ik_timeout_);
-  getDoubleParameter(parent_name, teleop_nh, "ik_attempts", ik_attempts_);
-  getDoubleParameter(parent_name, teleop_nh, "ik_cart_max_step", ik_cart_max_step_);
-  getDoubleParameter(parent_name, teleop_nh, "ik_cart_jump_threshold", ik_cart_jump_threshold_);
-  getDoubleParameter(parent_name, teleop_nh, "vel_scaling_factor", vel_scaling_factor_);
-  getDoubleParameter(parent_name, teleop_nh, "visualization_rate", visualization_rate_);
-  getDurationParameter(parent_name, teleop_nh, "execution_delay", execution_delay_);
-  getBoolParameter(parent_name, teleop_nh, "debug/ik_rate", debug_ik_rate_);
-  getBoolParameter(parent_name, teleop_nh, "debug/command_rate", debug_command_rate_);
-  getBoolParameter(parent_name, teleop_nh, "debug/generated_traj_rate", debug_generated_traj_rate_);
+  getAffine3dParam(parent_name, teleop_nh, "ee_offset", ee_offset_);
+  getDoubleParam(parent_name, teleop_nh, "compute_ik_freq", compute_ik_freq);                     
+  getDoubleParam(parent_name, teleop_nh, "command_freq", command_freq);                     
+  getDoubleParam(parent_name, teleop_nh, "ik_consistency_limit", ik_consistency_limit_);
+  getDoubleParam(parent_name, teleop_nh, "ik_timeout", ik_timeout_);
+  getDoubleParam(parent_name, teleop_nh, "ik_attempts", ik_attempts_);
+  getDoubleParam(parent_name, teleop_nh, "ik_cart_max_step", ik_cart_max_step_);
+  getDoubleParam(parent_name, teleop_nh, "ik_cart_jump_threshold", ik_cart_jump_threshold_);
+  getDoubleParam(parent_name, teleop_nh, "vel_scaling_factor", vel_scaling_factor_);
+  getDoubleParam(parent_name, teleop_nh, "visualization_rate", visualization_rate_);
+  getDurationParam(parent_name, teleop_nh, "execution_delay", execution_delay_);
+  getBoolParam(parent_name, teleop_nh, "debug/ik_rate", debug_ik_rate_);
+  getBoolParam(parent_name, teleop_nh, "debug/command_rate", debug_command_rate_);
+  getBoolParam(parent_name, teleop_nh, "debug/generated_traj_rate", debug_generated_traj_rate_);
 
   // Create consistency limits for IK solving. Pre-build this vector for improved speed
   // This specifies the desired distance between the solution and the seed state
@@ -527,28 +527,29 @@ void Teleoperation::processIMarkerPose(
           // User has requested to reset location of interactive marker
           remote_control_->updateMarkerPose(chooseNewIMarkerPose());
           break;
-        case 2:  // Start
-          ROS_INFO_STREAM_NAMED("teleoperation", "Set start state");
-          // start_ee_pose_ = offsetEEPose(feedback->pose);
-          // visual_tools_->publishZArrow(start_ee_pose_, rvt::GREEN);
+        case 2:  // Save Pose
+          ROS_INFO_STREAM_NAMED("teleoperation", "Saving Pose");
+
+          Eigen::Affine3d pose = offsetEEPose(feedback->pose);
+          visual_tools_->publishZArrow(pose, rvt::GREEN);
 
           // // Save start state // TODO thread safety?
 
           // // Show Robot State
           // planning_interface_->getVisualStartState()->publishRobotState(start_planning_state_,
           // rvt::GREEN);
-          break;
-        case 3:  // Goal
-          ROS_INFO_STREAM_NAMED("teleoperation", "Set goal state");
-          // goal_ee_pose_ = offsetEEPose(feedback->pose);
-          // visual_tools_->publishZArrow(goal_ee_pose_, rvt::ORANGE);
 
-          // // Show Robot State // TODO thread safety?
-          // rvt::ORANGE);
-          break;
-        case 4:  // Plan cartesian
-          ROS_INFO_STREAM_NAMED("teleoperation", "Plan cartesian");
-          // planCartPath();
+          std::vector<double> xyzrpy;
+          visual_tools_->convertToXYZRPY(pose, xyzrpy);
+          std::cout << "pose: [" 
+                    << xyzrpy[0] << ", "
+                    << xyzrpy[1] << ", "
+                    << xyzrpy[2] << ", "
+                    << xyzrpy[3] << ", "
+                    << xyzrpy[4] << ", "
+                    << xyzrpy[5] << "]"
+                    << std::endl;
+
           break;
         default:
           ROS_WARN_STREAM_NAMED("teleoperation", "Unknown menu id");
@@ -725,12 +726,6 @@ Eigen::Affine3d Teleoperation::offsetEEPose(const geometry_msgs::Pose& pose) con
 
 bool Teleoperation::posesEqual(const Eigen::Affine3d& pose1, const Eigen::Affine3d& pose2)
 {
-  // std::cout << "POSE1: " << std::endl;
-  // visual_tools_->printTransform(pose1);
-  // std::cout << std::endl;
-  // std::cout << "POSE2: " << std::endl;
-  // visual_tools_->printTransform(pose2);
-
   static const double POSE_EQUAL_THRESHOLD = 0.001;
   static const std::size_t NUM_VARS = 16;
 
