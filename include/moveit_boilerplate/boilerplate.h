@@ -33,69 +33,85 @@
  *********************************************************************/
 
 /* Author: Dave Coleman <dave@dav.ee>
-   Desc:   Main function that processes arguments
+   Desc:   Base class for using MoveIt! in C++
 */
 
-#include <string>
-#include <iostream>
-
-// Command line arguments
-#include <gflags/gflags.h>
-
-// MoveItManipuation
-#include <moveit_manipulation/behaviors/teleoperation.h>
+#ifndef MOVEIT_BOILERPLATE__MOVEIT_BOILERPLATE
+#define MOVEIT_BOILERPLATE__MOVEIT_BOILERPLATE
 
 // ROS
 #include <ros/ros.h>
+#include <tf/transform_listener.h>
 
-DEFINE_string(pose, "", "Requested robot pose");
-DEFINE_int32(mode, 2, "Mode");
+// MoveIt
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 
-int main(int argc, char** argv)
+// Visual tools
+#include <moveit_visual_tools/moveit_visual_tools.h>
+
+// MoveItManipulation
+#include <moveit_boilerplate/namespaces.h>
+#include <moveit_boilerplate/remote_control.h>
+#include <moveit_boilerplate/execution_interface.h>
+
+// ROS parameter loading
+#include <ros_param_shortcuts/ros_param_shortcuts.h>
+
+namespace moveit_boilerplate
 {
-  google::SetVersionString("Best version.");
-  google::SetUsageMessage("MoveIt!-based picking framework");
-  google::ParseCommandLineFlags(&argc, &argv, true);
+static const std::string ROBOT_DESCRIPTION = "robot_description";
 
-  ros::init(argc, argv, "moveit_manipulation");
+class Boilerplate
+{
+public:
+  /**
+   * \brief Constructor
+   */
+  Boilerplate();
 
-  std::cout << std::endl << std::endl << std::endl;
-  ROS_INFO_STREAM_NAMED("main", "Starting Pick Manager");
+  /**
+   * \brief Connect to the MoveIt! planning scene messages
+   */
+  bool loadPlanningSceneMonitor(const std::string &joint_state_topic);
 
-  // Allow the action server to recieve and send ros messages
-  ros::AsyncSpinner spinner(4);
-  spinner.start();
+  /**
+   * \brief Load visual tools
+   */
+  void loadVisualTools();
+  
+  /**
+   * \brief Use the planning scene to get the robot's current state
+   */
+  moveit::core::RobotStatePtr getCurrentState();
 
-  // start timer for run length
-  ros::Time begin_time = ros::Time::now();
+protected:
 
-  // Random
-  srand(time(NULL));
+  // A shared node handle
+  ros::NodeHandle nh_;
 
-  // Main program
-  moveit_manipulation::Teleoperation manager;
+  // Transform
+  boost::shared_ptr<tf::TransformListener> tf_;
 
-  std::cout << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
+  // For visualizing things in rviz
+  mvt::MoveItVisualToolsPtr visual_tools_;
 
-  ros::spin();
+  // Core MoveIt components
+  robot_model_loader::RobotModelLoaderPtr robot_model_loader_;
+  robot_model::RobotModelPtr robot_model_;
+  planning_scene::PlanningScenePtr planning_scene_;
+  psm::PlanningSceneMonitorPtr planning_scene_monitor_;
 
-  // Shutdown
-  std::cout << std::endl << std::endl << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-  ROS_INFO_STREAM_NAMED("main", "Shutting down.");
-  std::cout << std::endl << std::endl << std::endl;
+  // For executing joint and cartesian trajectories
+  ExecutionInterfacePtr execution_interface_;
 
-  ros::Time end_time = ros::Time::now();
+  // Allocated memory for robot state
+  moveit::core::RobotStatePtr current_state_;
 
-  ros::Duration duration = (end_time - begin_time);
+  // Remote control for dealing with GUIs
+  RemoteControlPtr remote_control_;
 
-  ROS_INFO_STREAM_NAMED("main", "Test duration = " << duration << " seconds ("
-                                                   << (duration.toSec() / 60.0) << " minutes). "
-                                                   << "Max time allowed = " << (15.0 * 60.0)
-                                                   << " seconds (15 minutes).");
+};  // end class
 
-  ros::shutdown();
+}  // end namespace
 
-  return 0;
-}
+#endif

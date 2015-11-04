@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2015, University of Colorado, Boulder
+ *  Copyright (c) 2015, PickNik LLC
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of the Univ of CO, Boulder nor the names of its
+ *   * Neither the name of the PickNik LLC nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -47,7 +47,7 @@
 */
 
 // MoveItManipulation
-#include <moveit_manipulation/execution_interface.h>
+#include <moveit_boilerplate/execution_interface.h>
 
 // MoveIt
 #include <moveit/trajectory_execution_manager/trajectory_execution_manager.h>
@@ -58,7 +58,7 @@
 // ros_control
 #include <controller_manager_msgs/ListControllers.h>
 
-namespace moveit_manipulation
+namespace moveit_boilerplate
 {
 ExecutionInterface::ExecutionInterface(RemoteControlPtr remote_control,
                                        psm::PlanningSceneMonitorPtr planning_scene_monitor)
@@ -495,10 +495,10 @@ void ExecutionInterface::loadVisualTools()
 {
   visual_tools_.reset(
       new mvt::MoveItVisualTools(planning_scene_monitor_->getRobotModel()->getModelFrame(),
-                                 "/moveit_manipulation/markers", planning_scene_monitor_));
+                                 "/moveit_boilerplate/markers", planning_scene_monitor_));
 
-  visual_tools_->loadRobotStatePub("/moveit_manipulation/robot_state");
-  visual_tools_->loadTrajectoryPub("/moveit_manipulation/display_trajectory");
+  visual_tools_->loadRobotStatePub("/moveit_boilerplate/robot_state");
+  visual_tools_->loadTrajectoryPub("/moveit_boilerplate/display_trajectory");
   visual_tools_->loadMarkerPub();
   visual_tools_->setAlpha(0.8);
   visual_tools_->deleteAllMarkers();  // clear all old markers

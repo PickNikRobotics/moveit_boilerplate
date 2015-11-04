@@ -40,13 +40,13 @@
 #include <moveit/robot_state/conversions.h>
 
 // MoveItManipulation
-#include <moveit_manipulation/fix_state_bounds.h>
-#include <moveit_manipulation/namespaces.h>
+#include <moveit_boilerplate/fix_state_bounds.h>
+#include <moveit_boilerplate/namespaces.h>
 
 // Parameter loading
 #include <ros_param_shortcuts/ros_param_shortcuts.h>
 
-namespace moveit_manipulation
+namespace moveit_boilerplate
 {
 FixStateBounds::FixStateBounds()
   : nh_("~")

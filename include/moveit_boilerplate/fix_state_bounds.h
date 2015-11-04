@@ -37,7 +37,7 @@
 #include <ros/ros.h>
 #include <moveit/planning_scene/planning_scene.h>
 
-namespace moveit_manipulation
+namespace moveit_boilerplate
 {
 const std::string BOUNDS_PARAM_NAME = "start_state_max_bounds_error";
 const std::string DT_PARAM_NAME = "start_state_max_dt";

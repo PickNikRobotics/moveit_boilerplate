@@ -37,8 +37,8 @@
    Desc:   Shortcuts for namespaces
 */
 
-#ifndef MOVEIT_MANIPULATION__NAMESPACES
-#define MOVEIT_MANIPULATION__NAMESPACES
+#ifndef MOVEIT_BOILERPLATE__NAMESPACES
+#define MOVEIT_BOILERPLATE__NAMESPACES
 
 // Temporarily define namespaces
 namespace moveit_visual_tools

@@ -40,22 +40,22 @@
 #include <gflags/gflags.h>
 
 // MoveItManipulation
-#include <moveit_manipulation/moveit_boilerplate.h>
+#include <moveit_boilerplate/boilerplate.h>
 
-// MoveIt
-#include <moveit/macros/console_colors.h>
-
-namespace moveit_manipulation
+namespace moveit_boilerplate
 {
-DEFINE_bool(fake_execution, false, "Fake execution of motions");
 DEFINE_int32(id, 0, "Identification number for various component modes");
 
-MoveItBoilerplate::MoveItBoilerplate()
+Boilerplate::Boilerplate()
   : nh_("~")
 {
-  // Warn of fake modes
-  if (FLAGS_fake_execution)
-    ROS_WARN_STREAM_NAMED("moveit_boilerplate", "In fake execution mode");
+  std::string joint_state_topic;
+
+  // Load rosparams
+  const std::string parent_name = "boilerplate";  // for namespacing logging messages
+  ros::NodeHandle rosparam_nh("~/boilerplate");
+  using namespace ros_param_shortcuts;
+  getStringParam(parent_name, rosparam_nh, "joint_state_topic", joint_state_topic);
 
   // Load the loader
   robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(ROBOT_DESCRIPTION));
@@ -66,24 +66,15 @@ MoveItBoilerplate::MoveItBoilerplate()
   // Create the planning scene
   planning_scene_.reset(new planning_scene::PlanningScene(robot_model_));
 
-  // Get package path
-  package_path_ = ros::package::getPath(package_name_);
-  if (package_path_.empty())
-    ROS_FATAL_STREAM_NAMED("product", "Unable to get " << package_name_ << " package path");
-
-  // Load manipulation data for our robot
-  config_.reset(new ManipulationData());
-  config_->load(robot_model_, FLAGS_fake_execution, package_path_);
-
   // Create tf transformer
   tf_.reset(new tf::TransformListener(nh_));
   // TODO: remove these lines, only an attempt to fix loadPlanningSceneMonitor bug
   ros::spinOnce();
 
   // Load planning scene monitor
-  if (!loadPlanningSceneMonitor())
+  if (!loadPlanningSceneMonitor(joint_state_topic))
   {
-    ROS_ERROR_STREAM_NAMED("moveit_boilerplate", "Unable to load planning scene monitor");
+    ROS_ERROR_STREAM_NAMED("boilerplate", "Unable to load planning scene monitor");
   }
 
   // Load the Robot Viz Tools for publishing to Rviz
@@ -92,28 +83,16 @@ MoveItBoilerplate::MoveItBoilerplate()
   // Load the remote control for dealing with GUIs
   remote_control_.reset(new RemoteControl(nh_));
 
-  // Load grasp data specific to our robot
-  grasp_datas_[config_->right_arm_].reset(
-      new moveit_grasps::GraspData(nh_, config_->right_hand_name_, robot_model_));
+  // Load execution interface
+  execution_interface_.reset(new ExecutionInterface(remote_control_, planning_scene_monitor_));
 
-  if (config_->dual_arm_)
-    grasp_datas_[config_->left_arm_].reset(
-        new moveit_grasps::GraspData(nh_, config_->left_hand_name_, robot_model_));
-
-  // Create helper class for planning and manipulation
-  planning_interface_.reset(new PlanningInterface(planning_scene_monitor_, config_,
-                                       grasp_datas_, remote_control_, FLAGS_fake_execution));
-
-  // Show interactive marker
-  //setupInteractiveMarker();
-
-  ROS_INFO_STREAM_NAMED("moveit_boilerplate", "MoveItBoilerplate Ready.");
+  ROS_INFO_STREAM_NAMED("boilerplate", "Boilerplate Ready.");
 }
 
-bool MoveItBoilerplate::loadPlanningSceneMonitor()
+bool Boilerplate::loadPlanningSceneMonitor(const std::string &joint_state_topic)
 {
   // Allows us to sycronize to Rviz and also publish collision objects to ourselves
-  ROS_DEBUG_STREAM_NAMED("moveit_boilerplate", "Loading Planning Scene Monitor");
+  ROS_DEBUG_STREAM_NAMED("boilerplate", "Loading Planning Scene Monitor");
   static const std::string PLANNING_SCENE_MONITOR_NAME = "AmazonShelfWorld";
   planning_scene_monitor_.reset(new psm::PlanningSceneMonitor(
       planning_scene_, robot_model_loader_, tf_, PLANNING_SCENE_MONITOR_NAME));
@@ -122,14 +101,14 @@ bool MoveItBoilerplate::loadPlanningSceneMonitor()
   if (planning_scene_monitor_->getPlanningScene())
   {
     // Optional monitors to start:
-    planning_scene_monitor_->startStateMonitor(config_->joint_state_topic_, "");
+    planning_scene_monitor_->startStateMonitor(joint_state_topic, "");
     planning_scene_monitor_->startPublishingPlanningScene(
         psm::PlanningSceneMonitor::UPDATE_SCENE, "picknik_planning_scene");
     planning_scene_monitor_->getPlanningScene()->setName("picknik_planning_scene");
   }
   else
   {
-    ROS_ERROR_STREAM_NAMED("moveit_boilerplate", "Planning scene not configured");
+    ROS_ERROR_STREAM_NAMED("boilerplate", "Planning scene not configured");
     return false;
   }
   ros::spinOnce();
@@ -146,7 +125,7 @@ bool MoveItBoilerplate::loadPlanningSceneMonitor()
   while (!planning_scene_monitor_->getStateMonitor()->haveCompleteState() && ros::ok())
   {
     ROS_INFO_STREAM_THROTTLE_NAMED(1, "", "Waiting for complete state from topic "
-                                                          << config_->joint_state_topic_);
+                                                          << joint_state_topic);
     ros::Duration(0.1).sleep();
     ros::spinOnce();
 
@@ -155,7 +134,7 @@ bool MoveItBoilerplate::loadPlanningSceneMonitor()
     {
       planning_scene_monitor_->getStateMonitor()->haveCompleteState(missing_joints);
       for (std::size_t i = 0; i < missing_joints.size(); ++i)
-        ROS_WARN_STREAM_NAMED("moveit_boilerplate", "Unpublished joints: " << missing_joints[i]);
+        ROS_WARN_STREAM_NAMED("boilerplate", "Unpublished joints: " << missing_joints[i]);
     }
     counter++;
   }
@@ -164,13 +143,13 @@ bool MoveItBoilerplate::loadPlanningSceneMonitor()
   return true;
 }
 
-void MoveItBoilerplate::loadVisualTools()
+void Boilerplate::loadVisualTools()
 {
   visual_tools_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(),
-                                                 "/moveit_manipulation/markers", planning_scene_monitor_));
+                                                 "/moveit_boilerplate/markers", planning_scene_monitor_));
 
-  visual_tools_->loadRobotStatePub("/moveit_manipulation/robot_state");
-  visual_tools_->loadTrajectoryPub("/moveit_manipulation/display_trajectory");
+  visual_tools_->loadRobotStatePub("/moveit_boilerplate/robot_state");
+  visual_tools_->loadTrajectoryPub("/moveit_boilerplate/display_trajectory");
   visual_tools_->loadMarkerPub();
   visual_tools_->setAlpha(0.8);
   visual_tools_->deleteAllMarkers();  // clear all old markers
@@ -178,36 +157,12 @@ void MoveItBoilerplate::loadVisualTools()
   visual_tools_->hideRobot();  // show that things have been reset
 }
 
-bool MoveItBoilerplate::allowCollisions(JointModelGroup* arm_jmg)
+moveit::core::RobotStatePtr Boilerplate::getCurrentState()
 {
-  // Allow collisions between frame of robot and floor
-  {
-    psm::LockedPlanningSceneRW scene(planning_scene_monitor_);  // Lock planning
-    collision_detection::AllowedCollisionMatrix& collision_matrix =
-        scene->getAllowedCollisionMatrixNonConst();
-
-    // Get links of end effector
-    const std::vector<std::string>& ee_link_names =
-        grasp_datas_[arm_jmg]->ee_jmg_->getLinkModelNames();
-    for (std::size_t i = 0; i < ee_link_names.size(); ++i)
-    {
-      for (std::size_t j = i + 1; j < ee_link_names.size(); ++j)
-      {
-        // std::cout << "disabling collsion between " << ee_link_names[i] << " and " <<
-        // ee_link_names[j] << std::endl;
-        collision_matrix.setEntry(ee_link_names[i], ee_link_names[j], true);
-      }
-    }
-  }
-
-  return true;
-}
-
-moveit::core::RobotStatePtr MoveItBoilerplate::getCurrentState()
-{
-  // Pass down to the exection interface layer so that we can catch the getCurrentState with a fake
-  // one if we are unit testing  
-  return planning_interface_->getExecutionInterface()->getCurrentState();
+  // Get the real current state
+  psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
+  (*current_state_) = scene->getCurrentState();
+  return current_state_;
 }
 
 }  // end namespace

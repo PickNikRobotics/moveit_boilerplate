@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2015, University of Colorado, Boulder
+ *  Copyright (c) 2015, PickNik LLC
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of the Univ of CO, Boulder nor the names of its
+ *   * Neither the name of the PickNik LLC nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -36,59 +36,51 @@
    Desc:   Loads from and saves to file trajectories in joint states and EE poses
 */
 
-#ifndef MOVEIT_MANIPULATION__TRAJECTORY_IO
-#define MOVEIT_MANIPULATION__TRAJECTORY_IO
+#ifndef MOVEIT_BOILERPLATE__TRAJECTORY_IO
+#define MOVEIT_BOILERPLATE__TRAJECTORY_IO
 
 // PickNik
-#include <moveit_manipulation/planning_interface.h>
-#include <moveit_manipulation/namespaces.h>
+#include <moveit_boilerplate/namespaces.h>
 
-namespace moveit_manipulation
+// MoveIt
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
+
+// Visual tools
+#include <moveit_visual_tools/moveit_visual_tools.h>
+
+namespace moveit_boilerplate
 {
+
 class TrajectoryIO
 {
 public:
   /**
    * \brief Constructor
    */
-  TrajectoryIO(RemoteControlPtr remote_control, ManipulationDataPtr config,
-               PlanningInterfacePtr planning_interface, mvt::MoveItVisualToolsPtr visual_tools);
+  TrajectoryIO(psm::PlanningSceneMonitorPtr planning_scene_monitor,
+               mvt::MoveItVisualToolsPtr visual_tools);
 
   /**
    * \brief Read a joint trajectory from CSV and execute on robot
    * \param file_name - location of file
    * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
-   * \param velocity_scaling_factor - the percent of max speed all joints should be allowed to
-   * utilize
    * \return true on success
    */
-  bool playbackTrajectoryFromFile(const std::string& file_name, JointModelGroup* arm_jmg,
-                                  double velocity_scaling_factor);
-
-  /**
-   * \brief Read a trajectory from CSV and execute on robot state by state
-   * \param file_name - location of file
-   * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
-   * \param velocity_scaling_factor - the percent of max speed all joints should be allowed to
-   * utilize
-   * \return true on success
-   */
-  bool playbackTrajectoryFromFileInteractive(const std::string& file_name, JointModelGroup* arm_jmg,
-                                             double velocity_scaling_factor);
+  bool loadTrajectoryFromFile(const std::string& file_name, JointModelGroup* arm_jmg);
 
   /**
    * \brief Record the entire state of a robot to file
    * \param file_name - location of file
    * \return true on success
    */
-  bool recordTrajectoryToFile(const std::string& file_name);
+  bool saveJointTrajectoryToFile(const std::string& file_name);
 
   /**
    * \brief Read a waypoint trajectory from CSV and load into this class
    * \param file_name - location of file
    * \return true on success
    */
-  bool loadWaypointsFromFile(const std::string& file_name);
+  bool loadCartesianTrajectoryFromFile(const std::string& file_name);
 
   /** \brief Add current robot pose to trajectory */
   void addWaypoint(const Eigen::Affine3d& pose);
@@ -105,7 +97,7 @@ public:
    * \brief Save a trajectory of poses to a file in CSV format
    * \return true on success
    */
-  bool saveWaypointsToFile(const std::string& file_path);
+  bool saveCartesianTrajectoryToFile(const std::string& file_path);
 
   /**
    * \brief Convert a 6-vector of x,y,z, roll,pitch,yall to an Affine3d with quaternion, from a line
@@ -119,20 +111,31 @@ public:
    * \param file_name - the desired name of the file
    * \return true on success
    */
-  bool getFilePath(std::string& file_path, const std::string& file_name) const;
+  bool getFilePath(std::string& file_path, const std::string& file_name);
 
 private:
+
+  /** \brief Use the planning scene to get the robot's current state */
+  moveit::core::RobotStatePtr getCurrentState();
+
   // A shared node handle
   ros::NodeHandle nh_;
 
-  // Common classes in moveit_manipulation
-  RemoteControlPtr remote_control_;
-  ManipulationDataPtr config_;
-  PlanningInterfacePtr planning_interface_;
-  mvt::MoveItVisualToolsPtr visual_tools_;
+  // Core MoveIt components
+  psm::PlanningSceneMonitorPtr planning_scene_monitor_;
 
-  // Trajectory to load/save to/from file
+  // Common classes in moveit_boilerplate
+  mvt::MoveItVisualToolsPtr visual_tools_;
+  std::string package_path_;
+
+  // Waypoint trajectory to load/save to/from file
   std::vector<Eigen::Affine3d> waypoints_trajectory_;
+
+  // Joint trajectory to load/save to/from file
+  robot_trajectory::RobotTrajectoryPtr joint_trajectory_;
+
+  // Allocated memory for robot state
+  moveit::core::RobotStatePtr current_state_;
 
 };  // end class
 

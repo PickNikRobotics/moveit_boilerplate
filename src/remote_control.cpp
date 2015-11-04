@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2015, University of Colorado, Boulder
+ *  Copyright (c) 2015, PickNik LLC
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of the Univ of CO, Boulder nor the names of its
+ *   * Neither the name of the PickNik LLC nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -36,14 +36,14 @@
    Desc:   Contains all hooks for remote control
 */
 
-#include <moveit_manipulation/remote_control.h>
+#include <moveit_boilerplate/remote_control.h>
 #include <dashboard_msgs/DashboardControl.h>
 #include <moveit/macros/console_colors.h>
 
 // Command line arguments
 #include <gflags/gflags.h>
 
-namespace moveit_manipulation
+namespace moveit_boilerplate
 {
 DEFINE_bool(auto_step, false, "Automatically go through each step");
 DEFINE_bool(full_auto, false, "Automatically run ignoring all errors");

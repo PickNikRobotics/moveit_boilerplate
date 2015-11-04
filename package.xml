@@ -1,17 +1,17 @@
 <?xml version='1.0' encoding='ASCII'?>
 <package>
-  <name>moveit_manipulation</name>
+  <name>moveit_boilerplate</name>
 
-  <version>0.1.0</version>
+  <version>0.2.0</version>
 
-  <description>Main package for controlling robots for Amazon picking challenge</description>
+  <description>Basic functionality for easily building applications on MoveIt! in C++</description>
 
   <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
   <license>BSD</license>
 
-  <url type="website">https://github.com/davetcoleman/cu_amazon</url>
-  <url type="butracker">https://github.com/davetcoleman/cu_amazon/issues</url>
-  <url type="repository">https://github.com/davetcoleman/cu_amazon/</url>
+  <url type="website">https://github.com/davetcoleman/moveit_boilerplate</url>
+  <url type="butracker">https://github.com/davetcoleman/moveit_boilerplate/issues</url>
+  <url type="repository">https://github.com/davetcoleman/moveit_boilerplate/</url>
 
   <author email="davetcoleman@gmail.com">Dave Coleman</author>
 

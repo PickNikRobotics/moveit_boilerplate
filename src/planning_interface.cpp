@@ -39,7 +39,7 @@
 */
 
 // MoveItManipulation
-#include <moveit_manipulation/planning_interface.h>
+#include <moveit_boilerplate/planning_interface.h>
 
 // MoveIt
 #include <moveit/collision_detection/world.h>
@@ -48,18 +48,17 @@
 #include <moveit/macros/console_colors.h>
 #include <moveit/robot_state/conversions.h>
 
-// moveit_grasps
-//#include <moveit_grasps/grasp_generator.h>
-
-namespace moveit_manipulation
+namespace moveit_boilerplate
 {
 PlanningInterface::PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor,
                                      ManipulationDataPtr config,
+                                     ExecutionInterface execution_interface,
                                      moveit_grasps::GraspDatas grasp_datas,
                                      RemoteControlPtr remote_control, bool fake_execution)
   : nh_("~")
   , planning_scene_monitor_(planning_scene_monitor)
   , config_(config)
+  , execution_interface_(execution_interface)
   , grasp_datas_(grasp_datas)
   , remote_control_(remote_control)
 {
@@ -78,8 +77,6 @@ PlanningInterface::PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene
   // Debug tools for visualizing in Rviz
   loadVisualTools();
 
-  // Load execution interface
-  execution_interface_.reset(new ExecutionInterface(remote_control_, planning_scene_monitor_));
 
   /*
   // Load grasp generator
@@ -88,7 +85,7 @@ PlanningInterface::PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene
   grasp_filter_.reset(new moveit_grasps::GraspFilter(current_state_, visual_tools_));
   grasp_planner_.reset(new moveit_grasps::GraspPlanner(visual_tools_));
   grasp_planner_->setWaitForNextStepCallback(
-      boost::bind(&moveit_manipulation::RemoteControl::waitForNextStep, remote_control_, _1));
+      boost::bind(&moveit_boilerplate::RemoteControl::waitForNextStep, remote_control_, _1));
   */
 
   // Done
@@ -714,7 +711,7 @@ bool PlanningInterface::computeStraightLinePath(
   {
     std::cout << "Tip Pose Start \n" << tip_pose_start.translation().x() << "\t"
               << tip_pose_start.translation().y() << "\t" << tip_pose_start.translation().z()
-              << std::endl;
+              << std::end;l
   }
 
   // Visualize start and goal state
@@ -1691,8 +1688,8 @@ void PlanningInterface::transformWorldToBase(Eigen::Affine3d& pose_world, Eigen:
 void PlanningInterface::loadVisualTools()
 {
   visual_tools_.reset(new mvt::MoveItVisualTools(
-      robot_model_->getModelFrame(), "/moveit_manipulation/markers", planning_scene_monitor_));
-  visual_tools_->loadTrajectoryPub("/moveit_manipulation/display_trajectory");
+      robot_model_->getModelFrame(), "/moveit_boilerplate/markers", planning_scene_monitor_));
+  visual_tools_->loadTrajectoryPub("/moveit_boilerplate/display_trajectory");
   visual_tools_->loadMarkerPub();
   visual_tools_->setAlpha(0.8);
   visual_tools_->deleteAllMarkers();  // clear all old markers
@@ -1700,14 +1697,14 @@ void PlanningInterface::loadVisualTools()
 
   // Robot Start State
   visual_start_state_.reset(new mvt::MoveItVisualTools(
-      robot_model_->getModelFrame(), "/moveit_manipulation/markers2", planning_scene_monitor_));
-  visual_start_state_->loadRobotStatePub("/moveit_manipulation/robot_start_state");
+      robot_model_->getModelFrame(), "/moveit_boilerplate/markers2", planning_scene_monitor_));
+  visual_start_state_->loadRobotStatePub("/moveit_boilerplate/robot_start_state");
   visual_start_state_->hideRobot();
 
   // Robot Goal State
   visual_goal_state_.reset(new mvt::MoveItVisualTools(
-      robot_model_->getModelFrame(), "/moveit_manipulation/markers3", planning_scene_monitor_));
-  visual_goal_state_->loadRobotStatePub("/moveit_manipulation/robot_goal_state");
+      robot_model_->getModelFrame(), "/moveit_boilerplate/markers3", planning_scene_monitor_));
+  visual_goal_state_->loadRobotStatePub("/moveit_boilerplate/robot_goal_state");
   visual_goal_state_->hideRobot();
 }
 

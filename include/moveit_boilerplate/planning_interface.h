@@ -33,21 +33,21 @@
  *********************************************************************/
 
 /* Author: Dave Coleman <dave@dav.ee>
-   Desc:   Helper functions for using the planning and manipulation 
+   Desc:   Helper functions for using the planning and manipulation
            facilities in MoveIt! with better introspection and feedback
            tools
 */
 
-#ifndef MOVEIT_MANIPULATION__PLANNING_INTERFACE_
-#define MOVEIT_MANIPULATION__PLANNING_INTERFACE_
+#ifndef MOVEIT_BOILERPLATE__PLANNING_INTERFACE_
+#define MOVEIT_BOILERPLATE__PLANNING_INTERFACE_
 
 // MoveItManipulation
-#include <moveit_manipulation/namespaces.h>
+#include <moveit_boilerplate/namespaces.h>
 #include <moveit_visual_tools/moveit_visual_tools.h>
-#include <moveit_manipulation/manipulation_data.h>
-#include <moveit_manipulation/fix_state_bounds.h>
-#include <moveit_manipulation/remote_control.h>
-#include <moveit_manipulation/execution_interface.h>
+#include <moveit_boilerplate/manipulation_data.h>
+#include <moveit_boilerplate/fix_state_bounds.h>
+#include <moveit_boilerplate/remote_control.h>
+#include <moveit_boilerplate/execution_interface.h>
 
 // ROS
 #include <ros/ros.h>
@@ -65,7 +65,7 @@ namespace planning_pipeline
 MOVEIT_CLASS_FORWARD(PlanningPipeline);
 }
 
-namespace moveit_manipulation
+namespace moveit_boilerplate
 {
 MOVEIT_CLASS_FORWARD(PlanningInterface);
 
@@ -75,9 +75,11 @@ public:
   /**
    * \brief Constructor
    */
-  PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor,               
-               ManipulationDataPtr config, moveit_grasps::GraspDatas grasp_datas,
-               RemoteControlPtr remote_control, bool fake_execution);
+  PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor,
+                    ManipulationDataPtr config,
+                    ExecutionInterface execution_interface,
+                    moveit_grasps::GraspDatas grasp_datas,
+                    RemoteControlPtr remote_control, bool fake_execution);
 
   /**
    * \brief Move to any pose as defined in the SRDF
@@ -450,7 +452,7 @@ protected:
   // A shared node handle
   ros::NodeHandle nh_;
 
-  // For executing trajectories
+  // For executing joint and cartesian trajectories
   ExecutionInterfacePtr execution_interface_;
 
   // For visualizing things in rviz
@@ -476,13 +478,6 @@ protected:
 
   // Remote control
   RemoteControlPtr remote_control_;
-
-  // End effector sheer force teleoperation
-  Eigen::Vector3d teleop_direction_;
-  Eigen::Vector3d teleop_rotated_direction_;
-  Eigen::Affine3d teleop_world_to_tool_;
-  Eigen::Affine3d teleop_world_to_ee_;
-  Eigen::Affine3d teleop_base_to_ee_;
 
   // Experience-based planning
   bool use_experience_;

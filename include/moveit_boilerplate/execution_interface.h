@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2015, University of Colorado, Boulder
+ *  Copyright (c) 2015, PickNik LLC
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of the Univ of CO, Boulder nor the names of its
+ *   * Neither the name of the PickNik LLC nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -36,8 +36,8 @@
    Desc:   Interface between MoveIt! execution tools and MoveItManipulation
 */
 
-#ifndef MOVEIT_MANIPULATION__EXECUTION_INTERFACE
-#define MOVEIT_MANIPULATION__EXECUTION_INTERFACE
+#ifndef MOVEIT_BOILERPLATE__EXECUTION_INTERFACE
+#define MOVEIT_BOILERPLATE__EXECUTION_INTERFACE
 
 // ROS
 #include <ros/ros.h>
@@ -47,8 +47,8 @@
 #include <moveit_visual_tools/moveit_visual_tools.h>
 
 // MoveItManipulation
-#include <moveit_manipulation/namespaces.h>
-#include <moveit_manipulation/remote_control.h>
+#include <moveit_boilerplate/namespaces.h>
+#include <moveit_boilerplate/remote_control.h>
 
 // MoveIt
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
@@ -58,7 +58,7 @@ namespace trajectory_execution_manager
 MOVEIT_CLASS_FORWARD(TrajectoryExecutionManager);
 }
 
-namespace moveit_manipulation
+namespace moveit_boilerplate
 {
 MOVEIT_CLASS_FORWARD(ExecutionInterface);
 
@@ -68,7 +68,7 @@ enum CommandMode {
   CARTESIAN_PUBLISHER      // send cartesian poses direclty to your controller using ROS messages
 };
 
-const static std::string PACKAGE_NAME = "moveit_manipulation";
+const static std::string PACKAGE_NAME = "moveit_boilerplate";
 
 class ExecutionInterface
 {

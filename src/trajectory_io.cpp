@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2015, University of Colorado, Boulder
+ *  Copyright (c) 2015, PickNik LLC
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of the Univ of CO, Boulder nor the names of its
+ *   * Neither the name of the PickNik LLC nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -39,7 +39,7 @@
 */
 
 // MoveItManipuation
-#include <moveit_manipulation/trajectory_io.h>
+#include <moveit_boilerplate/trajectory_io.h>
 
 // basic file operations
 #include <iostream>
@@ -51,132 +51,71 @@
 // Boost
 #include <boost/filesystem.hpp>
 
-namespace moveit_manipulation
+namespace moveit_boilerplate
 {
-TrajectoryIO::TrajectoryIO(RemoteControlPtr remote_control, ManipulationDataPtr config, 
-			   PlanningInterfacePtr planning_interface, mvt::MoveItVisualToolsPtr visual_tools)
-  : remote_control_(remote_control)
-  , config_(config)
-  , planning_interface_(planning_interface)
+TrajectoryIO::TrajectoryIO(psm::PlanningSceneMonitorPtr planning_scene_monitor,                           
+                           mvt::MoveItVisualToolsPtr visual_tools)
+  : planning_scene_monitor_(planning_scene_monitor)
   , visual_tools_(visual_tools)
 {
 }
 
-bool TrajectoryIO::playbackTrajectoryFromFile(const std::string& file_name,
-                                              JointModelGroup* arm_jmg,
-                                              double velocity_scaling_factor)
+bool TrajectoryIO::loadTrajectoryFromFile(const std::string& file_name,
+                                          JointModelGroup* arm_jmg)
 {
   std::ifstream input_file;
   input_file.open(file_name.c_str());
   ROS_DEBUG_STREAM_NAMED("manipultion", "Loading trajectory from file " << file_name);
 
   std::string line;
-  moveit::core::RobotStatePtr current_state = planning_interface_->getCurrentState();
+  getCurrentState();
 
-  robot_trajectory::RobotTrajectoryPtr robot_traj(
-      new robot_trajectory::RobotTrajectory(current_state->getRobotModel(), arm_jmg));
+  joint_trajectory_.reset(new robot_trajectory::RobotTrajectory(current_state_->getRobotModel(), arm_jmg));
   double dummy_dt = 1;  // temp value
 
   // Read each line
   while (std::getline(input_file, line))
   {
     // Convert line to a robot state
-    moveit::core::RobotStatePtr new_state(new moveit::core::RobotState(*current_state));
+    moveit::core::RobotStatePtr new_state(new moveit::core::RobotState(*current_state_));
     moveit::core::streamToRobotState(*new_state, line, ",");
-    robot_traj->addSuffixWayPoint(new_state, dummy_dt);
+    joint_trajectory_->addSuffixWayPoint(new_state, dummy_dt);
   }
 
   // Close file
   input_file.close();
 
   // Error check
-  if (robot_traj->getWayPointCount() == 0)
+  if (joint_trajectory_->getWayPointCount() == 0)
   {
     ROS_ERROR_STREAM_NAMED("manipultion", "No states loaded from CSV file " << file_name);
     return false;
   }
 
-  // Unwrap joint values if needed
-
-  // Interpolate between each point
-  double discretization = 0.25;
-  planning_interface_->interpolate(robot_traj, discretization);
-
-  // Perform iterative parabolic smoothing
-  planning_interface_->getIterativeSmoother().computeTimeStamps(*robot_traj, velocity_scaling_factor);
-
-  // Convert trajectory to a message
-  moveit_msgs::RobotTrajectory trajectory_msg;
-  robot_traj->getRobotTrajectoryMsg(trajectory_msg);
-
-  std::cout << std::endl << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-  std::cout << "MOVING ARM TO START OF TRAJECTORY" << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-
-  // Plan to start state of trajectory
-  bool verbose = true;
-  bool execute_trajectory = true;
-  bool check_validity = true;
-  ROS_INFO_STREAM_NAMED("trajectory_io", "Moving to start state of trajectory");
-  if (!planning_interface_->move(current_state, robot_traj->getFirstWayPointPtr(), arm_jmg,
-                           config_->main_velocity_scaling_factor_, verbose, execute_trajectory,
-                           check_validity))
-  {
-    ROS_ERROR_STREAM_NAMED("manipultion", "Unable to plan");
-    return false;
-  }
-
-  std::cout << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-  std::cout << "PLAYING BACK TRAJECTORY" << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-
-  // Execute
-  if (!planning_interface_->getExecutionInterface()->executeTrajectory(trajectory_msg, arm_jmg))
-  {
-    ROS_ERROR_STREAM_NAMED("trajectory_io", "Failed to execute trajectory");
-    return false;
-  }
-
   return true;
 }
 
-bool TrajectoryIO::recordTrajectoryToFile(const std::string& file_path)
+bool TrajectoryIO::saveJointTrajectoryToFile(const std::string& file_path)
 {
   bool include_header = false;
 
   std::ofstream output_file;
   output_file.open(file_path.c_str());
-  ROS_DEBUG_STREAM_NAMED("trajectory_io", "Saving bin trajectory to file " << file_path);
+  ROS_DEBUG_STREAM_NAMED("trajectory_io", "Saving joint trajectory to file " << file_path);
 
-  remote_control_->waitForNextStep("record trajectory");
-
-  std::cout << std::endl << std::endl << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-  std::cout << "START MOVING ARM " << std::endl;
-  std::cout << "Press stop button to end recording " << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-
-  std::size_t counter = 0;
-  while (ros::ok() && !remote_control_->getStop())
+  for (std::size_t i = 0; i < joint_trajectory_->getWayPointCount(); ++i)
   {
-    ROS_INFO_STREAM_THROTTLE_NAMED(1, "trajectory_io", "Recording waypoint #" << counter++);
+    ROS_INFO_STREAM_THROTTLE_NAMED(1, "trajectory_io", "Saving waypoint #" << i);
 
-    moveit::core::robotStateToStream(*planning_interface_->getCurrentState(), output_file,
+    moveit::core::robotStateToStream(joint_trajectory_->getWayPoint(i), output_file,
                                      include_header);
-
-    ros::Duration(0.25).sleep();
   }
-
-  // Reset the stop button
-  remote_control_->setStop(false);
 
   output_file.close();
   return true;
 }
 
-bool TrajectoryIO::loadWaypointsFromFile(const std::string& file_name)
+bool TrajectoryIO::loadCartesianTrajectoryFromFile(const std::string& file_name)
 {
   std::ifstream input_file;
   std::string line;
@@ -222,7 +161,7 @@ void TrajectoryIO::clearWaypoints()
   waypoints_trajectory_.clear();
 }
 
-bool TrajectoryIO::saveWaypointsToFile(const std::string& file_path)
+bool TrajectoryIO::saveCartesianTrajectoryToFile(const std::string& file_path)
 {
   if (waypoints_trajectory_.empty())
     ROS_WARN_STREAM_NAMED("trajectory_io","Saving empty waypoint trajectory");
@@ -248,13 +187,22 @@ bool TrajectoryIO::saveWaypointsToFile(const std::string& file_path)
   return true;
 }
 
-bool TrajectoryIO::getFilePath(std::string& file_path, const std::string& file_name) const
+bool TrajectoryIO::getFilePath(std::string& file_path, const std::string& file_name)
 {
   namespace fs = boost::filesystem;
 
+  // Get package path
+  if (package_path_.empty())
+    package_path_ = ros::package::getPath("moveit_boilerplate");
+  if (package_path_.empty())
+  {
+    ROS_ERROR_STREAM_NAMED("product", "Unable to get moveit_boilerplate package path");
+    return false;
+  }
+
   // Check that the directory exists, if not, create it
   fs::path path;
-  path = fs::path(config_->package_path_ + "/trajectories");
+  path = fs::path(package_path_ + "/trajectories");
 
   boost::system::error_code returnedError;
   fs::create_directories(path, returnedError);
@@ -298,6 +246,14 @@ bool TrajectoryIO::streamToAffine3d(Eigen::Affine3d& pose, const std::string& li
   pose = visual_tools_->convertXYZRPY(transform6);
 
   return true;
+}
+
+moveit::core::RobotStatePtr TrajectoryIO::getCurrentState()
+{
+  // Get the real current state
+  psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
+  (*current_state_) = scene->getCurrentState();
+  return current_state_;
 }
 
 }  // end namespace

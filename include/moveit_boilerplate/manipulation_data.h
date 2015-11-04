@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2015, University of Colorado, Boulder
+ *  Copyright (c) 2015, PickNik LLC
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of the Univ of CO, Boulder nor the names of its
+ *   * Neither the name of the PickNik LLC nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -36,19 +36,19 @@
    Desc:   Holds common parameters for manipulation
 */
 
-#ifndef MOVEIT_MANIPULATION__MANIPULATION_DATA
-#define MOVEIT_MANIPULATION__MANIPULATION_DATA
+#ifndef MOVEIT_BOILERPLATE__MANIPULATION_DATA
+#define MOVEIT_BOILERPLATE__MANIPULATION_DATA
 
 // ROS
 #include <ros/ros.h>
 
 // MoveItManipulation
-#include <moveit_manipulation/namespaces.h>
+#include <moveit_boilerplate/namespaces.h>
 
 // MoveIt!
 #include <moveit/robot_model/robot_model.h>
 
-namespace moveit_manipulation
+namespace moveit_boilerplate
 {
 class ManipulationData
 {

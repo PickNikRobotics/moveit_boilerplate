@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(moveit_manipulation)
+project(moveit_boilerplate)
 
 # C++ 11
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall ${CMAKE_CXX_FLAGS}")
@@ -34,9 +34,12 @@ catkin_package(
   INCLUDE_DIRS 
     include
   LIBRARIES
+    remote_control
     fix_state_bounds
-    planning_interface    
-    moveit_boilerplate
+    execution_interface
+    #planning_interface
+    trajectory_io
+    boilerplate
 )
 
 ###########
@@ -54,15 +57,15 @@ include_directories(SYSTEM
 )
 
 # Manipulation Data Library
-add_library(manipulation_data
-  src/manipulation_data.cpp
-)
-target_link_libraries(manipulation_data
-  ${catkin_LIBRARIES} 
-  ${Boost_LIBRARIES}
-)
+# add_library(manipulation_data
+#    src/manipulation_data.cpp
+# )
+# target_link_libraries(manipulation_data
+#   ${catkin_LIBRARIES} 
+#   ${Boost_LIBRARIES}
+# )
 
-# Remote_control library
+# remote_control library
 add_library(remote_control
   src/remote_control.cpp
 )
@@ -90,67 +93,37 @@ target_link_libraries(execution_interface
 )
 
 # Planning_interface library
-add_library(planning_interface
-  src/planning_interface.cpp
-)
-add_dependencies(planning_interface moveit_manipulation_generate_messages_cpp)
-target_link_libraries(planning_interface
-  manipulation_data
-  execution_interface
-  remote_control  
-  fix_state_bounds
-  ${catkin_LIBRARIES} 
-  ${Boost_LIBRARIES}
-)
+# add_library(planning_interface
+#   src/planning_interface.cpp
+# )
+# add_dependencies(planning_interface moveit_boilerplate_generate_messages_cpp)
+# target_link_libraries(planning_interface
+#   manipulation_data
+#   execution_interface
+#   remote_control  
+#   fix_state_bounds
+#   ${catkin_LIBRARIES} 
+#   ${Boost_LIBRARIES}
+# )
 
 # trajectory input/output
 add_library(trajectory_io
   src/trajectory_io.cpp
 )
 target_link_libraries(trajectory_io
-  planning_interface
   ${catkin_LIBRARIES} 
   ${Boost_LIBRARIES}
 )
 
 # Reusable class for MoveIt!
-add_library(moveit_boilerplate
-  src/moveit_boilerplate.cpp
+add_library(boilerplate
+  src/boilerplate.cpp
 )
-target_link_libraries(moveit_boilerplate
+target_link_libraries(boilerplate
+  remote_control
+  execution_interface
   trajectory_io
-  planning_interface
   gflags
   ${catkin_LIBRARIES} 
   ${Boost_LIBRARIES}
-)
-
-# Teleop-specific functionality
-add_library(teleoperation
-  src/behaviors/teleoperation.cpp
-)
-target_link_libraries(teleoperation  
-  moveit_boilerplate
-  ${catkin_LIBRARIES} 
-  ${Boost_LIBRARIES}
-)
-
-# Teleop-specific functionality
-add_library(arm_testing
-  src/behaviors/arm_testing.cpp
-)
-target_link_libraries(arm_testing  
-  moveit_boilerplate
-  ${catkin_LIBRARIES} 
-  ${Boost_LIBRARIES}
-)
-
-## Declare a C++ executable
-add_executable(teleoperation_main src/behaviors/teleoperation_main.cpp)
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(teleoperation_main
-  teleoperation
-  gflags
-  ${catkin_LIBRARIES}
 )
