@@ -215,26 +215,27 @@ bool RemoteControl::waitForNextFullStep(const std::string& caption)
 void RemoteControl::initializeInteractiveMarkers(const geometry_msgs::Pose& pose)
 {
   // Server
-  imarker_server_.reset(
-      new interactive_markers::InteractiveMarkerServer("basic_controls", "", false));
+  imarker_server_.reset(new interactive_markers::InteractiveMarkerServer("basic_controls", "", false));
 
   // Menu
   menu_handler_.insert("Reset", boost::bind(&RemoteControl::processFeedback, this, _1));
-  menu_handler_.insert("Save Pose", boost::bind(&RemoteControl::processFeedback, this, _1));
-  //menu_handler_.insert("Set Goal", boost::bind(&RemoteControl::processFeedback, this, _1));
-  //menu_handler_.insert("Cartesian Plan", boost::bind(&RemoteControl::processFeedback, this, _1));
-  // interactive_markers::MenuHandler::EntryHandle sub_menu_handle =
-  // menu_handler_.insert("Submenu");
-  // menu_handler_.insert(sub_menu_handle, "First Entry",
-  //                      boost::bind(&RemoteControl::processFeedback, this, _1));
+  interactive_markers::MenuHandler::EntryHandle sub_menu_handle = menu_handler_.insert("Playback");
+  menu_handler_.insert(sub_menu_handle, "Add Pose",
+                       boost::bind(&RemoteControl::processFeedback, this, _1));
+  menu_handler_.insert(sub_menu_handle, "Play Trajectory",
+                       boost::bind(&RemoteControl::processFeedback, this, _1));
+  menu_handler_.insert(sub_menu_handle, "Stop Trajectory",
+                       boost::bind(&RemoteControl::processFeedback, this, _1));
+  menu_handler_.insert(sub_menu_handle, "Clear Trajectory",
+                       boost::bind(&RemoteControl::processFeedback, this, _1));
 
-  // Marker
+  // marker
   make6DofMarker(pose);
 
   imarker_server_->applyChanges();
 }
 
-void RemoteControl::make6DofMarker(const geometry_msgs::Pose& pose)                                   
+void RemoteControl::make6DofMarker(const geometry_msgs::Pose& pose)
 {
   using namespace visualization_msgs;
 
@@ -313,11 +314,11 @@ RemoteControl::makeBoxControl(visualization_msgs::InteractiveMarker& msg)
   return msg.controls.back();
 }
 
-void RemoteControl::processFeedback(
-				    const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback)
+void RemoteControl::processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback)
 {
   using namespace visualization_msgs;
 
+  // Only allow one feedback to be processed at a time
   {
     boost::unique_lock<boost::mutex> scoped_lock(interactive_mutex_);
     if (!teleoperation_ready_)
@@ -327,11 +328,10 @@ void RemoteControl::processFeedback(
     teleoperation_ready_ = false;
   }
 
-  // Redirect
+  // Redirect to base class
   imarker_callback_(feedback);
 
-  //imarker_server_->applyChanges();
-
+  // Allow next feedback to be processed
   {
     boost::unique_lock<boost::mutex> scoped_lock(interactive_mutex_);
     teleoperation_ready_ = true;
@@ -340,9 +340,10 @@ void RemoteControl::processFeedback(
 
 void RemoteControl::updateMarkerPose(const geometry_msgs::Pose& pose)
 {
-  std::cout << "UPDATE pose \n" << pose << std::endl;
-  std::cout << "name: " << int_marker_.name << std::endl;
+  // std::cout << "UPDATE imarker pose \n" << pose << std::endl;
+  // std::cout << "name: " << int_marker_.name << std::endl;
   imarker_server_->setPose(int_marker_.name, pose);
+  imarker_server_->applyChanges();
 }
 
 }  // end namespace

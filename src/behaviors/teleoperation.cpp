@@ -7,12 +7,25 @@
 
 // moveit_manipulation
 #include <moveit_manipulation/behaviors/teleoperation.h>
+#include <moveit_manipulation/trajectory_io.h>
 
 // Parameter loading
 #include <ros_param_shortcuts/ros_param_shortcuts.h>
 
 // MoveIt
 #include <moveit/robot_state/conversions.h>
+
+// Boost
+#include <boost/lexical_cast.hpp>
+
+// Conversions
+#include <tf_conversions/tf_eigen.h>
+#include <eigen_conversions/eigen_msg.h>
+
+// Command line arguments
+#include <gflags/gflags.h>
+
+DEFINE_bool(play_traj, false, "Playback saved trajectory");
 
 namespace moveit_manipulation
 {
@@ -34,11 +47,15 @@ Teleoperation::Teleoperation() : MoveItBoilerplate()
   getDoubleParam(parent_name, teleop_nh, "ik_cart_jump_threshold", ik_cart_jump_threshold_);
   getDoubleParam(parent_name, teleop_nh, "vel_scaling_factor", vel_scaling_factor_);
   getDoubleParam(parent_name, teleop_nh, "visualization_rate", visualization_rate_);
-  getDurationParam(parent_name, teleop_nh, "execution_delay", execution_delay_);
+  getDurationParam(parent_name, teleop_nh, "execution_throttle", execution_throttle_);
+  getStringParam(parent_name, teleop_nh, "waypoints_file", waypoints_file_);
   getBoolParam(parent_name, teleop_nh, "debug/ik_rate", debug_ik_rate_);
   getBoolParam(parent_name, teleop_nh, "debug/command_rate", debug_command_rate_);
   getBoolParam(parent_name, teleop_nh, "debug/generated_traj_rate", debug_generated_traj_rate_);
 
+  // Load trajectory IO class
+  trajectory_io_.reset(new TrajectoryIO(remote_control_, config_, planning_interface_, visual_tools_));
+  
   // Create consistency limits for IK solving. Pre-build this vector for improved speed
   // This specifies the desired distance between the solution and the seed state
   if (ik_consistency_limit_)
@@ -102,6 +119,12 @@ Teleoperation::Teleoperation() : MoveItBoilerplate()
   // Create threads for IK solving and commanding joints
   //ik_thread_ = std::thread(&Teleoperation::solveIKThread, this);
   //command_joints_thread_ = std::thread(&Teleoperation::commandJointsThread, this);
+
+  // Does user want to run recorded trajectory?
+  if (FLAGS_play_traj)
+  {
+    playbackTrajectory();
+  }
 }
 
 Teleoperation::~Teleoperation()
@@ -309,8 +332,8 @@ void Teleoperation::commandJointsThreadHelper()
   // Fix message 'Dropping first 1 trajectory point(s) out of 35, as they occur before the current time.' from ros_control
   bool use_first_waypoint_offset = false; // prevent first waypoint from being skipped
   trajectory_msgs::JointTrajectory &traj = trajectory_msg_.joint_trajectory;
-  if (traj.points.size() > 1)
-    ROS_INFO_STREAM_NAMED("temp","second point (point 1) is at time offset " << traj.points[1].time_from_start.toSec());
+  //  if (traj.points.size() > 1)
+  //ROS_INFO_STREAM_NAMED("temp","second point (point 1) is at time offset " << traj.points[1].time_from_start.toSec());
   if (use_first_waypoint_offset)
   {
     static const ros::Duration SLIGHT_TIME_OFFSET(0.00000001);
@@ -484,13 +507,55 @@ bool Teleoperation::convertRobotStatesToTrajectory(
 void Teleoperation::visualizationThread(const ros::TimerEvent& e)
 {
   // Check if there is anything to visualize
-  if (!has_state_to_visualize_)
+  if (has_state_to_visualize_)
+  {
+    has_state_to_visualize_ = false;
+
+    visual_tools_->publishRobotState(visualize_goal_state_, rvt::BLUE);
+    planning_interface_->getVisualStartState()->publishRobotState(start_planning_state_, rvt::GREEN);
+  }
+
+  // Test pose functionality
+  if (play_test_pose_ && start_next_test_pose_ < ros::Time::now())
+  {
+    // Check that we have test poses
+    if (trajectory_io_->getWaypoints().empty())
+    {
+      ROS_ERROR_STREAM_NAMED("temp","Failed to play back test trajectory because no poses available");
+      play_test_pose_ = false;
+      return;
+    }
+
+    // Choose next pose ID
+    if (++current_test_pose_ % trajectory_io_->getWaypoints().size() == 0)
+      current_test_pose_ = 0;
+
+    playTrajectoryWaypoint(current_test_pose_);
+
+    // Choose duration for this pose
+    //start_next_test_pose_ = ros::Time::now() + ros::Duration(2); //visual_tools_->dRand(0.01, 5));
+    start_next_test_pose_ = ros::Time::now() + ros::Duration(visual_tools_->dRand(0.01, 5));
+  }
+}
+
+void Teleoperation::playTrajectoryWaypoint(std::size_t point_id)
+{
+  if (point_id > trajectory_io_->getWaypoints().size() - 1)
+  {
+    ROS_ERROR_STREAM_NAMED("temp","Invalid waypoint id " << point_id);
+    play_test_pose_ = false;
     return;
+  }
 
-  has_state_to_visualize_ = false;
+  // Convert
+  geometry_msgs::Pose pose_msg;
+  tf::poseEigenToMsg(trajectory_io_->getWaypoints()[point_id], pose_msg);
 
-  visual_tools_->publishRobotState(visualize_goal_state_, rvt::BLUE);
-  planning_interface_->getVisualStartState()->publishRobotState(start_planning_state_, rvt::GREEN);  
+  // Move imarker
+  remote_control_->updateMarkerPose(pose_msg);
+
+  // Send next pose        
+  setNextGoalPose(trajectory_io_->getWaypoints()[point_id]);
 }
 
 geometry_msgs::Pose Teleoperation::chooseNewIMarkerPose()
@@ -505,13 +570,19 @@ geometry_msgs::Pose Teleoperation::chooseNewIMarkerPose()
   // Move marker to tip of fingers
   imarker_start_pose = imarker_start_pose * ee_offset_.inverse();
 
-  return visual_tools_->convertPose(imarker_start_pose);  // Not thread safe!
+  geometry_msgs::Pose pose;
+  tf::poseEigenToMsg(imarker_start_pose, pose);
+  return pose;
 }
 
 void Teleoperation::processIMarkerPose(
                                        const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback)
 {
   using namespace visualization_msgs;
+
+  Eigen::Affine3d feedback_pose;
+  tf::poseMsgToEigen(feedback->pose, feedback_pose);
+  offsetEEPose(feedback_pose);
 
   switch (feedback->event_type)
   {
@@ -527,30 +598,34 @@ void Teleoperation::processIMarkerPose(
           // User has requested to reset location of interactive marker
           remote_control_->updateMarkerPose(chooseNewIMarkerPose());
           break;
-        case 2:  // Save Pose
-          ROS_INFO_STREAM_NAMED("teleoperation", "Saving Pose");
 
-          Eigen::Affine3d pose = offsetEEPose(feedback->pose);
-          visual_tools_->publishZArrow(pose, rvt::GREEN);
+        case 3:
+          ROS_INFO_STREAM_NAMED("teleoperation", "Adding Pose");
 
-          // // Save start state // TODO thread safety?
-
-          // // Show Robot State
-          // planning_interface_->getVisualStartState()->publishRobotState(start_planning_state_,
-          // rvt::GREEN);
-
-          std::vector<double> xyzrpy;
-          visual_tools_->convertToXYZRPY(pose, xyzrpy);
-          std::cout << "pose: [" 
-                    << xyzrpy[0] << ", "
-                    << xyzrpy[1] << ", "
-                    << xyzrpy[2] << ", "
-                    << xyzrpy[3] << ", "
-                    << xyzrpy[4] << ", "
-                    << xyzrpy[5] << "]"
-                    << std::endl;
-
+          // Add a new point then save the entire trajectory to file
+          trajectory_io_->addWaypoint(feedback_pose);
+          trajectory_io_->saveWaypointsToFile(waypoints_file_);
           break;
+
+        case 4: // Playing back trajectory
+          
+          playbackTrajectory();
+          break;
+
+        case 5: 
+          ROS_INFO_STREAM_NAMED("teleoperation", "Stopping trajectory");
+
+          play_test_pose_ = false;
+          break;
+
+        case 6: 
+          ROS_INFO_STREAM_NAMED("teleoperation", "Clearing trajectory");
+          
+          // Remove all points then save empty file
+          trajectory_io_->clearWaypoints();
+          trajectory_io_->saveWaypointsToFile(waypoints_file_);
+          break;
+
         default:
           ROS_WARN_STREAM_NAMED("teleoperation", "Unknown menu id");
       }
@@ -563,19 +638,59 @@ void Teleoperation::processIMarkerPose(
       // --------------------------------------------------------------------------
     case InteractiveMarkerFeedback::POSE_UPDATE:
 
-      // Get write mutex lock
-      {
-        boost::lock_guard<boost::shared_mutex> lock(desired_ee_pose_mutex_);
-        desired_ee_pose_ = offsetEEPose(feedback->pose);
-      }
-
-      // Mark pose as ready for ik solving
-      has_pose_to_ik_solve_ = true;
+      setNextGoalPose(feedback_pose);
       break;
 
     case InteractiveMarkerFeedback::MOUSE_UP:
       break;
   }
+}
+
+void Teleoperation::playbackTrajectory()
+{  
+  ROS_INFO_STREAM_NAMED("teleoperation", "Playing back trajectory");
+
+  // Load waypoints from file if none exist
+  if (trajectory_io_->getWaypoints().empty())
+  {
+    trajectory_io_->loadWaypointsFromFile(waypoints_file_);
+
+    // Debug show all poses
+    for (std::size_t i = 0; i < trajectory_io_->getWaypoints().size(); ++i)
+    {
+      visual_tools_->publishZArrow(trajectory_io_->getWaypoints()[i], rvt::RED);
+      ros::Duration(0.01).sleep();
+    }
+  }
+
+  // Check that we have test poses
+  if (trajectory_io_->getWaypoints().empty())
+  {
+    ROS_ERROR_STREAM_NAMED("temp","No waypoints loaded, unable to playback trajectory");
+    return;
+  }
+
+  // Initialize robot arm with first waypoint
+  current_test_pose_ = 0;
+  playTrajectoryWaypoint(current_test_pose_);
+  ROS_INFO_STREAM_NAMED("temp","Sleeping while moving to first waypoint");
+  ros::Duration(4.0).sleep();
+
+  // Start randomly playing point
+  play_test_pose_ = true;
+  start_next_test_pose_ = ros::Time::now();
+}
+
+void Teleoperation::setNextGoalPose(const Eigen::Affine3d& pose)
+{
+  // Get write mutex lock
+  {
+    boost::lock_guard<boost::shared_mutex> lock(desired_ee_pose_mutex_);
+    desired_ee_pose_ = pose;
+  }
+
+  // Mark pose as ready for ik solving
+  has_pose_to_ik_solve_ = true;
 }
 
 void Teleoperation::stateCB(const ControllerState::ConstPtr& state)
@@ -629,7 +744,7 @@ void Teleoperation::stateCBHelper()
   // Throttle how many to process
   static std::size_t count = 0;
   count++;
-  if (count % std::size_t(execution_delay_.toSec()) == 0)
+  if (count % std::size_t(execution_throttle_.toSec()) == 0)
   {
     // Send trajectory for execution
     commandJointsThreadHelper();
@@ -715,13 +830,10 @@ void Teleoperation::getDesiredState(moveit::core::RobotStatePtr& robot_state)
 
 }
 
-Eigen::Affine3d Teleoperation::offsetEEPose(const geometry_msgs::Pose& pose) const
+void Teleoperation::offsetEEPose(Eigen::Affine3d &marker_pose) const
 {
-  // TODO convertPose is not thread safe
-  Eigen::Affine3d marker_pose = visual_tools_->convertPose(pose);
-
   // Offset ee pose forward, because interactive marker is a special thing in front of hand
-  return marker_pose * ee_offset_;
+  marker_pose = marker_pose * ee_offset_;
 }
 
 bool Teleoperation::posesEqual(const Eigen::Affine3d& pose1, const Eigen::Affine3d& pose2)

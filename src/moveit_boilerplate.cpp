@@ -104,9 +104,6 @@ MoveItBoilerplate::MoveItBoilerplate()
   planning_interface_.reset(new PlanningInterface(planning_scene_monitor_, config_,
                                        grasp_datas_, remote_control_, FLAGS_fake_execution));
 
-  // Load trajectory IO class
-  //trajectory_io_.reset(new TrajectoryIO(remote_control_, config_, planning_interface_, visual_tools_));
-
   // Show interactive marker
   //setupInteractiveMarker();
 

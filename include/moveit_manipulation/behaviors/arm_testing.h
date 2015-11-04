@@ -42,6 +42,7 @@
 
 // MoveItManipulation
 #include <moveit_manipulation/moveit_boilerplate.h>
+#include <moveit_manipulation/trajectory_io.h>
 
 namespace moveit_manipulation
 {
@@ -160,6 +161,11 @@ public:
 
   /** \brief Allow interactive markers to control robot */
   void enableTeleoperation();
+
+private:
+
+  // Allow loading and saving trajectories to file
+  TrajectoryIOPtr trajectory_io_;
 
 };  // end class
 

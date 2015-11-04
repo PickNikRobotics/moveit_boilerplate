@@ -91,6 +91,8 @@
 namespace moveit_manipulation
 {
 
+MOVEIT_CLASS_FORWARD(TrajectoryIO);
+
 typedef control_msgs::JointTrajectoryControllerState ControllerState;
 
 class Teleoperation : public moveit_manipulation::MoveItBoilerplate
@@ -130,6 +132,9 @@ public:
   /** \brief Publish the robot state to Rviz in a separate thread */
   void visualizationThread(const ros::TimerEvent& e);
 
+  /** \brief Move to the specified waypoint in the trajectory */
+  void playTrajectoryWaypoint(std::size_t point_id);
+
   /** \brief Helper to get the current robot state's ee pose */
   geometry_msgs::Pose chooseNewIMarkerPose();
 
@@ -141,6 +146,12 @@ public:
    */
   void processIMarkerPose(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
 
+  /** \brief Start the playback of saved from file waypoint trajectories */
+  void playbackTrajectory();
+
+  /** \brief Use a mutex to alert the processing thread a new goal pose is available */
+  void setNextGoalPose(const Eigen::Affine3d& pose);
+
   /** \brief Callback from ROS message */
   void stateCB(const ControllerState::ConstPtr& state);
   void stateCBHelper();
@@ -149,7 +160,7 @@ public:
   void getDesiredState(moveit::core::RobotStatePtr& robot_state);
 
   /** \brief Helper transform function */
-  Eigen::Affine3d offsetEEPose(const geometry_msgs::Pose& pose) const;
+  void offsetEEPose(Eigen::Affine3d& pose) const;
 
   /** \brief Compare two Eigen poses */
   bool posesEqual(const Eigen::Affine3d& pose1, const Eigen::Affine3d& pose2);
@@ -224,7 +235,7 @@ private:
   boost::shared_mutex trajectory_msg_mutex_;
 
   ros::Time trajectory_msg_timestamp_;  // when the last trajectory message was sent
-  ros::Duration execution_delay_;       // Tuneable parameter for how long it takes to execute a
+  ros::Duration execution_throttle_;       // Tuneable parameter for how long it takes to execute a
                                         // trajectory onto hardware
 
   // Stats
@@ -237,6 +248,15 @@ private:
 
   // State to visualize in Rviz, also the current goal state
   moveit::core::RobotStatePtr visualize_goal_state_;
+
+  // Trajectory Playback -------------------------------------------
+  std::string waypoints_file_;
+  std::size_t current_test_pose_;
+  ros::Time start_next_test_pose_;
+  bool play_test_pose_ = false;
+
+  // Allow loading and saving trajectories to file
+  TrajectoryIOPtr trajectory_io_;
 
 };  // end class
 

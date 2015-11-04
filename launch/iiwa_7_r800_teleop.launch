@@ -19,6 +19,7 @@
   <arg name="id" default="0" />
   <arg name="fake_execution" default="0"/>
   <arg name="pose" default=""/>
+  <arg name="play_traj" default="false"/>
 
   <!-- Planning Functionality -->
   <include ns="moveit_manipulation" file="$(find iiwa_7_r800_moveit_config)/launch/planning_pipeline.launch.xml">
@@ -37,8 +38,9 @@
   <!-- Main process -->
   <node name="moveit_manipulation" pkg="moveit_manipulation" type="teleoperation_main" respawn="false" 
 	launch-prefix="$(arg launch_prefix)" output="screen"
-	args="--mode $(arg mode) --full_auto=$(arg full_auto) --auto_step=$(arg auto_step)
-	      --id $(arg id) --fake_execution $(arg fake_execution) --pose $(arg pose)">	      
+	args="-play_traj=$(arg play_traj) --mode $(arg mode) --full_auto=$(arg full_auto) --auto_step=$(arg auto_step)
+	      --id $(arg id) --fake_execution $(arg fake_execution) --pose $(arg pose)">
+	      
 
     <!-- Robot-specific settings -->
     <rosparam command="load" file="$(find moveit_manipulation)/config/picknik_iiwa_7_r800.yaml"/>

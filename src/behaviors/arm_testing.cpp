@@ -48,6 +48,9 @@ namespace moveit_manipulation
 ArmTesting::ArmTesting()
   : ArmTesting()
 {
+  // Load trajectory IO class
+  trajectory_io_.reset(new TrajectoryIO(remote_control_, config_, planning_interface_, visual_tools_));
+
   ROS_INFO_STREAM_NAMED("arm_testing", "ArmTesting Ready.");
 }
 

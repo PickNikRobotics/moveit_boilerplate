@@ -34,8 +34,11 @@
 
 /* Author: Dave Coleman <dave@dav.ee>
    Desc:   Loads from and saves to file trajectories in joint states and EE poses
+           There are essentially two modes to this class, saving entire joint states
+           or saving ee poses.
 */
 
+// MoveItManipuation
 #include <moveit_manipulation/trajectory_io.h>
 
 // basic file operations
@@ -139,79 +142,6 @@ bool TrajectoryIO::playbackTrajectoryFromFile(const std::string& file_name,
   return true;
 }
 
-bool TrajectoryIO::playbackWaypointsFromFile(const std::string& file_name, JointModelGroup* arm_jmg,
-                                             double velocity_scaling_factor)
-{
-  std::ifstream input_file;
-  std::string line;
-  input_file.open(file_name.c_str());
-  ROS_DEBUG_STREAM_NAMED("manipultion", "Loading waypoints from file " << file_name);
-
-  // Create desired trajectory
-  EigenSTL::vector_Affine3d waypoints;
-
-  // Read each line
-  while (std::getline(input_file, line))
-  {
-    // Convert line to a robot state
-    Eigen::Affine3d pose;
-    streamToAffine3d(pose, line, " ");
-
-    // Convert pose that has x arrow pointing to object, to pose that has z arrow pointing towards
-    // object and x out in the grasp dir
-    pose = pose * Eigen::AngleAxisd(-M_PI / 2.0, Eigen::Vector3d::UnitZ());
-
-    Eigen::Affine3d transform =
-        rvt::RvizVisualTools::convertXYZRPY(0.15, -0.01, 0, 0, 0, 0);  // from testPose()
-    pose = transform * pose;
-
-    // Debug
-    // visual_tools_->publishZArrow(new_point, rvt::RED);
-
-    // Translate to custom end effector geometry
-    // Eigen::Affine3d grasp_pose = new_point * grasp_datas_[arm_jmg]->grasp_pose_to_eef_pose_;
-
-    waypoints.push_back(pose);
-  }
-
-  // Close file
-  input_file.close();
-
-  // Error check
-  if (waypoints.empty())
-  {
-    ROS_ERROR_STREAM_NAMED("trajectory_io", "No waypoints loaded from CSV file " << file_name);
-    return false;
-  }
-
-  // Visualize
-  if (true)
-  {
-    visual_tools_->enableBatchPublishing(true);
-    for (std::size_t i = 0; i < waypoints.size(); ++i)
-    {
-      // printTransform(waypoints[i]);
-
-      // visual_tools_->publishAxis(waypoints[i]);
-      // visual_tools_->publishZArrow(waypoints[i]);
-      visual_tools_->publishSphere(waypoints[i]);
-    }
-    visual_tools_->triggerBatchPublishAndDisable();
-  }
-
-  // Plan and move
-  // TODO restore this function
-  ROS_WARN_STREAM_NAMED("temp","Currently function for execution has been removed!");
-  return false;
-  // if (!planning_interface_->moveCartesianWaypointPath(arm_jmg, waypoints))
-  // {
-  //   ROS_ERROR_STREAM_NAMED("trajectory_io", "Error executing path");
-  //   return false;
-  // }
-
-  return true;
-}
-
 bool TrajectoryIO::recordTrajectoryToFile(const std::string& file_path)
 {
   bool include_header = false;
@@ -246,6 +176,78 @@ bool TrajectoryIO::recordTrajectoryToFile(const std::string& file_path)
   return true;
 }
 
+bool TrajectoryIO::loadWaypointsFromFile(const std::string& file_name)
+{
+  std::ifstream input_file;
+  std::string line;
+  input_file.open(file_name.c_str());
+  ROS_DEBUG_STREAM_NAMED("trajectory_io", "Loading waypoints from file " << file_name);
+
+  // Read each line
+  while (std::getline(input_file, line))
+  {
+    // Convert line to a robot state
+    Eigen::Affine3d pose;
+    streamToAffine3d(pose, line);
+
+    // Debug
+    visual_tools_->publishZArrow(pose, rvt::RED);
+
+    waypoints_trajectory_.push_back(pose);
+  }
+
+  // Close file
+  input_file.close();
+
+  // Error check
+  if (waypoints_trajectory_.empty())
+  {
+    ROS_ERROR_STREAM_NAMED("trajectory_io", "No waypoints loaded from CSV file " << file_name);
+    return false;
+  }
+
+  return true;
+}
+
+void TrajectoryIO::addWaypoint(const Eigen::Affine3d& pose)
+{
+  // Debug
+  visual_tools_->publishZArrow(pose, rvt::GREEN);
+
+  waypoints_trajectory_.push_back(pose);
+}
+
+void TrajectoryIO::clearWaypoints()
+{
+  waypoints_trajectory_.clear();
+}
+
+bool TrajectoryIO::saveWaypointsToFile(const std::string& file_path)
+{
+  if (waypoints_trajectory_.empty())
+    ROS_WARN_STREAM_NAMED("trajectory_io","Saving empty waypoint trajectory");
+
+  std::ofstream output_file;
+  output_file.open(file_path.c_str());
+  ROS_DEBUG_STREAM_NAMED("trajectory_io", "Saving waypoints trajectory to file " << file_path);
+
+  std::vector<double> xyzrpy;
+  for (std::size_t i = 0; i < waypoints_trajectory_.size(); ++i)
+  {
+    visual_tools_->convertToXYZRPY(waypoints_trajectory_[i], xyzrpy);
+    output_file << xyzrpy[0] << ", "
+                << xyzrpy[1] << ", "
+                << xyzrpy[2] << ", "
+                << xyzrpy[3] << ", "
+                << xyzrpy[4] << ", "
+                << xyzrpy[5]
+                << std::endl;
+  }
+    
+  output_file.close();
+  return true;
+}
+
 bool TrajectoryIO::getFilePath(std::string& file_path, const std::string& file_name) const
 {
   namespace fs = boost::filesystem;
@@ -272,38 +274,28 @@ bool TrajectoryIO::getFilePath(std::string& file_path, const std::string& file_n
   return true;
 }
 
-bool TrajectoryIO::streamToAffine3d(Eigen::Affine3d& pose, const std::string& line,
-                                    const std::string& separator)
+bool TrajectoryIO::streamToAffine3d(Eigen::Affine3d& pose, const std::string& line)
 {
   std::stringstream line_stream(line);
   std::string cell;
-  std::vector<double> values;
-  values.resize(16);
+  std::vector<double> transform6;
+  transform6.resize(6);
 
   // For each item/column
-  for (std::size_t i = 0; i < values.size(); ++i)
+  for (std::size_t i = 0; i < transform6.size(); ++i)
   {
     // Get a variable
-    if (!std::getline(line_stream, cell, ','))  // separator.c_str())) TODO
+    if (!std::getline(line_stream, cell, ','))
     {
       ROS_ERROR_STREAM_NAMED("trajectory_io", "Missing variable " << i << " on cell '" << cell
                                                                   << "' line '" << line << "'");
       return false;
     }
 
-    values[i] = atof(cell.c_str());
+    transform6[i] = atof(cell.c_str());
   }
 
-  Eigen::Map<Eigen::Matrix<double, 4, 4, Eigen::RowMajor>> matrix(values.data(), 4, 4);
-
-  // if (false)
-  // {
-  //   std::cout << matrix << std::endl;
-  //   std::cout << "-------------------------------------------------------" << std::endl;
-  // }
-
-  // Eigen::Affine3d dummy;
-  pose.matrix() = matrix;
+  pose = visual_tools_->convertXYZRPY(transform6);
 
   return true;
 }

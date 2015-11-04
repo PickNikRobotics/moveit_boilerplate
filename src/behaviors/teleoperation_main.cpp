@@ -41,6 +41,8 @@
 
 // Command line arguments
 #include <gflags/gflags.h>
+
+// MoveItManipuation
 #include <moveit_manipulation/behaviors/teleoperation.h>
 
 // ROS

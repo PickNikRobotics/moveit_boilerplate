@@ -42,7 +42,6 @@
 // MoveItManipulation
 #include <moveit_manipulation/namespaces.h>
 #include <moveit_manipulation/planning_interface.h>
-#include <moveit_manipulation/trajectory_io.h>
 #include <moveit_manipulation/manipulation_data.h>
 #include <moveit_manipulation/remote_control.h>
 #include <moveit_manipulation/remote_control.h>
@@ -127,9 +126,6 @@ protected:
 
   // Robot-specific data for generating grasps
   moveit_grasps::GraspDatas grasp_datas_;
-
-  // Allow loading and saving trajectories to file
-  TrajectoryIOPtr trajectory_io_;
 
 };  // end class
 
