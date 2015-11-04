@@ -33,25 +33,25 @@ Teleoperation::Teleoperation() : MoveItBoilerplate()
 {
   // Load rosparams
   const std::string parent_name = "teleoperation";  // for namespacing logging messages
-  ros::NodeHandle teleop_nh("~/teleoperation");
+  ros::NodeHandle rosparam_nh("~/teleoperation");
   using namespace ros_param_shortcuts;
   double command_freq;
   double compute_ik_freq;
-  getAffine3dParam(parent_name, teleop_nh, "ee_offset", ee_offset_);
-  getDoubleParam(parent_name, teleop_nh, "compute_ik_freq", compute_ik_freq);                     
-  getDoubleParam(parent_name, teleop_nh, "command_freq", command_freq);                     
-  getDoubleParam(parent_name, teleop_nh, "ik_consistency_limit", ik_consistency_limit_);
-  getDoubleParam(parent_name, teleop_nh, "ik_timeout", ik_timeout_);
-  getDoubleParam(parent_name, teleop_nh, "ik_attempts", ik_attempts_);
-  getDoubleParam(parent_name, teleop_nh, "ik_cart_max_step", ik_cart_max_step_);
-  getDoubleParam(parent_name, teleop_nh, "ik_cart_jump_threshold", ik_cart_jump_threshold_);
-  getDoubleParam(parent_name, teleop_nh, "vel_scaling_factor", vel_scaling_factor_);
-  getDoubleParam(parent_name, teleop_nh, "visualization_rate", visualization_rate_);
-  getDurationParam(parent_name, teleop_nh, "execution_throttle", execution_throttle_);
-  getStringParam(parent_name, teleop_nh, "waypoints_file", waypoints_file_);
-  getBoolParam(parent_name, teleop_nh, "debug/ik_rate", debug_ik_rate_);
-  getBoolParam(parent_name, teleop_nh, "debug/command_rate", debug_command_rate_);
-  getBoolParam(parent_name, teleop_nh, "debug/generated_traj_rate", debug_generated_traj_rate_);
+  getAffine3dParam(parent_name, rosparam_nh, "ee_offset", ee_offset_);
+  getDoubleParam(parent_name, rosparam_nh, "compute_ik_freq", compute_ik_freq);                     
+  getDoubleParam(parent_name, rosparam_nh, "command_freq", command_freq);                     
+  getDoubleParam(parent_name, rosparam_nh, "ik_consistency_limit", ik_consistency_limit_);
+  getDoubleParam(parent_name, rosparam_nh, "ik_timeout", ik_timeout_);
+  getDoubleParam(parent_name, rosparam_nh, "ik_attempts", ik_attempts_);
+  getDoubleParam(parent_name, rosparam_nh, "ik_cart_max_step", ik_cart_max_step_);
+  getDoubleParam(parent_name, rosparam_nh, "ik_cart_jump_threshold", ik_cart_jump_threshold_);
+  getDoubleParam(parent_name, rosparam_nh, "vel_scaling_factor", vel_scaling_factor_);
+  getDoubleParam(parent_name, rosparam_nh, "visualization_rate", visualization_rate_);
+  getDurationParam(parent_name, rosparam_nh, "execution_throttle", execution_throttle_);
+  getStringParam(parent_name, rosparam_nh, "waypoints_file", waypoints_file_);
+  getBoolParam(parent_name, rosparam_nh, "debug/ik_rate", debug_ik_rate_);
+  getBoolParam(parent_name, rosparam_nh, "debug/command_rate", debug_command_rate_);
+  getBoolParam(parent_name, rosparam_nh, "debug/generated_traj_rate", debug_generated_traj_rate_);
 
   // Load trajectory IO class
   trajectory_io_.reset(new TrajectoryIO(remote_control_, config_, planning_interface_, visual_tools_));
@@ -345,8 +345,11 @@ void Teleoperation::commandJointsThreadHelper()
     traj.points.erase(traj.points.begin()); // remove first element
   }
 
+  
+  trajectory_msg_.joint_trajectory.header.stamp = controller_state2_->header.stamp;
 
-  trajectory_msg_.joint_trajectory.header.stamp = controller_state2_->header.stamp; //ros::Time::now();
+  // DEBUG - measure latency
+  trajectory_msg_.joint_trajectory.header.stamp = ros::Time::now();
 
   // Debug
   //std::cout << "Sending commanded trajectory: \n" << trajectory_msg_ << std::endl;
@@ -400,8 +403,8 @@ bool Teleoperation::computeCartWaypointPath(const moveit::core::RobotStatePtr st
 
     // Collision check
     /*
-      boost::scoped_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls;
-      ls.reset(new planning_scene_monitor::LockedPlanningSceneRO(planning_scene_monitor_));
+      boost::scoped_ptr<psm::LockedPlanningSceneRO> ls;
+      ls.reset(new psm::LockedPlanningSceneRO(planning_scene_monitor_));
       moveit::core::GroupStateValidityCallbackFn constraint_fn = boost::bind(
       &isStateValid, static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get(),
       collision_checking_verbose, only_check_self_collision, visual_tools_, _1, _2, _3);

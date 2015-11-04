@@ -38,6 +38,15 @@ test:
   # During development it is nice to have ability to tweak a value
   test_pose: [0.0, 0.0, -0.2, 0, 0, 0] # x,y,z,r,p,y
   
+# Execution Interface --------------------
+execution_interface:
+  cartesian_command_topic: /iiwa_7_r800/position_trajectory_controller/command
+  joint_trajectory_topic: /execution_interface/cartesian_command
+  save_to_file: false
+  visualize_trajectory_line: false
+  visualize_trajectory_path: false
+  check_for_waypoint_jumps: false
+
 # Teleoperation --------------------------
 teleoperation:
   compute_ik_freq: 10 # hz, how often to compute a new cartesian path using IK

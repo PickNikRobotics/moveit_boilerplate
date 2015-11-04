@@ -50,6 +50,9 @@ namespace rviz_visual_tools
 namespace ompl_visual_tools
 {
 }
+namespace planning_scene_monitor
+{
+}
 namespace moveit
 {
 namespace core
@@ -62,6 +65,7 @@ class JointModelGroup;
 namespace mvt = moveit_visual_tools;
 namespace rvt = rviz_visual_tools;
 namespace ovt = ompl_visual_tools;
+namespace psm = planning_scene_monitor;
 
 typedef const moveit::core::JointModelGroup JointModelGroup;
 

@@ -75,7 +75,7 @@ public:
   /**
    * \brief Constructor
    */
-  PlanningInterface(planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor,               
+  PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor,               
                ManipulationDataPtr config, moveit_grasps::GraspDatas grasp_datas,
                RemoteControlPtr remote_control, bool fake_execution);
 
@@ -287,7 +287,7 @@ public:
   bool openEE(bool open, JointModelGroup* arm_jmg);
 
   /**
-   * \brief Set the joint values of the finger joints - TODO - this is very Jaco-specific
+   * \brief Set the joint values of the finger joints - TODO - this is very robot-specific
    * \param joint_position
    * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
    * \return true on sucess
@@ -459,7 +459,7 @@ protected:
   mvt::MoveItVisualToolsPtr visual_goal_state_;
 
   // Core MoveIt components
-  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
+  psm::PlanningSceneMonitorPtr planning_scene_monitor_;
   robot_model::RobotModelConstPtr robot_model_;
   planning_pipeline::PlanningPipelinePtr planning_pipeline_;
   planning_interface::PlanningContextPtr planning_context_handle_;

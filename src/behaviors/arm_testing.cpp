@@ -399,7 +399,7 @@ bool ArmTesting::moveToStartPosition(JointModelGroup* arm_jmg, bool check_validi
 
 void ArmTesting::publishCurrentState()
 {
-  planning_scene_monitor::LockedPlanningSceneRO scene(
+  psm::LockedPlanningSceneRO scene(
       planning_scene_monitor_);  // Lock planning scene
   visual_tools_->publishRobotState(scene->getCurrentState(), rvt::PURPLE);
 }

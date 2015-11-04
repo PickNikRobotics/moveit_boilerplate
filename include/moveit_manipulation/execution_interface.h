@@ -43,19 +43,15 @@
 #include <ros/ros.h>
 #include <cartesian_msgs/CartesianCommand.h>
 
-// MoveItManipulation
+// Visual tools
 #include <moveit_visual_tools/moveit_visual_tools.h>
-#include <moveit_manipulation/manipulation_data.h>
+
+// MoveItManipulation
+#include <moveit_manipulation/namespaces.h>
 #include <moveit_manipulation/remote_control.h>
 
 // MoveIt
-#include <moveit_grasps/grasp_data.h>
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
-
-namespace plan_execution
-{
-MOVEIT_CLASS_FORWARD(PlanExecution);
-}
 
 namespace trajectory_execution_manager
 {
@@ -66,18 +62,22 @@ namespace moveit_manipulation
 {
 MOVEIT_CLASS_FORWARD(ExecutionInterface);
 
+enum CommandMode { 
+  JOINT_EXECUTION_MANAGER, // use the default MoveIt! method for sending trajectories using actionlib
+  JOINT_PUBLISHER,         // send trajectories direct to ros_control using ROS messages
+  CARTESIAN_PUBLISHER      // send cartesian poses direclty to your controller using ROS messages
+};
+
+const static std::string PACKAGE_NAME = "moveit_manipulation";
+
 class ExecutionInterface
 {
 public:
   /**
    * \brief Constructor
-   * \param verbose - run in debug mode
    */
   ExecutionInterface(RemoteControlPtr remote_control,
-                     moveit_grasps::GraspDatas grasp_datas,
-                     planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor,
-                     ManipulationDataPtr config, moveit::core::RobotStatePtr current_state,
-                     bool fake_execution);
+                     psm::PlanningSceneMonitorPtr planning_scene_monitor);
 
   /**
    * \brief Execute a desired cartesian end effector pose
@@ -100,6 +100,14 @@ public:
    */
   bool waitForExecution();
 
+  /** \brief Pass through accessor function */
+  trajectory_execution_manager::TrajectoryExecutionManagerPtr getTrajectoryExecutionManager()
+  {
+    return trajectory_execution_manager_;
+  }
+
+private:
+
   /**
    * \brief Ensure that execution manager has been loaded
    * \return true on success
@@ -107,79 +115,58 @@ public:
   bool checkExecutionManager();
 
   /**
-   * \brief Ensure controllers are ready and in correct state
-   * \return true on success
-   */
-  bool loadExecutionManager();
-
-  /**
-   * \brief Turn on unit testingn
-   * \return true on success
-   */
-  bool enableUnitTesting(bool enable = true);
-
-  /**
    * \brief Get the current state of the robot
-   * \return true on success
    */
   moveit::core::RobotStatePtr getCurrentState();
 
   /** \brief Debug tools for visualizing in Rviz */
   void loadVisualTools();
 
-  /** \brief Pass through accessor function */
-  trajectory_execution_manager::TrajectoryExecutionManagerPtr getTrajectoryExecutionManager()
-  {
-    // Ensure that execution manager has been loaded
-    loadExecutionManager();
+  /** \brief Check for potential errors in the trajectory been sent */
+  void checkForWaypointJumpts(const trajectory_msgs::JointTrajectory &trajectory);
 
-    return trajectory_execution_manager_;
-  }
-
-private:
+  /** \brief Check if correct controllers are loaded */
   bool checkTrajectoryController(ros::ServiceClient &service_client,
                                  const std::string &hardware_name, bool has_ee = false);
 
+  /** \brief Save a trajectory that is about to be executed to file, for later debugging */
   bool saveTrajectory(const moveit_msgs::RobotTrajectory &trajectory_msg,
                       const std::string &file_name);
 
-  bool getFilePath(std::string &file_path, const std::string &file_name) const;
-
-  // Show more visual and console output, with general slower run time.
-  bool verbose_;
-
-  RemoteControlPtr remote_control_;
-
-  mvt::MoveItVisualToolsPtr visual_tools_;
- 
-  // Robot-specific data for generating grasps
-  moveit_grasps::GraspDatas grasp_datas_;
-
-  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
-
-  // Robot-sepcific data for the APC
-  ManipulationDataPtr config_;
-
-  // Allocated memory for robot state
-  moveit::core::RobotStatePtr current_state_;
+  /** \brief Get a full file path based on the package's location */
+  bool getFilePath(std::string &file_path, const std::string &file_name);
 
   // A shared node handle
   ros::NodeHandle nh_;
 
+  // Configuration settings
+  CommandMode mode_ = JOINT_PUBLISHER; // how to publish
+  bool save_to_file_ = false;
+  bool visualize_trajectory_line_ = false;
+  bool visualize_trajectory_path_ = false;
+  bool check_for_waypoint_jumps_ = false;
+  std::string package_path_;
+
+  std::size_t trajectory_filename_count_ = 0; // iterate file names
+
+  RemoteControlPtr remote_control_;
+  mvt::MoveItVisualToolsPtr visual_tools_;
+ 
+  psm::PlanningSceneMonitorPtr planning_scene_monitor_;
+
+  // Allocated memory for robot state
+  moveit::core::RobotStatePtr current_state_;
+
   // Trajectory execution
   trajectory_execution_manager::TrajectoryExecutionManagerPtr trajectory_execution_manager_;
 
-  // Check which controllers are loaded
-  ros::ServiceClient zaber_list_controllers_client_;
-  ros::ServiceClient kinova_list_controllers_client_;
+  // Alternative method to sending trajectories than trajectory_execution_manager
+  ros::Publisher joint_trajectory_pub_;
 
+  // Cartesian execution
   cartesian_msgs::CartesianCommand cartesian_command_msg_;
   ros::Publisher cartesian_command_pub_;
 
-  // Unit testing mode - do not actually execute trajectories
-  bool unit_testing_enabled_;
-
-  bool fake_execution_;
 };  // end class
 
 }  // end namespace

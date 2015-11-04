@@ -64,12 +64,6 @@ public:
   MoveItBoilerplate();
 
   /**
-   * \brief Check if all communication is properly active
-   * \return true on success
-   */
-  bool checkSystemReady();
-
-  /**
    * \brief Connect to the MoveIt! planning scene messages
    */
   bool loadPlanningSceneMonitor();
@@ -89,7 +83,7 @@ public:
    */
   moveit::core::RobotStatePtr getCurrentState();
 
-  /*planning_scene_monitor::PlanningSceneMonitorPtr getPlanningSceneMonitor() const
+  /*psm::PlanningSceneMonitorPtr getPlanningSceneMonitor() const
   {
     return planning_scene_monitor_;
   }
@@ -109,7 +103,7 @@ protected:
   robot_model_loader::RobotModelLoaderPtr robot_model_loader_;
   robot_model::RobotModelPtr robot_model_;
   planning_scene::PlanningScenePtr planning_scene_;
-  planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor_;
+  psm::PlanningSceneMonitorPtr planning_scene_monitor_;
 
   // File path to ROS package on drive
   std::string package_name_ = "moveit_manipulation";

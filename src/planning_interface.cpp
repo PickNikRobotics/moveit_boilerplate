@@ -33,7 +33,7 @@
  *********************************************************************/
 
 /* Author: Dave Coleman <dave@dav.ee>
-   Desc:   Helper functions for using the planning and manipulation 
+   Desc:   Helper functions for using the planning and manipulation
            facilities in MoveIt! with better introspection and feedback
            tools
 */
@@ -53,9 +53,10 @@
 
 namespace moveit_manipulation
 {
-PlanningInterface::PlanningInterface(planning_scene_monitor::PlanningSceneMonitorPtr planning_scene_monitor,
-                           ManipulationDataPtr config, moveit_grasps::GraspDatas grasp_datas,
-                           RemoteControlPtr remote_control, bool fake_execution)                         
+PlanningInterface::PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor,
+                                     ManipulationDataPtr config,
+                                     moveit_grasps::GraspDatas grasp_datas,
+                                     RemoteControlPtr remote_control, bool fake_execution)
   : nh_("~")
   , planning_scene_monitor_(planning_scene_monitor)
   , config_(config)
@@ -64,13 +65,12 @@ PlanningInterface::PlanningInterface(planning_scene_monitor::PlanningSceneMonito
 {
   // Create initial robot state
   {
-    planning_scene_monitor::LockedPlanningSceneRO scene(
-        planning_scene_monitor_);  // Lock planning scene
+    psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
     current_state_.reset(new moveit::core::RobotState(scene->getCurrentState()));
   }  // end scoped pointer of locked planning scene
 
   // Set shared robot states for all visual tools
-  //visual_tools_->setSharedRobotState(current_state_);
+  // visual_tools_->setSharedRobotState(current_state_);
 
   // Set robot model
   robot_model_ = current_state_->getRobotModel();
@@ -79,9 +79,7 @@ PlanningInterface::PlanningInterface(planning_scene_monitor::PlanningSceneMonito
   loadVisualTools();
 
   // Load execution interface
-  execution_interface_.reset(new ExecutionInterface(remote_control_,
-                                                    grasp_datas_, planning_scene_monitor_, config_,
-                                                    current_state_, fake_execution));
+  execution_interface_.reset(new ExecutionInterface(remote_control_, planning_scene_monitor_));
 
   /*
   // Load grasp generator
@@ -98,7 +96,7 @@ PlanningInterface::PlanningInterface(planning_scene_monitor::PlanningSceneMonito
 }
 
 bool PlanningInterface::moveToSRDFPose(JointModelGroup* arm_jmg, const std::string& pose_name,
-                                  double velocity_scaling_factor, bool check_validity)
+                                       double velocity_scaling_factor, bool check_validity)
 {
   ROS_DEBUG_STREAM_NAMED("manipulation.superdebug", "moveToSRDFPose()");
 
@@ -130,7 +128,7 @@ bool PlanningInterface::moveToSRDFPose(JointModelGroup* arm_jmg, const std::stri
 }
 
 bool PlanningInterface::moveToSRDFPoseNoPlan(JointModelGroup* arm_jmg, const std::string& pose_name,
-                                        double duration)
+                                             double duration)
 {
   ROS_DEBUG_STREAM_NAMED("manipulation.superdebug", "moveToSRDFPose()");
 
@@ -162,7 +160,7 @@ bool PlanningInterface::moveToSRDFPoseNoPlan(JointModelGroup* arm_jmg, const std
 }
 
 bool PlanningInterface::moveToEEPose(const Eigen::Affine3d& ee_pose, double velocity_scaling_factor,
-                                JointModelGroup* arm_jmg)
+                                     JointModelGroup* arm_jmg)
 {
   // Create start and goal
   getCurrentState();
@@ -191,9 +189,9 @@ bool PlanningInterface::moveToEEPose(const Eigen::Affine3d& ee_pose, double velo
 }
 
 bool PlanningInterface::move(const moveit::core::RobotStatePtr& start,
-                        const moveit::core::RobotStatePtr& goal, JointModelGroup* arm_jmg,
-                        double velocity_scaling_factor, bool verbose, bool execute_trajectory,
-                        bool check_validity)
+                             const moveit::core::RobotStatePtr& goal, JointModelGroup* arm_jmg,
+                             double velocity_scaling_factor, bool verbose, bool execute_trajectory,
+                             bool check_validity)
 {
   ROS_INFO_STREAM_NAMED("manipulation.move", "Planning to new pose with velocity scale "
                                                  << velocity_scaling_factor);
@@ -206,8 +204,8 @@ bool PlanningInterface::move(const moveit::core::RobotStatePtr& start,
     return false;
   }
   else if (!check_validity)
-    ROS_WARN_STREAM_NAMED("manipulation.move",
-                          "Start/goal state collision checking for move() was disabled");
+    ROS_WARN_STREAM_NAMED("manipulation.move", "Start/goal state collision checking for move() was "
+                                               "disabled");
 
   // Visualize start and goal
   if (verbose)
@@ -219,9 +217,8 @@ bool PlanningInterface::move(const moveit::core::RobotStatePtr& start,
   // Check if already in new position
   if (statesEqual(*start, *goal, arm_jmg))
   {
-    ROS_INFO_STREAM_NAMED(
-        "manipulation",
-        "Not planning motion because current state and goal state are close enough.");
+    ROS_INFO_STREAM_NAMED("manipulation", "Not planning motion because current state and goal "
+                                          "state are close enough.");
     return true;
   }
 
@@ -297,8 +294,8 @@ bool PlanningInterface::move(const moveit::core::RobotStatePtr& start,
   }
   else
   {
-    ROS_WARN_STREAM_NAMED("manipulation",
-                          "Trajectory not executed as because was requested not to");
+    ROS_WARN_STREAM_NAMED("manipulation", "Trajectory not executed as because was requested not "
+                                          "to");
   }
 
   // Do processing while trajectory is execute
@@ -318,16 +315,17 @@ bool PlanningInterface::move(const moveit::core::RobotStatePtr& start,
 }
 
 bool PlanningInterface::createPlanningRequest(planning_interface::MotionPlanRequest& request,
-                                         const moveit::core::RobotStatePtr& start,
-                                         const moveit::core::RobotStatePtr& goal,
-                                         JointModelGroup* arm_jmg, double velocity_scaling_factor)
+                                              const moveit::core::RobotStatePtr& start,
+                                              const moveit::core::RobotStatePtr& goal,
+                                              JointModelGroup* arm_jmg,
+                                              double velocity_scaling_factor)
 {
   moveit::core::robotStateToRobotStateMsg(*start, request.start_state);
 
   // Create Goal constraint
   double tolerance_pose = 0.0001;
-  moveit_msgs::Constraints goal_constraint = kinematic_constraints::constructGoalConstraints(
-      *goal, arm_jmg, tolerance_pose, tolerance_pose);
+  moveit_msgs::Constraints goal_constraint =
+      kinematic_constraints::constructGoalConstraints(*goal, arm_jmg, tolerance_pose, tolerance_pose);
   request.goal_constraints.push_back(goal_constraint);
 
   // Other settings e.g. OMPL
@@ -365,9 +363,9 @@ bool PlanningInterface::createPlanningRequest(planning_interface::MotionPlanRequ
 }
 
 bool PlanningInterface::plan(const moveit::core::RobotStatePtr& start,
-                        const moveit::core::RobotStatePtr& goal, JointModelGroup* arm_jmg,
-                        double velocity_scaling_factor, bool verbose,
-                        moveit_msgs::RobotTrajectory& trajectory_msg)
+                             const moveit::core::RobotStatePtr& goal, JointModelGroup* arm_jmg,
+                             double velocity_scaling_factor, bool verbose,
+                             moveit_msgs::RobotTrajectory& trajectory_msg)
 {
   // Create motion planning request
   planning_interface::MotionPlanRequest request;
@@ -382,8 +380,7 @@ bool PlanningInterface::plan(const moveit::core::RobotStatePtr& start,
   loadPlanningPipeline();  // always call before using planning_pipeline_
   planning_scene::PlanningScenePtr cloned_scene;
   {
-    planning_scene_monitor::LockedPlanningSceneRO scene(
-        planning_scene_monitor_);  // Lock planning scene
+    psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
     cloned_scene = planning_scene::PlanningScene::clone(scene);
   }  // end scoped pointer of locked planning scene
 
@@ -408,13 +405,10 @@ bool PlanningInterface::plan(const moveit::core::RobotStatePtr& start,
   return true;
 }
 
-bool PlanningInterface::planPostProcessing()
-{
-  return true;
-}
+bool PlanningInterface::planPostProcessing() { return true; }
 
 bool PlanningInterface::interpolate(robot_trajectory::RobotTrajectoryPtr robot_traj,
-                               const double& discretization)
+                                    const double& discretization)
 {
   double dummy_dt = 1;  // dummy value until parameterization
 
@@ -448,8 +442,7 @@ bool PlanningInterface::interpolate(robot_trajectory::RobotTrajectoryPtr robot_t
       moveit::core::RobotStatePtr interpolated_state(
           new moveit::core::RobotState(robot_traj->getFirstWayPoint()));
       // Fill in new values
-      robot_traj->getWayPoint(i)
-          .interpolate(robot_traj->getWayPoint(i + 1), t, *interpolated_state);
+      robot_traj->getWayPoint(i).interpolate(robot_traj->getWayPoint(i + 1), t, *interpolated_state);
       // Add to trajectory
       new_robot_traj->addSuffixWayPoint(interpolated_state, dummy_dt);
       // std::cout << "inserting " << t << " at " << new_robot_traj->getWayPointCount() <<
@@ -478,7 +471,7 @@ bool PlanningInterface::interpolate(robot_trajectory::RobotTrajectoryPtr robot_t
 }
 
 std::string PlanningInterface::getActionResultString(const moveit_msgs::MoveItErrorCodes& error_code,
-                                                bool planned_trajectory_empty)
+                                                     bool planned_trajectory_empty)
 {
   if (error_code.val == moveit_msgs::MoveItErrorCodes::SUCCESS)
   {
@@ -520,8 +513,8 @@ std::string PlanningInterface::getActionResultString(const moveit_msgs::MoveItEr
   return "Unknown event";
 }
 
-bool PlanningInterface::executeState(const moveit::core::RobotStatePtr goal_state, JointModelGroup* jmg,
-                                double velocity_scaling_factor)
+bool PlanningInterface::executeState(const moveit::core::RobotStatePtr goal_state,
+                                     JointModelGroup* jmg, double velocity_scaling_factor)
 {
   // Get the start state
   getCurrentState();
@@ -536,8 +529,8 @@ bool PlanningInterface::executeState(const moveit::core::RobotStatePtr goal_stat
   // Check if already in new position
   if (statesEqual(*current_state_, *goal_state, jmg))
   {
-    ROS_INFO_STREAM_NAMED("manipulation",
-                          "Not executing because current state and goal state are close enough.");
+    ROS_INFO_STREAM_NAMED("manipulation", "Not executing because current state and goal state are "
+                                          "close enough.");
     return true;
   }
 
@@ -571,7 +564,7 @@ bool PlanningInterface::executeState(const moveit::core::RobotStatePtr goal_stat
 }
 
 bool PlanningInterface::moveDirectToState(const moveit::core::RobotStatePtr goal_state,
-                                     JointModelGroup* jmg, double velocity_scaling_factor)
+                                          JointModelGroup* jmg, double velocity_scaling_factor)
 {
   // Visualize goal
   visual_goal_state_->publishRobotState(goal_state, rvt::ORANGE);
@@ -612,8 +605,8 @@ bool PlanningInterface::moveDirectToState(const moveit::core::RobotStatePtr goal
 }
 
 bool PlanningInterface::executeVerticlePathWithIK(JointModelGroup* arm_jmg,
-                                             const double& desired_lift_distance, bool up,
-                                             bool ignore_collision)
+                                                  const double& desired_lift_distance, bool up,
+                                                  bool ignore_collision)
 {
   Eigen::Vector3d approach_direction;
   approach_direction << 0, 0, (up ? 1 : -1);  // 1 is up, -1 is down
@@ -629,8 +622,8 @@ bool PlanningInterface::executeVerticlePathWithIK(JointModelGroup* arm_jmg,
 }
 
 bool PlanningInterface::executeHorizontalPath(JointModelGroup* arm_jmg,
-                                         const double& desired_lift_distance, bool left,
-                                         bool ignore_collision)
+                                              const double& desired_lift_distance, bool left,
+                                              bool ignore_collision)
 {
   Eigen::Vector3d approach_direction;
   approach_direction << 0, (left ? 1 : -1), 0;  // 1 is left, -1 is right
@@ -646,7 +639,7 @@ bool PlanningInterface::executeHorizontalPath(JointModelGroup* arm_jmg,
 }
 
 bool PlanningInterface::executeRetreatPath(JointModelGroup* arm_jmg, double desired_retreat_distance,
-                                      bool retreat, bool ignore_collision)
+                                           bool retreat, bool ignore_collision)
 {
   // Compute straight line in reverse from grasp
   Eigen::Vector3d approach_direction;
@@ -654,8 +647,7 @@ bool PlanningInterface::executeRetreatPath(JointModelGroup* arm_jmg, double desi
   bool reverse_path = false;
 
   if (!executeCartesianPath(arm_jmg, approach_direction, desired_retreat_distance,
-                            config_->retreat_velocity_scaling_factor_, reverse_path,
-                            ignore_collision))
+                            config_->retreat_velocity_scaling_factor_, reverse_path, ignore_collision))
   {
     ROS_ERROR_STREAM_NAMED("manipulation", "Failed to execute retreat path");
     return false;
@@ -663,9 +655,10 @@ bool PlanningInterface::executeRetreatPath(JointModelGroup* arm_jmg, double desi
   return true;
 }
 
-bool PlanningInterface::executeCartesianPath(JointModelGroup* arm_jmg, const Eigen::Vector3d& direction,
-                                        double desired_distance, double velocity_scaling_factor,
-                                        bool reverse_path, bool ignore_collision)
+bool PlanningInterface::executeCartesianPath(JointModelGroup* arm_jmg,
+                                             const Eigen::Vector3d& direction,
+                                             double desired_distance, double velocity_scaling_factor,
+                                             bool reverse_path, bool ignore_collision)
 {
   getCurrentState();
 
@@ -807,8 +800,8 @@ bool PlanningInterface::computeStraightLinePath(
     }
 
     // Collision check
-    boost::scoped_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls;
-    ls.reset(new planning_scene_monitor::LockedPlanningSceneRO(planning_scene_monitor_));
+    boost::scoped_ptr<psm::LockedPlanningSceneRO> ls;
+    ls.reset(new psm::LockedPlanningSceneRO(planning_scene_monitor_));
     moveit::core::GroupStateValidityCallbackFn constraint_fn = boost::bind(
         &isStateValid, static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get(),
         collision_checking_verbose, only_check_self_collision, visual_tools_, _1, _2, _3);
@@ -839,16 +832,15 @@ bool PlanningInterface::computeStraightLinePath(
     double min_allowed_valid_percentage = 0.9;
     if (last_valid_percentage == 0)
     {
-      ROS_WARN_STREAM_NAMED("manipulation",
-                            "Failed to computer cartesian path: last_valid_percentage is 0");
+      ROS_WARN_STREAM_NAMED("manipulation", "Failed to computer cartesian path: "
+                                            "last_valid_percentage is 0");
     }
     else if (last_valid_percentage < min_allowed_valid_percentage)
     {
-      ROS_DEBUG_STREAM_NAMED("manipulation.waypoints",
-                             "Resulting cartesian path is less than "
-                                 << min_allowed_valid_percentage
-                                 << " % of the desired distance, % valid: "
-                                 << last_valid_percentage);
+      ROS_DEBUG_STREAM_NAMED("manipulation.waypoints", "Resulting cartesian path is less than "
+                                                           << min_allowed_valid_percentage
+                                                           << " % of the desired distance, % "
+                                                              "valid: " << last_valid_percentage);
     }
     else
     {
@@ -937,19 +929,19 @@ JointModelGroup* PlanningInterface::chooseArm(const Eigen::Affine3d& ee_pose)
 }
 
 bool PlanningInterface::getRobotStateFromPose(const Eigen::Affine3d& ee_pose,
-                                         moveit::core::RobotStatePtr& robot_state,
-                                         JointModelGroup* arm_jmg, double consistency_limit)
+                                              moveit::core::RobotStatePtr& robot_state,
+                                              JointModelGroup* arm_jmg, double consistency_limit)
 {
   // Setup collision checking with a locked planning scene
   {
-    static bool collision_checking_verbose = 
-      config_->isEnabled("get_robot_state_from_pose__collision_checking_verbose");
+    static bool collision_checking_verbose =
+        config_->isEnabled("get_robot_state_from_pose__collision_checking_verbose");
     if (collision_checking_verbose)
-      ROS_WARN_STREAM_NAMED("manipulation.getRobotStateFromPose",
-                            "collision_checking_verbose turned on");
+      ROS_WARN_STREAM_NAMED("manipulation.getRobotStateFromPose", "collision_checking_verbose "
+                                                                  "turned on");
 
-    boost::scoped_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls;
-    ls.reset(new planning_scene_monitor::LockedPlanningSceneRO(planning_scene_monitor_));
+    boost::scoped_ptr<psm::LockedPlanningSceneRO> ls;
+    ls.reset(new psm::LockedPlanningSceneRO(planning_scene_monitor_));
     bool only_check_self_collision = true;
     moveit::core::GroupStateValidityCallbackFn constraint_fn = boost::bind(
         &isStateValid, static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get(),
@@ -964,16 +956,17 @@ bool PlanningInterface::getRobotStateFromPose(const Eigen::Affine3d& ee_pose,
     std::vector<double> consistency_limits_vector;
     if (consistency_limit)
       // TODO hard coded njoints
-      for (std::size_t i = 0; i < arm_jmg->getActiveJointModels().size(); ++i)            
+      for (std::size_t i = 0; i < arm_jmg->getActiveJointModels().size(); ++i)
         consistency_limits_vector.push_back(consistency_limit);
 
     const moveit::core::LinkModel* ik_tip_link = grasp_datas_[arm_jmg]->parent_link_;
     if (!robot_state->setFromIK(arm_jmg, ee_pose, ik_tip_link->getName(), consistency_limits_vector,
                                 attempts, timeout, constraint_fn))
     {
-      //visual_tools_->publishZArrow(ee_pose, rvt::RED);
+      // visual_tools_->publishZArrow(ee_pose, rvt::RED);
       static std::size_t warning_counter = 0;
-      ROS_WARN_STREAM_NAMED("manipulation", "Unable to find arm solution for desired pose " << warning_counter++);
+      ROS_WARN_STREAM_NAMED("manipulation", "Unable to find arm solution for desired pose "
+                                                << warning_counter++);
       return false;
     }
   }  // end scoped pointer of locked planning scene
@@ -983,8 +976,8 @@ bool PlanningInterface::getRobotStateFromPose(const Eigen::Affine3d& ee_pose,
 }
 
 bool PlanningInterface::straightProjectPose(const Eigen::Affine3d& original_pose,
-                                       Eigen::Affine3d& new_pose, const Eigen::Vector3d direction,
-                                       double distance)
+                                            Eigen::Affine3d& new_pose,
+                                            const Eigen::Vector3d direction, double distance)
 {
   ROS_DEBUG_STREAM_NAMED("manipulation.superdebug", "straightProjectPose()");
 
@@ -1016,7 +1009,7 @@ bool PlanningInterface::convertRobotStatesToTrajectory(
   }
 
   if (robot_traj->getFirstWayPoint().hasVelocities())
-    ROS_DEBUG_STREAM_NAMED("manipulation.convert","First waypoint has velocity");
+    ROS_DEBUG_STREAM_NAMED("manipulation.convert", "First waypoint has velocity");
 
   // Interpolate any path with two few points
   if (use_interpolation)
@@ -1047,7 +1040,7 @@ bool PlanningInterface::convertRobotStatesToTrajectory(
   // Convert trajectory to a message
   robot_traj->getRobotTrajectoryMsg(trajectory_msg);
 
-  //std::cout << "After Iterative smoother: " << trajectory_msg << std::endl;
+  // std::cout << "After Iterative smoother: " << trajectory_msg << std::endl;
 
   return true;
 }
@@ -1096,10 +1089,9 @@ bool PlanningInterface::setEEJointPosition(double joint_position, JointModelGrou
 }
 
 bool PlanningInterface::setEEGraspPosture(trajectory_msgs::JointTrajectory grasp_posture,
-                                     JointModelGroup* arm_jmg)
+                                          JointModelGroup* arm_jmg)
 {
-  ROS_DEBUG_STREAM_NAMED("manipulation.end_effector", "Moving to grasp posture:\n"
-                                                          << grasp_posture);
+  ROS_DEBUG_STREAM_NAMED("manipulation.end_effector", "Moving to grasp posture:\n" << grasp_posture);
 
   // Check status
   if (!config_->isEnabled("end_effector_enabled"))
@@ -1187,8 +1179,7 @@ bool PlanningInterface::fixCollidingState(planning_scene::PlanningScenePtr clone
   cloned_scene->getCollidingPairs(contacts);
 
   std::string colliding_world_object = "";
-  for (collision_detection::CollisionResult::ContactMap::const_iterator contact_it =
-           contacts.begin();
+  for (collision_detection::CollisionResult::ContactMap::const_iterator contact_it = contacts.begin();
        contact_it != contacts.end(); contact_it++)
   {
     // const std::string& body_id_1 = contact_it->first.first;
@@ -1220,14 +1211,14 @@ bool PlanningInterface::fixCollidingState(planning_scene::PlanningScenePtr clone
 
   if (colliding_world_object.empty())
   {
-    ROS_WARN_STREAM_NAMED("manipulation",
-                          "Did not find any world objects in collision. Attempting to move home");
+    ROS_WARN_STREAM_NAMED("manipulation", "Did not find any world objects in collision. Attempting "
+                                          "to move home");
     bool check_validity = false;
     return moveToStartPosition(NULL, check_validity);
   }
 
-  ROS_INFO_STREAM_NAMED("manipulation", "World object " << colliding_world_object
-                                                        << " in collision");
+  ROS_INFO_STREAM_NAMED("manipulation", "World object " << colliding_world_object << " in "
+                                                                                     "collision");
 
   // Categorize this world object
   bool reverse_out = false;
@@ -1287,8 +1278,7 @@ bool PlanningInterface::fixCollidingState(planning_scene::PlanningScenePtr clone
     double desired_distance = 0.2;
     bool up = true;
     bool ignore_collision = true;
-    if (!executeVerticlePathWithIK(arm_jmg, desired_distance, up,
-				   ignore_collision))
+    if (!executeVerticlePathWithIK(arm_jmg, desired_distance, up, ignore_collision))
     {
       return false;
     }
@@ -1352,7 +1342,7 @@ void PlanningInterface::loadPlanningPipeline()
 }
 
 bool PlanningInterface::statesEqual(const moveit::core::RobotState& s1,
-                               const moveit::core::RobotState& s2, JointModelGroup* jmg)
+                                    const moveit::core::RobotState& s2, JointModelGroup* jmg)
 {
   static const double STATES_EQUAL_THRESHOLD = 0.01;
 
@@ -1387,9 +1377,9 @@ bool PlanningInterface::statesEqual(const moveit::core::RobotState& s1,
 
 moveit::core::RobotStatePtr PlanningInterface::getCurrentState()
 {
-  // Pass down to the exection interface layer so that we can catch the getCurrentState with a fake
-  // one if we are unit testing  
-  current_state_ = execution_interface_->getCurrentState();
+  // Get the real current state
+  psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
+  (*current_state_) = scene->getCurrentState();
   return current_state_;
 }
 
@@ -1466,7 +1456,7 @@ bool PlanningInterface::fixCurrentCollisionAndBounds(JointModelGroup* arm_jmg)
   // Copy planning scene that is locked
   planning_scene::PlanningScenePtr cloned_scene;
   {
-    planning_scene_monitor::LockedPlanningSceneRO scene(planning_scene_monitor_);
+    psm::LockedPlanningSceneRO scene(planning_scene_monitor_);
     cloned_scene = planning_scene::PlanningScene::clone(scene);
     (*current_state_) = scene->getCurrentState();
   }
@@ -1531,8 +1521,8 @@ bool PlanningInterface::fixCurrentCollisionAndBounds(JointModelGroup* arm_jmg)
 }
 
 bool PlanningInterface::checkCollisionAndBounds(const moveit::core::RobotStatePtr& start_state,
-                                           const moveit::core::RobotStatePtr& goal_state,
-                                           bool verbose)
+                                                const moveit::core::RobotStatePtr& goal_state,
+                                                bool verbose)
 {
   bool result = true;
 
@@ -1570,7 +1560,7 @@ bool PlanningInterface::checkCollisionAndBounds(const moveit::core::RobotStatePt
 
   // Get planning scene lock
   {
-    planning_scene_monitor::LockedPlanningSceneRO scene(planning_scene_monitor_);
+    psm::LockedPlanningSceneRO scene(planning_scene_monitor_);
     // Start
     if (scene->isStateColliding(*start_state, arm_jmg->getName(), verbose))
     {
@@ -1578,8 +1568,8 @@ bool PlanningInterface::checkCollisionAndBounds(const moveit::core::RobotStatePt
       {
         ROS_WARN_STREAM_NAMED("manipulation.checkCollisionAndBounds", "Start state is colliding");
         // Show collisions
-        visual_tools_->publishContactPoints(
-            *start_state, planning_scene_monitor_->getPlanningScene().get());
+        visual_tools_->publishContactPoints(*start_state,
+                                            planning_scene_monitor_->getPlanningScene().get());
         visual_tools_->publishRobotState(*start_state, rvt::RED);
       }
       result = false;
@@ -1596,8 +1586,8 @@ bool PlanningInterface::checkCollisionAndBounds(const moveit::core::RobotStatePt
         {
           ROS_WARN_STREAM_NAMED("manipulation.checkCollisionAndBounds", "Goal state is colliding");
           // Show collisions
-          visual_tools_->publishContactPoints(
-              *goal_state, planning_scene_monitor_->getPlanningScene().get());
+          visual_tools_->publishContactPoints(*goal_state,
+                                              planning_scene_monitor_->getPlanningScene().get());
           visual_tools_->publishRobotState(*goal_state, rvt::RED);
         }
         result = false;
@@ -1700,8 +1690,8 @@ void PlanningInterface::transformWorldToBase(Eigen::Affine3d& pose_world, Eigen:
 
 void PlanningInterface::loadVisualTools()
 {
-  visual_tools_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(),
-                                                 "/moveit_manipulation/markers", planning_scene_monitor_));
+  visual_tools_.reset(new mvt::MoveItVisualTools(
+      robot_model_->getModelFrame(), "/moveit_manipulation/markers", planning_scene_monitor_));
   visual_tools_->loadTrajectoryPub("/moveit_manipulation/display_trajectory");
   visual_tools_->loadMarkerPub();
   visual_tools_->setAlpha(0.8);
@@ -1709,18 +1699,17 @@ void PlanningInterface::loadVisualTools()
   visual_tools_->setManualSceneUpdating(true);
 
   // Robot Start State
-  visual_start_state_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(),
-                                                 "/moveit_manipulation/markers2", planning_scene_monitor_));
+  visual_start_state_.reset(new mvt::MoveItVisualTools(
+      robot_model_->getModelFrame(), "/moveit_manipulation/markers2", planning_scene_monitor_));
   visual_start_state_->loadRobotStatePub("/moveit_manipulation/robot_start_state");
   visual_start_state_->hideRobot();
 
   // Robot Goal State
-  visual_goal_state_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(),
-                                                 "/moveit_manipulation/markers3", planning_scene_monitor_));
+  visual_goal_state_.reset(new mvt::MoveItVisualTools(
+      robot_model_->getModelFrame(), "/moveit_manipulation/markers3", planning_scene_monitor_));
   visual_goal_state_->loadRobotStatePub("/moveit_manipulation/robot_goal_state");
   visual_goal_state_->hideRobot();
 }
-
 
 }  // end namespace
 

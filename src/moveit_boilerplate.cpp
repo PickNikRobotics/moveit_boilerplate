@@ -110,57 +110,12 @@ MoveItBoilerplate::MoveItBoilerplate()
   ROS_INFO_STREAM_NAMED("moveit_boilerplate", "MoveItBoilerplate Ready.");
 }
 
-bool MoveItBoilerplate::checkSystemReady()
-{
-  std::cout << std::endl;
-  std::cout << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-  ROS_INFO_STREAM_NAMED("moveit_boilerplate", "Starting system ready check:");
-
-  // Check joint model groups, assuming we are the jaco arm
-  if (config_->right_arm_->getVariableCount() < 6 || config_->right_arm_->getVariableCount() > 7)
-  {
-    ROS_FATAL_STREAM_NAMED("moveit_boilerplate", "Incorrect number of joints for group "
-                                               << config_->right_arm_->getName() << ", joints: "
-                                               << config_->right_arm_->getVariableCount());
-    return false;
-  }
-  JointModelGroup* ee_jmg = grasp_datas_[config_->right_arm_]->ee_jmg_;
-  if (ee_jmg->getVariableCount() > 6)
-  {
-    ROS_FATAL_STREAM_NAMED("moveit_boilerplate", "Incorrect number of joints for group "
-                                               << ee_jmg->getName()
-                                               << ", joints: " << ee_jmg->getVariableCount());
-    return false;
-  }
-
-  // Check trajectory execution manager
-  if (!planning_interface_->getExecutionInterface()->checkExecutionManager())
-  {
-    ROS_FATAL_STREAM_NAMED("moveit_boilerplate", "Trajectory controllers unable to connect");
-    return false;
-  }
-
-  // Choose which planning group to use
-  // JointModelGroup* arm_jmg = config_->dual_arm_ ? config_->both_arms_ : config_->right_arm_;
-
-  // Check robot calibrated
-  // TODO
-
-  // Check end effectors calibrated
-  // TODO
-
-  ROS_INFO_STREAM_NAMED("moveit_boilerplate", "System ready check COMPLETE");
-  std::cout << "-------------------------------------------------------" << std::endl;
-  return true;
-}
-
 bool MoveItBoilerplate::loadPlanningSceneMonitor()
 {
   // Allows us to sycronize to Rviz and also publish collision objects to ourselves
   ROS_DEBUG_STREAM_NAMED("moveit_boilerplate", "Loading Planning Scene Monitor");
   static const std::string PLANNING_SCENE_MONITOR_NAME = "AmazonShelfWorld";
-  planning_scene_monitor_.reset(new planning_scene_monitor::PlanningSceneMonitor(
+  planning_scene_monitor_.reset(new psm::PlanningSceneMonitor(
       planning_scene_, robot_model_loader_, tf_, PLANNING_SCENE_MONITOR_NAME));
   ros::spinOnce();
 
@@ -169,7 +124,7 @@ bool MoveItBoilerplate::loadPlanningSceneMonitor()
     // Optional monitors to start:
     planning_scene_monitor_->startStateMonitor(config_->joint_state_topic_, "");
     planning_scene_monitor_->startPublishingPlanningScene(
-        planning_scene_monitor::PlanningSceneMonitor::UPDATE_SCENE, "picknik_planning_scene");
+        psm::PlanningSceneMonitor::UPDATE_SCENE, "picknik_planning_scene");
     planning_scene_monitor_->getPlanningScene()->setName("picknik_planning_scene");
   }
   else
@@ -227,7 +182,7 @@ bool MoveItBoilerplate::allowCollisions(JointModelGroup* arm_jmg)
 {
   // Allow collisions between frame of robot and floor
   {
-    planning_scene_monitor::LockedPlanningSceneRW scene(planning_scene_monitor_);  // Lock planning
+    psm::LockedPlanningSceneRW scene(planning_scene_monitor_);  // Lock planning
     collision_detection::AllowedCollisionMatrix& collision_matrix =
         scene->getAllowedCollisionMatrixNonConst();
 
