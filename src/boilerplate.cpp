@@ -53,7 +53,7 @@ Boilerplate::Boilerplate()
 
   // Load rosparams
   const std::string parent_name = "boilerplate";  // for namespacing logging messages
-  ros::NodeHandle rosparam_nh("~/boilerplate");
+  ros::NodeHandle rosparam_nh(nh_, parent_name);
   using namespace ros_param_shortcuts;
   getStringParam(parent_name, rosparam_nh, "joint_state_topic", joint_state_topic);
 
@@ -77,6 +77,12 @@ Boilerplate::Boilerplate()
     ROS_ERROR_STREAM_NAMED("boilerplate", "Unable to load planning scene monitor");
   }
 
+  // Create initial robot state
+  {
+    psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
+    current_state_.reset(new moveit::core::RobotState(scene->getCurrentState()));
+  }  // end scoped pointer of locked planning scene
+
   // Load the Robot Viz Tools for publishing to Rviz
   loadVisualTools();
 
@@ -84,7 +90,7 @@ Boilerplate::Boilerplate()
   remote_control_.reset(new RemoteControl(nh_));
 
   // Load execution interface
-  execution_interface_.reset(new ExecutionInterface(remote_control_, planning_scene_monitor_));
+  execution_interface_.reset(new ExecutionInterface(JOINT_PUBLISHER, remote_control_, planning_scene_monitor_));
 
   ROS_INFO_STREAM_NAMED("boilerplate", "Boilerplate Ready.");
 }

@@ -76,7 +76,7 @@ public:
   /**
    * \brief Constructor
    */
-  ExecutionInterface(RemoteControlPtr remote_control,
+  ExecutionInterface(CommandMode mode, RemoteControlPtr remote_control,
                      psm::PlanningSceneMonitorPtr planning_scene_monitor);
 
   /**
@@ -140,7 +140,7 @@ private:
   ros::NodeHandle nh_;
 
   // Configuration settings
-  CommandMode mode_ = JOINT_PUBLISHER; // how to publish
+  CommandMode mode_; // how to publish
   bool save_to_file_ = false;
   bool visualize_trajectory_line_ = false;
   bool visualize_trajectory_path_ = false;

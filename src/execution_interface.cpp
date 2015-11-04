@@ -60,9 +60,10 @@
 
 namespace moveit_boilerplate
 {
-ExecutionInterface::ExecutionInterface(RemoteControlPtr remote_control,
+ExecutionInterface::ExecutionInterface(CommandMode mode, RemoteControlPtr remote_control,
                                        psm::PlanningSceneMonitorPtr planning_scene_monitor)
   : nh_("~")
+  , mode_(mode)
   , remote_control_(remote_control)
   , planning_scene_monitor_(planning_scene_monitor)
 {
@@ -77,7 +78,7 @@ ExecutionInterface::ExecutionInterface(RemoteControlPtr remote_control,
 
   // Load rosparams
   const std::string parent_name = "execution_interface";  // for namespacing logging messages
-  ros::NodeHandle rosparam_nh("~/execution_interface");
+  ros::NodeHandle rosparam_nh(nh_, parent_name);
   std::string joint_trajectory_topic;
   std::string cartesian_command_topic;
   using namespace ros_param_shortcuts;
@@ -92,20 +93,22 @@ ExecutionInterface::ExecutionInterface(RemoteControlPtr remote_control,
   switch (mode_)
   {
     case JOINT_EXECUTION_MANAGER:
+      ROS_DEBUG_STREAM_NAMED("execution_interface","Connecting to trajectory execution manager");
       if (!trajectory_execution_manager_)
       {
-        ROS_DEBUG_STREAM_NAMED("execution_interface", "Loading trajectory execution manager");
         using namespace trajectory_execution_manager;
         trajectory_execution_manager_.reset(
             new TrajectoryExecutionManager(planning_scene_monitor_->getRobotModel()));
       }
       break;
     case JOINT_PUBLISHER:
+      ROS_DEBUG_STREAM_NAMED("execution_interface","Connecting to joint publisher on topic " << joint_trajectory_topic);
       // Alternative method to sending trajectories than trajectory_execution_manager
       joint_trajectory_pub_ =
           nh_.advertise<trajectory_msgs::JointTrajectory>(joint_trajectory_topic, 1000);
       break;
     case CARTESIAN_PUBLISHER:
+      ROS_DEBUG_STREAM_NAMED("execution_interface","Connecting to cartesian publisher on topic" << cartesian_command_topic);
       cartesian_command_pub_ =
           nh_.advertise<cartesian_msgs::CartesianCommand>(cartesian_command_topic, 1000);
       break;
