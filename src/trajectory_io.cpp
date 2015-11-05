@@ -125,14 +125,19 @@ bool TrajectoryIO::loadCartesianTrajectoryFromFile(const std::string& file_name)
   // Read each line
   while (std::getline(input_file, line))
   {
+    // Ignore empty lines
+    if (line.empty())
+      continue;
+
     // Convert line to a robot state
     Eigen::Affine3d pose;
-    streamToAffine3d(pose, line);
+    double sec;
+    streamToAffine3d(pose, sec, line);
 
     // Debug
     visual_tools_->publishZArrow(pose, rvt::RED);
 
-    waypoints_trajectory_.push_back(pose);
+    waypoints_trajectory_.push_back(TimePose(sec,pose));
   }
 
   // Close file
@@ -145,15 +150,14 @@ bool TrajectoryIO::loadCartesianTrajectoryFromFile(const std::string& file_name)
     return false;
   }
 
+  ROS_INFO_STREAM_NAMED("trajectory_io","Loaded " << waypoints_trajectory_.size() << " waypoints from file");
+
   return true;
 }
 
-void TrajectoryIO::addWaypoint(const Eigen::Affine3d& pose)
+void TrajectoryIO::addWaypoint(const Eigen::Affine3d& pose, const double &sec)
 {
-  // Debug
-  visual_tools_->publishZArrow(pose, rvt::GREEN);
-
-  waypoints_trajectory_.push_back(pose);
+  waypoints_trajectory_.push_back(TimePose(sec,pose));
 }
 
 void TrajectoryIO::clearWaypoints()
@@ -173,13 +177,14 @@ bool TrajectoryIO::saveCartesianTrajectoryToFile(const std::string& file_path)
   std::vector<double> xyzrpy;
   for (std::size_t i = 0; i < waypoints_trajectory_.size(); ++i)
   {
-    visual_tools_->convertToXYZRPY(waypoints_trajectory_[i], xyzrpy);
+    visual_tools_->convertToXYZRPY(waypoints_trajectory_[i].pose_, xyzrpy);
     output_file << xyzrpy[0] << ", "
                 << xyzrpy[1] << ", "
                 << xyzrpy[2] << ", "
                 << xyzrpy[3] << ", "
                 << xyzrpy[4] << ", "
-                << xyzrpy[5]
+                << xyzrpy[5] << ", "
+                << waypoints_trajectory_[i].time_
                 << std::endl;
   }
     
@@ -222,7 +227,7 @@ bool TrajectoryIO::getFilePath(std::string& file_path, const std::string& file_n
   return true;
 }
 
-bool TrajectoryIO::streamToAffine3d(Eigen::Affine3d& pose, const std::string& line)
+bool TrajectoryIO::streamToAffine3d(Eigen::Affine3d& pose, double &sec, const std::string& line)
 {
   std::stringstream line_stream(line);
   std::string cell;
@@ -240,9 +245,19 @@ bool TrajectoryIO::streamToAffine3d(Eigen::Affine3d& pose, const std::string& li
       return false;
     }
 
-    transform6[i] = atof(cell.c_str());
+    transform6[i] = atof(cell.c_str()); // TODO improve with boost cast
+  }  
+
+  // Get time
+  if (!std::getline(line_stream, cell, ','))
+  {
+    ROS_WARN_STREAM_NAMED("trajectory_io","No time available");
+    return false;
   }
 
+  sec = atof(cell.c_str()); // TODO improve with boost cast  
+
+  // Convert to eigen
   pose = visual_tools_->convertXYZRPY(transform6);
 
   return true;

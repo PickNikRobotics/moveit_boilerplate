@@ -219,14 +219,19 @@ void RemoteControl::initializeInteractiveMarkers(const geometry_msgs::Pose& pose
 
   // Menu
   menu_handler_.insert("Reset", boost::bind(&RemoteControl::processFeedback, this, _1));
-  interactive_markers::MenuHandler::EntryHandle sub_menu_handle = menu_handler_.insert("Playback");
-  menu_handler_.insert(sub_menu_handle, "Add Pose",
+  interactive_markers::MenuHandler::EntryHandle sub_menu_handle1 = menu_handler_.insert("Recording");
+  menu_handler_.insert(sub_menu_handle1, "Add Current Pose",
                        boost::bind(&RemoteControl::processFeedback, this, _1));
-  menu_handler_.insert(sub_menu_handle, "Play Trajectory",
+  menu_handler_.insert(sub_menu_handle1, "Record IMarker Movements",
                        boost::bind(&RemoteControl::processFeedback, this, _1));
-  menu_handler_.insert(sub_menu_handle, "Stop Trajectory",
+  menu_handler_.insert(sub_menu_handle1, "Stop Recording IMarker",
                        boost::bind(&RemoteControl::processFeedback, this, _1));
-  menu_handler_.insert(sub_menu_handle, "Clear Trajectory",
+  interactive_markers::MenuHandler::EntryHandle sub_menu_handle2 = menu_handler_.insert("Playback");
+  menu_handler_.insert(sub_menu_handle2, "Play Trajectory",
+                       boost::bind(&RemoteControl::processFeedback, this, _1));
+  menu_handler_.insert(sub_menu_handle2, "Stop Trajectory",
+                       boost::bind(&RemoteControl::processFeedback, this, _1));
+  menu_handler_.insert(sub_menu_handle2, "Clear Trajectory",
                        boost::bind(&RemoteControl::processFeedback, this, _1));
 
   // marker

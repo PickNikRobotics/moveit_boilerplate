@@ -51,6 +51,18 @@
 namespace moveit_boilerplate
 {
 
+/** \brief Struct for storing the pose of an end effector with a time */
+struct TimePose
+{
+  TimePose(double time, Eigen::Affine3d pose)
+    : time_(time)
+    , pose_(pose)
+  {}           
+
+  double time_;
+  Eigen::Affine3d pose_;
+};
+
 class TrajectoryIO
 {
 public:
@@ -83,12 +95,12 @@ public:
   bool loadCartesianTrajectoryFromFile(const std::string& file_name);
 
   /** \brief Add current robot pose to trajectory */
-  void addWaypoint(const Eigen::Affine3d& pose);
+  void addWaypoint(const Eigen::Affine3d& pose, const double &sec = 2.0);
 
   /** \brief Delete all recorded waypoints */
   void clearWaypoints();
   
-  std::vector<Eigen::Affine3d>& getWaypoints()
+  std::vector<TimePose>& getWaypoints()
   {
     return waypoints_trajectory_;
   }
@@ -102,8 +114,11 @@ public:
   /**
    * \brief Convert a 6-vector of x,y,z, roll,pitch,yall to an Affine3d with quaternion, from a line
    * of a file
+   * \param pose - end effector location to read from file
+   * \param sec - seconds to execute this waypoint before executing next
+   * \param line - single record from file
    */
-  bool streamToAffine3d(Eigen::Affine3d& pose, const std::string& line);
+  bool streamToAffine3d(Eigen::Affine3d& pose, double &sec, const std::string& line);
 
   /**
    * \brief Get location to save a CSV file
@@ -129,7 +144,7 @@ private:
   std::string package_path_;
 
   // Waypoint trajectory to load/save to/from file
-  std::vector<Eigen::Affine3d> waypoints_trajectory_;
+  std::vector<TimePose> waypoints_trajectory_;
 
   // Joint trajectory to load/save to/from file
   robot_trajectory::RobotTrajectoryPtr joint_trajectory_;
