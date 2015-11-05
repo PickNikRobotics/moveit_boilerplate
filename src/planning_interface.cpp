@@ -53,7 +53,6 @@ namespace moveit_boilerplate
 PlanningInterface::PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor,
                                      ManipulationDataPtr config,
                                      ExecutionInterface execution_interface,
-                                     moveit_grasps::GraspDatas grasp_datas,
                                      RemoteControlPtr remote_control, bool fake_execution)
   : nh_("~")
   , planning_scene_monitor_(planning_scene_monitor)
@@ -76,17 +75,6 @@ PlanningInterface::PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene
 
   // Debug tools for visualizing in Rviz
   loadVisualTools();
-
-
-  /*
-  // Load grasp generator
-  grasp_generator_.reset(new moveit_grasps::GraspGenerator(visual_tools_));
-  // setStateWithOpenEE(true, current_state_); // so that grasp filter is started up with EE open
-  grasp_filter_.reset(new moveit_grasps::GraspFilter(current_state_, visual_tools_));
-  grasp_planner_.reset(new moveit_grasps::GraspPlanner(visual_tools_));
-  grasp_planner_->setWaitForNextStepCallback(
-      boost::bind(&moveit_boilerplate::RemoteControl::waitForNextStep, remote_control_, _1));
-  */
 
   // Done
   ROS_INFO_STREAM_NAMED("manipulation", "PlanningInterface Ready.");

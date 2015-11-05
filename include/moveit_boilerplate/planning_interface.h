@@ -57,9 +57,6 @@
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 #include <moveit/planning_interface/planning_interface.h>
 
-// Grasp generation
-#include <moveit_grasps/grasp_data.h>
-
 namespace planning_pipeline
 {
 MOVEIT_CLASS_FORWARD(PlanningPipeline);
@@ -78,7 +75,6 @@ public:
   PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor,
                     ManipulationDataPtr config,
                     ExecutionInterface execution_interface,
-                    moveit_grasps::GraspDatas grasp_datas,
                     RemoteControlPtr remote_control, bool fake_execution);
 
   /**
@@ -473,9 +469,6 @@ protected:
   // Robot-sepcific data for the APC
   ManipulationDataPtr config_;
 
-  // Robot-specific data for generating grasps
-  moveit_grasps::GraspDatas grasp_datas_;
-
   // Remote control
   RemoteControlPtr remote_control_;
 
@@ -483,11 +476,6 @@ protected:
   bool use_experience_;
   bool use_loggaing_;
   std::ofstream logging_file_;
-
-  // Grasp generator
-  // moveit_grasps::GraspGeneratorPtr grasp_generator_;
-  // moveit_grasps::GraspFilterPtr grasp_filter_;
-  // moveit_grasps::GraspPlannerPtr grasp_planner_;
 
   // State modification helper
   FixStateBounds fix_state_bounds_;

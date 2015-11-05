@@ -6,7 +6,6 @@ set(CMAKE_CXX_FLAGS "-std=c++11 -Wall ${CMAKE_CXX_FLAGS}")
 
 find_package(catkin REQUIRED COMPONENTS
   moveit_core
-  moveit_grasps
   moveit_visual_tools
   cmake_modules
   controller_manager_msgs
@@ -24,7 +23,6 @@ find_package(Gflags REQUIRED)
 catkin_package(
   CATKIN_DEPENDS
     moveit_core
-    moveit_grasps
     moveit_visual_tools
     controller_manager_msgs
     ros_param_shortcuts

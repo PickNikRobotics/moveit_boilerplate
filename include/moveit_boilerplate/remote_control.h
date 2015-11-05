@@ -39,9 +39,6 @@
 #ifndef MOVEIT_BOILERPLATE__REMOTE_CONTROL
 #define MOVEIT_BOILERPLATE__REMOTE_CONTROL
 
-// moveit_grasps
-//#include <moveit_grasps/grasp_planner.h>
-
 // ROS
 #include <ros/ros.h>
 #include <dashboard_msgs/DashboardControl.h>
