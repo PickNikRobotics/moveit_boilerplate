@@ -16,10 +16,6 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen REQUIRED)
 find_package(Boost REQUIRED)
 
-# Gflags
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-find_package(Gflags REQUIRED)
-
 catkin_package(
   CATKIN_DEPENDS
     moveit_core
@@ -46,7 +42,6 @@ catkin_package(
 include_directories(
   include 
   ${catkin_INCLUDE_DIRS}
-  ${Gflags_INCLUDE_DIRS}
 )
 
 include_directories(SYSTEM 
@@ -121,7 +116,6 @@ target_link_libraries(boilerplate
   remote_control
   execution_interface
   trajectory_io
-  gflags
   ${catkin_LIBRARIES} 
   ${Boost_LIBRARIES}
 )
