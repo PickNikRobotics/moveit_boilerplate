@@ -28,7 +28,7 @@ catkin_package(
   INCLUDE_DIRS 
     include
   LIBRARIES
-    remote_control
+    debug_interface
     fix_state_bounds
     execution_interface
     #planning_interface
@@ -58,11 +58,11 @@ include_directories(SYSTEM
 #   ${Boost_LIBRARIES}
 # )
 
-# remote_control library
-add_library(remote_control
-  src/remote_control.cpp
+# debug_interface library
+add_library(debug_interface
+  src/debug_interface.cpp
 )
-target_link_libraries(remote_control
+target_link_libraries(debug_interface
   ${catkin_LIBRARIES} 
   ${Boost_LIBRARIES}
 )
@@ -93,7 +93,7 @@ target_link_libraries(execution_interface
 # target_link_libraries(planning_interface
 #   manipulation_data
 #   execution_interface
-#   remote_control  
+#   debug_interface  
 #   fix_state_bounds
 #   ${catkin_LIBRARIES} 
 #   ${Boost_LIBRARIES}
@@ -113,7 +113,7 @@ add_library(boilerplate
   src/boilerplate.cpp
 )
 target_link_libraries(boilerplate
-  remote_control
+  debug_interface
   execution_interface
   trajectory_io
   ${catkin_LIBRARIES} 

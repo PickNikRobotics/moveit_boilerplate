@@ -15,7 +15,7 @@ Inherit your MoveIt! from this base class to quickly give you:
  - Current Robot State
  - Execution interface to controllers
  - Planning interface to OMPL, etc
- - Remote control interface to joysticks, interactive markers, etc
+ - Debug interface interface to joysticks, interactive markers, etc
  - File read/write for joint and cartesian trajectory
  - Visual tools for debugging in Rviz
 

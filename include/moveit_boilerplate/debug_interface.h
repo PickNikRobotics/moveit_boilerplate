@@ -33,44 +33,27 @@
  *********************************************************************/
 
 /* Author: Dave Coleman <dave@dav.ee>
-   Desc:   Contains all hooks for remote control
+   Desc:   Tool for creating break points and user verification points through
+           manipulation pipelines or other live robotitc tool. 
+           Think GDB for robots, or like, a state machine.
 */
 
-#ifndef MOVEIT_BOILERPLATE__REMOTE_CONTROL
-#define MOVEIT_BOILERPLATE__REMOTE_CONTROL
+#ifndef MOVEIT_BOILERPLATE__DEBUG_INTERFACE
+#define MOVEIT_BOILERPLATE__DEBUG_INTERFACE
 
 // ROS
 #include <ros/ros.h>
-#include <dashboard_msgs/DashboardControl.h>
-#include <sensor_msgs/Joy.h>
-#include <interactive_markers/interactive_marker_server.h>
-#include <interactive_markers/menu_handler.h>
-
-// Boost
-#include <boost/thread/mutex.hpp>
 
 namespace moveit_boilerplate
 {
-typedef std::function<void(const visualization_msgs::InteractiveMarkerFeedbackConstPtr&)> InteractiveMarkerCallback;
 
-class RemoteControl
+class DebugInterface
 {
 public:
   /**
    * \brief Constructor
    */
-  RemoteControl(ros::NodeHandle nh);
-
-  /**
-   * \brief Remote control from Rviz
-   */
-  void remoteCallback(const dashboard_msgs::DashboardControl::ConstPtr& msg);
-
-  /**
-   * \brief Recieves inputs from joystick
-   * \param ROS message
-   */
-  void joyCallback(const sensor_msgs::Joy::ConstPtr& msg);
+  DebugInterface(ros::NodeHandle nh);
 
   /**
    * \brief Step to next step
@@ -108,57 +91,26 @@ public:
   bool waitForNextStep(const std::string& caption = "go to next step");
   bool waitForNextFullStep(const std::string& caption = "go to next full step");
 
-  void initializeInteractiveMarkers(const geometry_msgs::Pose& pose);
-
-  /** \brief Return true if remote control is waiting for user input */
+  /** \brief Return true if debug interface is waiting for user input */
   bool isWaiting() { return is_waiting_; }
 
-  void setInteractiveMarkerCallback(InteractiveMarkerCallback callback)
-  {
-    imarker_callback_ = callback;
-  }
-
-  void updateMarkerPose(const geometry_msgs::Pose& pose);
-
 private:
-  void make6DofMarker(const geometry_msgs::Pose& pose);
   
-  /** \brief Helper for geometric shape */
-  visualization_msgs::InteractiveMarkerControl&
-  makeBoxControl(visualization_msgs::InteractiveMarker& msg);
-
-  /** \brief Callback from interactive marker server */
-  void processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
-
   // A shared node handle
   ros::NodeHandle nh_;
 
-  // Remote control
-  ros::Subscriber remote_control_;
-  ros::Subscriber remote_joy_;
-
-  // Remote control
+  // Debug interface
   bool is_waiting_;
   bool next_step_ready_;
   bool autonomous_;
   bool full_autonomous_;
   bool stop_;
 
-  // Interactive markers
-  boost::shared_ptr<interactive_markers::InteractiveMarkerServer> imarker_server_;
-  interactive_markers::MenuHandler menu_handler_;
-  visualization_msgs::InteractiveMarker int_marker_;
-  bool teleoperation_ready_ = true;
-  InteractiveMarkerCallback imarker_callback_;  // hook to parent class
-
-  ros::Time throttle_time_;
-  boost::mutex interactive_mutex_;
-
 };  // end class
 
 // Create boost pointers for this class
-typedef boost::shared_ptr<RemoteControl> RemoteControlPtr;
-typedef boost::shared_ptr<const RemoteControl> RemoteControlConstPtr;
+typedef boost::shared_ptr<DebugInterface> DebugInterfacePtr;
+typedef boost::shared_ptr<const DebugInterface> DebugInterfaceConstPtr;
 
 }  // end namespace
 

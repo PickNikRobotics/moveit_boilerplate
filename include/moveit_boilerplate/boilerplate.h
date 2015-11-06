@@ -51,7 +51,7 @@
 
 // MoveItManipulation
 #include <moveit_boilerplate/namespaces.h>
-#include <moveit_boilerplate/remote_control.h>
+#include <moveit_boilerplate/debug_interface.h>
 #include <moveit_boilerplate/execution_interface.h>
 
 // ROS parameter loading
@@ -107,8 +107,8 @@ protected:
   // Allocated memory for robot state
   moveit::core::RobotStatePtr current_state_;
 
-  // Remote control for dealing with GUIs
-  RemoteControlPtr remote_control_;
+  // Debug interface for dealing with GUIs
+  DebugInterfacePtr debug_interface_;
 
 };  // end class
 

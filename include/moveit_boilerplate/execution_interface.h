@@ -48,7 +48,7 @@
 
 // MoveItManipulation
 #include <moveit_boilerplate/namespaces.h>
-#include <moveit_boilerplate/remote_control.h>
+#include <moveit_boilerplate/debug_interface.h>
 
 // MoveIt
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
@@ -76,7 +76,7 @@ public:
   /**
    * \brief Constructor
    */
-  ExecutionInterface(CommandMode mode, RemoteControlPtr remote_control,
+  ExecutionInterface(CommandMode mode, DebugInterfacePtr debug_interface,
                      psm::PlanningSceneMonitorPtr planning_scene_monitor);
 
   /**
@@ -149,7 +149,7 @@ private:
 
   std::size_t trajectory_filename_count_ = 0; // iterate file names
 
-  RemoteControlPtr remote_control_;
+  DebugInterfacePtr debug_interface_;
   mvt::MoveItVisualToolsPtr visual_tools_;
  
   psm::PlanningSceneMonitorPtr planning_scene_monitor_;

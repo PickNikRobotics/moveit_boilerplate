@@ -46,7 +46,7 @@
 #include <moveit_visual_tools/moveit_visual_tools.h>
 #include <moveit_boilerplate/manipulation_data.h>
 #include <moveit_boilerplate/fix_state_bounds.h>
-#include <moveit_boilerplate/remote_control.h>
+#include <moveit_boilerplate/debug_interface.h>
 #include <moveit_boilerplate/execution_interface.h>
 
 // ROS
@@ -75,7 +75,7 @@ public:
   PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor,
                     ManipulationDataPtr config,
                     ExecutionInterface execution_interface,
-                    RemoteControlPtr remote_control, bool fake_execution);
+                    DebugInterfacePtr debug_interface, bool fake_execution);
 
   /**
    * \brief Move to any pose as defined in the SRDF
@@ -469,8 +469,8 @@ protected:
   // Robot-sepcific data for the APC
   ManipulationDataPtr config_;
 
-  // Remote control
-  RemoteControlPtr remote_control_;
+  // Debug interface
+  DebugInterfacePtr debug_interface_;
 
   // Experience-based planning
   bool use_experience_;

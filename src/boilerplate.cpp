@@ -86,11 +86,11 @@ Boilerplate::Boilerplate()
   // Load the Robot Viz Tools for publishing to Rviz
   loadVisualTools();
 
-  // Load the remote control for dealing with GUIs
-  remote_control_.reset(new RemoteControl(nh_));
+  // Load the debug interface for dealing with GUIs
+  debug_interface_.reset(new DebugInterface(nh_));
 
   // Load execution interface
-  execution_interface_.reset(new ExecutionInterface(JOINT_PUBLISHER, remote_control_, planning_scene_monitor_));
+  execution_interface_.reset(new ExecutionInterface(JOINT_PUBLISHER, debug_interface_, planning_scene_monitor_));
 
   ROS_INFO_STREAM_NAMED("boilerplate", "Boilerplate Ready.");
 }

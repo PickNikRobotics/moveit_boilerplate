@@ -53,13 +53,13 @@ namespace moveit_boilerplate
 PlanningInterface::PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor,
                                      ManipulationDataPtr config,
                                      ExecutionInterface execution_interface,
-                                     RemoteControlPtr remote_control, bool fake_execution)
+                                     DebugInterfacePtr debug_interface, bool fake_execution)
   : nh_("~")
   , planning_scene_monitor_(planning_scene_monitor)
   , config_(config)
   , execution_interface_(execution_interface)
   , grasp_datas_(grasp_datas)
-  , remote_control_(remote_control)
+  , debug_interface_(debug_interface)
 {
   // Create initial robot state
   {
@@ -1148,7 +1148,7 @@ bool PlanningInterface::fixCollidingState(planning_scene::PlanningScenePtr clone
   ROS_DEBUG_STREAM_NAMED("manipulation.superdebug", "fixCollidingState()");
 
   // Turn off auto mode
-  // remote_control_->setFullAutonomous(false);
+  // debug_interface_->setFullAutonomous(false);
 
   // Open hand to ensure we aren't holding anything anymore
   if (!openEEs(true))
@@ -1488,7 +1488,7 @@ bool PlanningInterface::fixCurrentCollisionAndBounds(JointModelGroup* arm_jmg)
     else
     {
       // Alert human to error
-      remote_control_->setAutonomous(false);
+      debug_interface_->setAutonomous(false);
 
       // State was modified, send to robot
       if (!executeState(new_state, arm_jmg, config_->main_velocity_scaling_factor_))
