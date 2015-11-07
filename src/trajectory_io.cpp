@@ -258,7 +258,7 @@ bool TrajectoryIO::streamToAffine3d(Eigen::Affine3d& pose, double &sec, const st
   sec = atof(cell.c_str()); // TODO improve with boost cast  
 
   // Convert to eigen
-  pose = visual_tools_->convertXYZRPY(transform6);
+  pose = visual_tools_->convertFromXYZRPY(transform6);
 
   return true;
 }

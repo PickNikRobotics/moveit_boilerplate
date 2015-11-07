@@ -120,7 +120,7 @@ bool ManipulationData::load(robot_model::RobotModelPtr robot_model, bool fake_ex
   std::vector<double> test_pose_doubles;
   ros_param_shortcuts::getDoubleParams(parent_name, nh_, "test/test_pose", test_pose_doubles);
   ros_param_shortcuts::convertDoublesToEigen(parent_name, test_pose_doubles, test_pose_);
-  // test_pose_ = rvt::RvizVisualTools::convertXYZRPY(test_pose_doubles_); // TODO
+  // test_pose_ = rvt::RvizVisualTools::convertFromXYZRPY(test_pose_doubles_); // TODO
 
   // Get grasp location doubles
   // std::vector<double> grasp_location_transform_doubles;
@@ -163,7 +163,7 @@ Eigen::Affine3d ManipulationData::getTestPose()
                         "Using test pose, which should only be used during early development");
   // ROS_WARN_STREAM_NAMED("manipulation_data", "Use instead:");
 
-  // std::cout << "  Eigen::Affine3d transform = rvt::RvizVisualTools::convertXYZRPY("
+  // std::cout << "  Eigen::Affine3d transform = rvt::RvizVisualTools::convertFromXYZRPY("
   //           << test_pose_doubles_[0] << "," << test_pose_doubles_[1] << "," <<
   //           test_pose_doubles_[2]
   //           << "," << test_pose_doubles_[3] << "," << test_pose_doubles_[4] << ","

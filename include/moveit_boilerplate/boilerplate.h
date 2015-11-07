@@ -49,7 +49,7 @@
 // Visual tools
 #include <moveit_visual_tools/moveit_visual_tools.h>
 
-// MoveItManipulation
+// moveit_boilerplate
 #include <moveit_boilerplate/namespaces.h>
 #include <moveit_boilerplate/debug_interface.h>
 #include <moveit_boilerplate/execution_interface.h>

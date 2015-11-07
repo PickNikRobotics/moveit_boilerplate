@@ -36,8 +36,8 @@
    Desc:   Interface between MoveIt! execution tools and MoveItManipulation
 */
 
-#ifndef MOVEIT_BOILERPLATE__EXECUTION_INTERFACE
-#define MOVEIT_BOILERPLATE__EXECUTION_INTERFACE
+#ifndef MOVEIT_BOILERPLATE__EXECUTION_INTERFACE_
+#define MOVEIT_BOILERPLATE__EXECUTION_INTERFACE_
 
 // ROS
 #include <ros/ros.h>
@@ -152,6 +152,7 @@ private:
   DebugInterfacePtr debug_interface_;
   mvt::MoveItVisualToolsPtr visual_tools_;
  
+  // Track collision objects in the environment
   psm::PlanningSceneMonitorPtr planning_scene_monitor_;
 
   // Allocated memory for robot state
