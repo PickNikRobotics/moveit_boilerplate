@@ -44,8 +44,12 @@
 // ROS
 #include <ros/ros.h>
 
+// MoveIt!
+#include <moveit/macros/class_forward.h>
+
 namespace moveit_boilerplate
 {
+MOVEIT_CLASS_FORWARD(DebugInterface);
 
 class DebugInterface
 {
@@ -107,10 +111,6 @@ private:
   bool stop_;
 
 };  // end class
-
-// Create boost pointers for this class
-typedef boost::shared_ptr<DebugInterface> DebugInterfacePtr;
-typedef boost::shared_ptr<const DebugInterface> DebugInterfaceConstPtr;
 
 }  // end namespace
 
