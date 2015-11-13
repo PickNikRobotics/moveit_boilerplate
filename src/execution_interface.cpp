@@ -145,6 +145,13 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
                          "Executing trajectory with " << trajectory.points.size() << " waypoints");
   ROS_DEBUG_STREAM_NAMED("execution_interface.trajectory", "Publishing:\n" << trajectory_msg);
 
+  // Error check
+  if (trajectory.points.empty())
+  {
+    ROS_ERROR_STREAM_NAMED("execution_interface","No points to execute, aborting trajectory execution");
+    return false;
+  }
+
   // Optionally save to file
   if (save_traj_to_file_)
     saveTrajectory(trajectory_msg,
@@ -211,6 +218,12 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
       break;
     case JOINT_PUBLISHER:
       joint_trajectory_pub_.publish(trajectory);
+
+      if (wait_for_execution)
+      {
+        ROS_INFO_STREAM_NAMED("execution_interface","Sleeping while trajectory executes");
+        ros::Duration(trajectory.points.back().time_from_start).sleep();
+      }
       break;
     case CARTESIAN_PUBLISHER:
       ROS_ERROR_STREAM_NAMED("execution_interface", "Incorrect control mode: CARTESIAN");

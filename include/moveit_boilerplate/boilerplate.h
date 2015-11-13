@@ -45,6 +45,7 @@
 
 // MoveIt
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
+#include <moveit/macros/console_colors.h>
 
 // Visual tools
 #include <moveit_visual_tools/moveit_visual_tools.h>
@@ -78,7 +79,10 @@ public:
    * \brief Load visual tools
    */
   void loadVisualTools();
-  
+
+  /** \brief Output to console the current state of the robot's joint limits */
+  bool showJointLimits(JointModelGroup* jmg);
+
   /**
    * \brief Use the planning scene to get the robot's current state
    */

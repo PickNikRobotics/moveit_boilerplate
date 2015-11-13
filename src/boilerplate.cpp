@@ -163,6 +163,61 @@ void Boilerplate::loadVisualTools()
   visual_tools_->hideRobot();  // show that things have been reset
 }
 
+bool Boilerplate::showJointLimits(JointModelGroup* jmg)
+{
+  const std::vector<const moveit::core::JointModel*>& joints = jmg->getActiveJointModels();
+
+  std::cout << std::endl;
+
+  // Loop through joints
+  for (std::size_t i = 0; i < joints.size(); ++i)
+  {
+    // Assume all joints have only one variable
+    if (joints[i]->getVariableCount() > 1)
+    {
+      ROS_ERROR_STREAM_NAMED("manipulation", "Unable to handle joints with more than one var");
+      return false;
+    }
+    getCurrentState();
+    double current_value = current_state_->getVariablePosition(joints[i]->getName());
+
+    // check if bad position
+    bool out_of_bounds = !current_state_->satisfiesBounds(joints[i]);
+
+    const moveit::core::VariableBounds& bound = joints[i]->getVariableBounds()[0];
+
+    if (out_of_bounds)
+      std::cout << MOVEIT_CONSOLE_COLOR_RED;
+
+    std::cout << "   " << std::fixed << std::setprecision(5) << bound.min_position_ << "\t";
+    double delta = bound.max_position_ - bound.min_position_;
+    // std::cout << "delta: " << delta << " ";
+    double step = delta / 20.0;
+
+    bool marker_shown = false;
+    for (double value = bound.min_position_; value < bound.max_position_; value += step)
+    {
+      // show marker of current value
+      if (!marker_shown && current_value < value)
+      {
+        std::cout << "|";
+        marker_shown = true;
+      }
+      else
+        std::cout << "-";
+    }
+    // show max position
+    std::cout << " \t" << std::fixed << std::setprecision(5) << bound.max_position_ << "  \t"
+              << joints[i]->getName() << " current: " << std::fixed << std::setprecision(5)
+              << current_value << std::endl;
+
+    if (out_of_bounds)
+      std::cout << MOVEIT_CONSOLE_COLOR_RESET;
+  }
+
+  return true;
+}
+
 moveit::core::RobotStatePtr Boilerplate::getCurrentState()
 {
   // Get the real current state
