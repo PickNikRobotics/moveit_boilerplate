@@ -68,8 +68,6 @@ enum CommandMode {
   CARTESIAN_PUBLISHER      // send cartesian poses direclty to your controller using ROS messages
 };
 
-const static std::string PACKAGE_NAME = "moveit_boilerplate";
-
 class ExecutionInterface
 {
 public:
@@ -123,7 +121,7 @@ private:
   void loadVisualTools();
 
   /** \brief Check for potential errors in the trajectory been sent */
-  void checkForWaypointJumpts(const trajectory_msgs::JointTrajectory &trajectory);
+  void checkForWaypointJumps(const trajectory_msgs::JointTrajectory &trajectory);
 
   /** \brief Check if correct controllers are loaded */
   bool checkTrajectoryController(ros::ServiceClient &service_client,
@@ -133,19 +131,16 @@ private:
   bool saveTrajectory(const moveit_msgs::RobotTrajectory &trajectory_msg,
                       const std::string &file_name);
 
-  /** \brief Get a full file path based on the package's location */
-  bool getFilePath(std::string &file_path, const std::string &file_name);
-
   // A shared node handle
   ros::NodeHandle nh_;
 
   // Configuration settings
   CommandMode mode_; // how to publish
-  bool save_to_file_ = false;
+  bool save_traj_to_file_ = false;
+  std::string save_traj_to_file_path_;
   bool visualize_trajectory_line_ = false;
   bool visualize_trajectory_path_ = false;
   bool check_for_waypoint_jumps_ = false;
-  std::string package_path_;
 
   std::size_t trajectory_filename_count_ = 0; // iterate file names
 

@@ -84,7 +84,8 @@ ExecutionInterface::ExecutionInterface(CommandMode mode, DebugInterfacePtr debug
   using namespace ros_param_shortcuts;
   getStringParam(parent_name, rosparam_nh, "joint_trajectory_topic", joint_trajectory_topic);
   getStringParam(parent_name, rosparam_nh, "cartesian_command_topic", cartesian_command_topic);
-  getBoolParam(parent_name, rosparam_nh, "save_to_file", save_to_file_);
+  getStringParam(parent_name, rosparam_nh, "save_traj_to_file_path", save_traj_to_file_path_);
+  getBoolParam(parent_name, rosparam_nh, "save_traj_to_file", save_traj_to_file_);
   getBoolParam(parent_name, rosparam_nh, "visualize_trajectory_line", visualize_trajectory_line_);
   getBoolParam(parent_name, rosparam_nh, "visualize_trajectory_path", visualize_trajectory_path_);
   getBoolParam(parent_name, rosparam_nh, "check_for_waypoint_jumps", check_for_waypoint_jumps_);
@@ -145,9 +146,9 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
   ROS_DEBUG_STREAM_NAMED("execution_interface.trajectory", "Publishing:\n" << trajectory_msg);
 
   // Optionally save to file
-  if (save_to_file_)
+  if (save_traj_to_file_)
     saveTrajectory(trajectory_msg,
-                   jmg->getName() + "_trajectory_" +
+                   jmg->getName() + "_moveit_trajectory_" +
                        boost::lexical_cast<std::string>(trajectory_filename_count_++) + ".csv");
 
   // Optionally visualize the hand/wrist path in Rviz
@@ -168,6 +169,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
                                 << trajectory.points.size()
                                 << " points or because is end effector");
   }
+
   // Optionally visualize trajectory in Rviz
   if (visualize_trajectory_path_)
   {
@@ -177,7 +179,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
 
   // Optionally check for errors in trajectory
   if (check_for_waypoint_jumps_)
-    checkForWaypointJumpts(trajectory);
+    checkForWaypointJumps(trajectory);
 
   // Confirm trajectory before continuing
   if (!debug_interface_->getFullAutonomous())
@@ -250,7 +252,7 @@ bool ExecutionInterface::waitForExecution()
   return false;
 }
 
-void ExecutionInterface::checkForWaypointJumpts(const trajectory_msgs::JointTrajectory &trajectory)
+void ExecutionInterface::checkForWaypointJumps(const trajectory_msgs::JointTrajectory &trajectory)
 {
   // Debug: check for errors in trajectory
   static const double MAX_TIME_STEP_SEC = 4.0;
@@ -407,8 +409,8 @@ bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &traj
     has_accelerations = false;
   }
 
-  std::string file_path;
-  getFilePath(file_path, file_name);
+  std::string file_path = save_traj_to_file_path_ + "/" + file_name;
+
   std::ofstream output_file;
   output_file.open(file_path.c_str());
 
@@ -447,42 +449,7 @@ bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &traj
     output_file << std::endl;
   }
   output_file.close();
-  ROS_DEBUG_STREAM_NAMED("execution_interface", "Saved trajectory to file " << file_name);
-  return true;
-}
-
-bool ExecutionInterface::getFilePath(std::string &file_path, const std::string &file_name)
-{
-  namespace fs = boost::filesystem;
-
-  // Get package path
-  if (package_path_.empty())
-    package_path_ = ros::package::getPath(PACKAGE_NAME);
-  if (package_path_.empty())
-  {
-    ROS_ERROR_STREAM_NAMED("product", "Unable to get " << PACKAGE_NAME << " package path");
-    return false;
-  }
-
-  // Check that the directory exists, if not, create it
-  fs::path path;
-  path = fs::path(package_path_ + "/trajectories/analysis/");
-
-  boost::system::error_code returnedError;
-  fs::create_directories(path, returnedError);
-
-  // Error check
-  if (returnedError)
-  {
-    ROS_ERROR_STREAM_NAMED("execution_interface", "Unable to create directory " << path.string());
-    return false;
-  }
-
-  // Directories successfully created, append the group name as the file name
-  path = path / fs::path(file_name);
-  file_path = path.string();
-
-  ROS_DEBUG_STREAM_NAMED("execution_interface.file_path", "Using full file path" << file_path);
+  ROS_INFO_STREAM_NAMED("execution_interface", "Saved trajectory to file " << file_name);
   return true;
 }
 

@@ -35,3 +35,15 @@ Wrapper for joystick and interactive marker subscribing, as well as a Rviz GUI p
 
 Load and save CSV files for both joint trajectories and cartesian trajectories.
  
+## Required Configurations:
+
+```
+execution_interface:
+  cartesian_command_topic: /execution_interface/cartesian_command
+  joint_trajectory_topic: /ROBOT/position_trajectory_controller/command
+  save_traj_to_file: false
+  save_traj_to_file_path: ~/ros/iiwa_trajectory_data/
+  visualize_trajectory_line: false
+  visualize_trajectory_path: false
+  check_for_waypoint_jumps: false
+```
