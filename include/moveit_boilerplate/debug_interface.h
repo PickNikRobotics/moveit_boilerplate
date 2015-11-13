@@ -34,7 +34,7 @@
 
 /* Author: Dave Coleman <dave@dav.ee>
    Desc:   Tool for creating break points and user verification points through
-           manipulation pipelines or other live robotitc tool. 
+           manipulation pipelines or other live robotitc tool.
            Think GDB for robots, or like, a state machine.
 */
 
@@ -99,7 +99,7 @@ public:
   bool isWaiting() { return is_waiting_; }
 
 private:
-  
+
   // A shared node handle
   ros::NodeHandle nh_;
 

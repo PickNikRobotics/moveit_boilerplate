@@ -62,7 +62,7 @@ namespace moveit_boilerplate
 {
 MOVEIT_CLASS_FORWARD(ExecutionInterface);
 
-enum CommandMode { 
+enum CommandMode {
   JOINT_EXECUTION_MANAGER, // use the default MoveIt! method for sending trajectories using actionlib
   JOINT_PUBLISHER,         // send trajectories direct to ros_control using ROS messages
   CARTESIAN_PUBLISHER      // send cartesian poses direclty to your controller using ROS messages
@@ -91,6 +91,9 @@ public:
    */
   bool executeTrajectory(moveit_msgs::RobotTrajectory &trajectory_msg, JointModelGroup *jmg,
                          bool wait_for_execution = true);
+
+  /** \brief Stop the current execution from continuing, using ROS topics so its a "soft stop" */
+  bool stopExecution();
 
   /**
    * \brief Wait for trajectory to finish being executed
@@ -146,7 +149,7 @@ private:
 
   DebugInterfacePtr debug_interface_;
   mvt::MoveItVisualToolsPtr visual_tools_;
- 
+
   // Track collision objects in the environment
   psm::PlanningSceneMonitorPtr planning_scene_monitor_;
 

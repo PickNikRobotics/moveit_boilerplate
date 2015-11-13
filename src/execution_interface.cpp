@@ -235,6 +235,32 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
   return true;
 }
 
+bool ExecutionInterface::stopExecution()
+{
+  ROS_WARN_STREAM_NAMED("temp","Execution stop requested");
+
+  trajectory_msgs::JointTrajectory blank_trajectory;
+
+  switch (mode_)
+  {
+    case JOINT_EXECUTION_MANAGER:
+      ROS_ERROR_STREAM_NAMED("temp","Not implemented");
+      // TODO Just send a blank trajectory
+      break;
+    case JOINT_PUBLISHER:
+      // Just send a blank trajectory
+      joint_trajectory_pub_.publish(blank_trajectory);
+      return true;
+      break;
+    case CARTESIAN_PUBLISHER:
+      ROS_ERROR_STREAM_NAMED("temp","Not implemented");
+      break;
+    default:
+      ROS_ERROR_STREAM_NAMED("execution_interface", "Unknown control mode");
+  }
+  return false;
+}
+
 bool ExecutionInterface::waitForExecution()
 {
   if (mode_ != JOINT_EXECUTION_MANAGER)
