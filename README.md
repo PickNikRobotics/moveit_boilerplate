@@ -3,8 +3,7 @@ By Dave Coleman
 
 Quickly get started with MoveIt! in C++ with several easy to use classes described in the following subsections:
 
-SEE IMAGE ``/docs/overview.png``
-<img align="right" src="https://raw.github.com/davetcoleman/moveit_boilerplate/master/docs/demo.png" />
+<img align="right" src="https://raw.githubusercontent.com/davetcoleman/moveit_boilerplate/master/docs/overview.png" />
 
 ## Boilerplate
 
@@ -34,7 +33,7 @@ Wrapper for joystick and interactive marker subscribing, as well as a Rviz GUI p
 ## Trajectory IO
 
 Load and save CSV files for both joint trajectories and cartesian trajectories.
- 
+
 ## Required Configurations:
 
 ```
