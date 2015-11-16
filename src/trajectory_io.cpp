@@ -106,21 +106,24 @@ bool TrajectoryIO::loadJointTrajectoryFromStream(std::istringstream& input_strea
 
   std::string line;
   getCurrentState();
-  std::cout << "here " << std::endl;
   joint_trajectory_.reset(new robot_trajectory::RobotTrajectory(current_state_->getRobotModel(), arm_jmg));
   double dummy_dt = 1;  // temp value
 
+  std::cout << "var names: " << std::endl;
+  std::copy(current_state_->getVariableNames().begin(), current_state_->getVariableNames().end(), std::ostream_iterator<std::string>(std::cout, "\n"));
+
   // Read each line
-  std::cout << "before get line " << std::endl;
   while (std::getline(input_stream, line))
   {
-    ROS_WARN_STREAM_NAMED("temp","temp hack");
-    line += ",0.0";
+    ROS_WARN_STREAM_NAMED("trajectory_io","temp hack");
+    // Add virtual joint at front and end effect at back TODO remove hack
+    line = "0.0,0.0,0.0,0.0,0.0,0.0,1.0," + line + ",0.0";
+
     std::cout << "line: " << line << std::endl;
 
     // Convert line to a robot state
     moveit::core::RobotStatePtr new_state(new moveit::core::RobotState(*current_state_));
-    moveit::core::streamToRobotState(*new_state, line, ",");
+    moveit::core::streamToRobotState(*new_state, line);
     joint_trajectory_->addSuffixWayPoint(new_state, dummy_dt);
   }
 
@@ -131,6 +134,7 @@ bool TrajectoryIO::loadJointTrajectoryFromStream(std::istringstream& input_strea
     return false;
   }
 
+  std::cout << "done loading " << std::endl;
   return true;
 }
 
