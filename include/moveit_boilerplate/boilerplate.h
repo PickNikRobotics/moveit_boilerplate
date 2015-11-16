@@ -54,6 +54,7 @@
 #include <moveit_boilerplate/namespaces.h>
 #include <moveit_boilerplate/debug_interface.h>
 #include <moveit_boilerplate/execution_interface.h>
+#include <moveit_boilerplate/planning_interface.h>
 
 // ROS parameter loading
 #include <ros_param_shortcuts/ros_param_shortcuts.h>
@@ -113,6 +114,13 @@ protected:
 
   // Debug interface for dealing with GUIs
   DebugInterfacePtr debug_interface_;
+
+  // For generating joint trajectories
+  PlanningInterfacePtr planning_interface_;
+
+  // Desired planning group to work with
+  JointModelGroup *arm_jmg_;
+
 
 };  // end class
 

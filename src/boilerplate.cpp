@@ -50,18 +50,23 @@ Boilerplate::Boilerplate()
   : nh_("~")
 {
   std::string joint_state_topic;
+  std::string arm_joint_model_group;
 
   // Load rosparams
   const std::string parent_name = "boilerplate";  // for namespacing logging messages
   ros::NodeHandle rosparam_nh(nh_, parent_name);
   using namespace ros_param_shortcuts;
   getStringParam(parent_name, rosparam_nh, "joint_state_topic", joint_state_topic);
+  getStringParam(parent_name, rosparam_nh, "arm_joint_model_group", arm_joint_model_group);
 
   // Load the loader
   robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(ROBOT_DESCRIPTION));
 
   // Load the robot model
   robot_model_ = robot_model_loader_->getModel();  // Get a shared pointer to the robot
+
+  // Choose planning group
+  arm_jmg_ = robot_model_->getJointModelGroup(arm_joint_model_group);
 
   // Create the planning scene
   planning_scene_.reset(new planning_scene::PlanningScene(robot_model_));
@@ -91,6 +96,10 @@ Boilerplate::Boilerplate()
 
   // Load execution interface
   execution_interface_.reset(new ExecutionInterface(JOINT_PUBLISHER, debug_interface_, planning_scene_monitor_));
+
+  // Load planning interface
+  planning_interface_.reset(
+      new PlanningInterface(execution_interface_, planning_scene_monitor_, visual_tools_, arm_jmg_));
 
   ROS_INFO_STREAM_NAMED("boilerplate", "Boilerplate Ready.");
 }

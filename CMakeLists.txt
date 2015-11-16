@@ -5,6 +5,7 @@ project(moveit_boilerplate)
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall ${CMAKE_CXX_FLAGS}")
 
 find_package(catkin REQUIRED COMPONENTS
+  gflags
   moveit_core
   moveit_visual_tools
   cmake_modules
@@ -25,7 +26,7 @@ catkin_package(
     dashboard_msgs
   DEPENDS
     Eigen
-  INCLUDE_DIRS 
+  INCLUDE_DIRS
     include
   LIBRARIES
     debug_interface
@@ -40,30 +41,21 @@ catkin_package(
 ## Build ##
 ###########
 include_directories(
-  include 
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
-include_directories(SYSTEM 
-  ${Boost_INCLUDE_DIR} 
+include_directories(SYSTEM
+  ${Boost_INCLUDE_DIR}
   ${EIGEN_INCLUDE_DIRS}
 )
-
-# Manipulation Data Library
-# add_library(manipulation_data
-#    src/manipulation_data.cpp
-# )
-# target_link_libraries(manipulation_data
-#   ${catkin_LIBRARIES} 
-#   ${Boost_LIBRARIES}
-# )
 
 # debug_interface library
 add_library(debug_interface
   src/debug_interface.cpp
 )
 target_link_libraries(debug_interface
-  ${catkin_LIBRARIES} 
+  ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
@@ -72,7 +64,7 @@ add_library(fix_state_bounds
   src/fix_state_bounds.cpp
 )
 target_link_libraries(fix_state_bounds
-  ${catkin_LIBRARIES} 
+  ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
@@ -81,30 +73,28 @@ add_library(execution_interface
   src/execution_interface.cpp
 )
 target_link_libraries(execution_interface
-  ${catkin_LIBRARIES} 
+  ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
-# Planning_interface library
-# add_library(planning_interface
-#   src/planning_interface.cpp
-# )
-# add_dependencies(planning_interface moveit_boilerplate_generate_messages_cpp)
-# target_link_libraries(planning_interface
-#   manipulation_data
-#   execution_interface
-#   debug_interface  
-#   fix_state_bounds
-#   ${catkin_LIBRARIES} 
-#   ${Boost_LIBRARIES}
-# )
+# Joint-space path planners
+add_library(planning_interface
+  src/planning_interface.cpp
+)
+target_link_libraries(planning_interface
+  execution_interface
+  debug_interface
+  fix_state_bounds
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
 
-# trajectory input/output
+# Trajectory input/output
 add_library(trajectory_io
   src/trajectory_io.cpp
 )
 target_link_libraries(trajectory_io
-  ${catkin_LIBRARIES} 
+  ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
@@ -115,7 +105,9 @@ add_library(boilerplate
 target_link_libraries(boilerplate
   debug_interface
   execution_interface
+  planning_interface
   trajectory_io
-  ${catkin_LIBRARIES} 
+  gflags
+  ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )

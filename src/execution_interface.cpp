@@ -76,19 +76,24 @@ ExecutionInterface::ExecutionInterface(CommandMode mode, DebugInterfacePtr debug
   // Debug tools for visualizing in Rviz
   loadVisualTools();
 
-  // Load rosparams
-  const std::string parent_name = "execution_interface";  // for namespacing logging messages
-  ros::NodeHandle rosparam_nh(nh_, parent_name);
   std::string joint_trajectory_topic;
   std::string cartesian_command_topic;
-  using namespace ros_param_shortcuts;
-  getStringParam(parent_name, rosparam_nh, "joint_trajectory_topic", joint_trajectory_topic);
-  getStringParam(parent_name, rosparam_nh, "cartesian_command_topic", cartesian_command_topic);
-  getStringParam(parent_name, rosparam_nh, "save_traj_to_file_path", save_traj_to_file_path_);
-  getBoolParam(parent_name, rosparam_nh, "save_traj_to_file", save_traj_to_file_);
-  getBoolParam(parent_name, rosparam_nh, "visualize_trajectory_line", visualize_trajectory_line_);
-  getBoolParam(parent_name, rosparam_nh, "visualize_trajectory_path", visualize_trajectory_path_);
-  getBoolParam(parent_name, rosparam_nh, "check_for_waypoint_jumps", check_for_waypoint_jumps_);
+
+  // Load rosparams
+  {
+    const std::string parent_name = "execution_interface";  // for namespacing logging messages
+    ros::NodeHandle rosparam_nh(nh_, parent_name);
+    using namespace ros_param_shortcuts;
+    std::size_t error = 0;
+    error += !getStringParam(parent_name, rosparam_nh, "joint_trajectory_topic", joint_trajectory_topic);
+    error += !getStringParam(parent_name, rosparam_nh, "cartesian_command_topic", cartesian_command_topic);
+    error += !getStringParam(parent_name, rosparam_nh, "save_traj_to_file_path", save_traj_to_file_path_);
+    error += !getBoolParam(parent_name, rosparam_nh, "save_traj_to_file", save_traj_to_file_);
+    error += !getBoolParam(parent_name, rosparam_nh, "visualize_trajectory_line", visualize_trajectory_line_);
+    error += !getBoolParam(parent_name, rosparam_nh, "visualize_trajectory_path", visualize_trajectory_path_);
+    error += !getBoolParam(parent_name, rosparam_nh, "check_for_waypoint_jumps", check_for_waypoint_jumps_);
+    shutdownIfParamErrors(parent_name, error);
+  }
 
   // Load the proper execution method
   switch (mode_)

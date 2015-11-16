@@ -57,7 +57,7 @@ struct TimePose
   TimePose(double time, Eigen::Affine3d pose)
     : time_(time)
     , pose_(pose)
-  {}           
+  {}
 
   double time_;
   Eigen::Affine3d pose_;
@@ -72,13 +72,23 @@ public:
   TrajectoryIO(psm::PlanningSceneMonitorPtr planning_scene_monitor,
                mvt::MoveItVisualToolsPtr visual_tools);
 
+  // JOINT TRAJECTORY ------------------------------------------------------------------
+
   /**
-   * \brief Read a joint trajectory from CSV and execute on robot
+   * \brief Read a joint trajectory from CSV
    * \param file_name - location of file
-   * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
+   * \param arm_jmg - the kinematic chain of joints that should be controlled (a planning group)
    * \return true on success
    */
-  bool loadTrajectoryFromFile(const std::string& file_name, JointModelGroup* arm_jmg);
+  bool loadJointTrajectoryFromFile(const std::string& file_name, JointModelGroup* arm_jmg);
+
+  /**
+   * \brief Read a joint trajectory from string
+   * \param input - string with comma separated values and line breaks for each waypoint
+   * \param arm_jmg - the kinematic chain of joints that should be controlled (a planning group)
+   * \return true on success
+   */
+  bool loadJointTrajectoryFromStream(std::istringstream& input_stream, JointModelGroup* arm_jmg);
 
   /**
    * \brief Record the entire state of a robot to file
@@ -87,29 +97,36 @@ public:
    */
   bool saveJointTrajectoryToFile(const std::string& file_name);
 
+  robot_trajectory::RobotTrajectoryPtr getJointTrajectory()
+  {
+    return joint_trajectory_;
+  }
+
+  // CARTESIAN TRAJECTORY ------------------------------------------------------------------
+
   /**
    * \brief Read a waypoint trajectory from CSV and load into this class
    * \param file_name - location of file
    * \return true on success
    */
-  bool loadCartesianTrajectoryFromFile(const std::string& file_name);
+  bool loadCartTrajectoryFromFile(const std::string& file_name);
 
   /** \brief Add current robot pose to trajectory */
-  void addWaypoint(const Eigen::Affine3d& pose, const double &sec = 2.0);
+  void addCartWaypoint(const Eigen::Affine3d& pose, const double &sec = 2.0);
 
   /** \brief Delete all recorded waypoints */
-  void clearWaypoints();
-  
-  std::vector<TimePose>& getWaypoints()
+  void clearCartWaypoints();
+
+  std::vector<TimePose>& getCartWaypoints()
   {
-    return waypoints_trajectory_;
+    return cartesian_trajectory_;
   }
 
   /**
    * \brief Save a trajectory of poses to a file in CSV format
    * \return true on success
    */
-  bool saveCartesianTrajectoryToFile(const std::string& file_path);
+  bool saveCartTrajectoryToFile(const std::string& file_path);
 
   /**
    * \brief Convert a 6-vector of x,y,z, roll,pitch,yall to an Affine3d with quaternion, from a line
@@ -119,6 +136,8 @@ public:
    * \param line - single record from file
    */
   bool streamToAffine3d(Eigen::Affine3d& pose, double &sec, const std::string& line);
+
+  // GENERIC UTILS ------------------------------------------------------------------
 
   /**
    * \brief Get location to save a CSV file
@@ -143,14 +162,18 @@ private:
   mvt::MoveItVisualToolsPtr visual_tools_;
   std::string package_path_;
 
-  // Waypoint trajectory to load/save to/from file
-  std::vector<TimePose> waypoints_trajectory_;
+  // Allocated memory for robot state
+  moveit::core::RobotStatePtr current_state_;
+
+  // JOINT TRAJECTORY ------------------------------------------------------------------
 
   // Joint trajectory to load/save to/from file
   robot_trajectory::RobotTrajectoryPtr joint_trajectory_;
 
-  // Allocated memory for robot state
-  moveit::core::RobotStatePtr current_state_;
+  // CARTESIAN TRAJECTORY ------------------------------------------------------------------
+
+  // Waypoint trajectory to load/save to/from file
+  std::vector<TimePose> cartesian_trajectory_;
 
 };  // end class
 
