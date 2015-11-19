@@ -139,19 +139,6 @@ bool PlanningInterface::convertRobotStatesToTraj(robot_trajectory::RobotTrajecto
                                                  moveit_msgs::RobotTrajectory& trajectory_msg, JointModelGroup* jmg,
                                                  const double& velocity_scaling_factor, bool use_interpolation)
 {
-  ROS_WARN_STREAM_NAMED("planning_interface","TEMP REMOVE");
-  for (std::size_t i = 0; i < robot_traj->getWayPointCount(); ++i)
-  {
-    std::cout << "publishing state: " << std::endl;
-    visual_tools_->publishRobotState(robot_traj->getWayPoint(i));
-    ros::Duration(0.1).sleep();
-    robot_traj->getWayPoint(i).printStateInfo();
-  }
-
-  // Debug
-  if (robot_traj->getFirstWayPoint().hasVelocities())
-    ROS_DEBUG_STREAM_NAMED("planning_interface.convert", "First waypoint has velocity");
-
   // Interpolate any path with two few points
   if (use_interpolation)
   {
