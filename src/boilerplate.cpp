@@ -108,7 +108,7 @@ bool Boilerplate::loadPlanningSceneMonitor(const std::string &joint_state_topic)
 {
   // Allows us to sycronize to Rviz and also publish collision objects to ourselves
   ROS_DEBUG_STREAM_NAMED("boilerplate", "Loading Planning Scene Monitor");
-  static const std::string PLANNING_SCENE_MONITOR_NAME = "AmazonShelfWorld";
+  static const std::string PLANNING_SCENE_MONITOR_NAME = "BoilerplatePlanningScene";
   planning_scene_monitor_.reset(new psm::PlanningSceneMonitor(
       planning_scene_, robot_model_loader_, tf_, PLANNING_SCENE_MONITOR_NAME));
   ros::spinOnce();
