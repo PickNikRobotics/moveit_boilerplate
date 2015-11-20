@@ -157,6 +157,18 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
     return false;
   }
 
+  // Optionally Remove velocity and acceleration from trajectories for testing
+  bool clear_dynamics = false;
+  if (clear_dynamics)
+  {
+    ROS_WARN_STREAM_NAMED("temp","clearing dynamics");
+    for (std::size_t i = 0; i < trajectory.points.size(); ++i)
+    {
+      trajectory.points[i].velocities.clear();
+      trajectory.points[i].accelerations.clear();
+    }
+  }
+
   // Optionally save to file
   if (save_traj_to_file_)
     saveTrajectory(trajectory_msg,
@@ -470,14 +482,11 @@ bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &traj
   output_file << std::endl;
 
   // Output data ------------------------------------------------------
-
-  // Subtract starting time
-
   for (std::size_t i = 0; i < joint_trajectory.points.size(); ++i)
   {
     // Timestamp
     output_file.precision(20);
-    output_file << joint_trajectory.points[i].time_from_start.toSec() << ",";
+    output_file << (joint_trajectory.header.stamp + joint_trajectory.points[i].time_from_start).toSec() << ",";
     output_file.precision(5);
     // Output entire trajectory to single line
     for (std::size_t j = 0; j < joint_trajectory.points[i].positions.size(); ++j)
