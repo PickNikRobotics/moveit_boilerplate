@@ -51,6 +51,7 @@ Boilerplate::Boilerplate()
 {
   std::string joint_state_topic;
   std::string arm_joint_model_group;
+  std::string execution_command_mode;
 
   // Load rosparams
   const std::string parent_name = "boilerplate";  // for namespacing logging messages
@@ -58,6 +59,7 @@ Boilerplate::Boilerplate()
   using namespace rosparam_shortcuts;
   getStringParam(parent_name, rosparam_nh, "joint_state_topic", joint_state_topic);
   getStringParam(parent_name, rosparam_nh, "arm_joint_model_group", arm_joint_model_group);
+  getStringParam(parent_name, rosparam_nh, "execution_command_mode", execution_command_mode);
 
   // Load the loader
   robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(ROBOT_DESCRIPTION));
@@ -95,7 +97,8 @@ Boilerplate::Boilerplate()
   debug_interface_.reset(new DebugInterface(nh_));
 
   // Load execution interface
-  execution_interface_.reset(new ExecutionInterface(JOINT_PUBLISHER, debug_interface_, planning_scene_monitor_));
+  const moveit_boilerplate::CommandMode command_mode = moveit_boilerplate::stringToCommandMode(execution_command_mode);
+  execution_interface_.reset(new ExecutionInterface(command_mode, debug_interface_, planning_scene_monitor_));
 
   // Load planning interface
   planning_interface_.reset(

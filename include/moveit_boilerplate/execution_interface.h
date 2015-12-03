@@ -68,6 +68,21 @@ enum CommandMode {
   CARTESIAN_PUBLISHER      // send cartesian poses direclty to your controller using ROS messages
 };
 
+static CommandMode stringToCommandMode(const std::string& command_mode)
+{
+  if (command_mode == "joint_publisher")
+    return JOINT_PUBLISHER;
+  else if (command_mode == "cartesian_publisher")
+    return CARTESIAN_PUBLISHER;
+  else if (command_mode == "joint_execution_manager")
+    return JOINT_EXECUTION_MANAGER; // use actionlib
+  else
+  {
+    ROS_WARN_STREAM_NAMED("execution_interface","No command mode specified, using execution manager as default");
+    return JOINT_EXECUTION_MANAGER; // use actionlib
+  }
+}
+
 class ExecutionInterface
 {
 public:
