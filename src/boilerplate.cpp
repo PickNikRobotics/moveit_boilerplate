@@ -55,7 +55,7 @@ Boilerplate::Boilerplate()
   // Load rosparams
   const std::string parent_name = "boilerplate";  // for namespacing logging messages
   ros::NodeHandle rosparam_nh(nh_, parent_name);
-  using namespace ros_param_shortcuts;
+  using namespace rosparam_shortcuts;
   getStringParam(parent_name, rosparam_nh, "joint_state_topic", joint_state_topic);
   getStringParam(parent_name, rosparam_nh, "arm_joint_model_group", arm_joint_model_group);
 

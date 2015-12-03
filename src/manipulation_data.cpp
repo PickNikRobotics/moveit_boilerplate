@@ -40,7 +40,7 @@
 #include <moveit_boilerplate/namespaces.h>
 
 // Parameter loading
-#include <ros_param_shortcuts/ros_param_shortcuts.h>
+#include <rosparam_shortcuts/rosparam_shortcuts.h>
 
 #include <rviz_visual_tools/rviz_visual_tools.h>
 
@@ -59,15 +59,15 @@ bool ManipulationData::load(robot_model::RobotModelPtr robot_model, bool fake_ex
   const std::string parent_name = "manipulation_data";  // for namespacing logging messages
 
   // Load performance variables
-  ros_param_shortcuts::getDoubleParam(parent_name, nh_, "main_velocity_scaling_factor",
+  rosparam_shortcuts::getDoubleParam(parent_name, nh_, "main_velocity_scaling_factor",
                                           main_velocity_scaling_factor_);
-  ros_param_shortcuts::getDoubleParam(parent_name, nh_, "approach_velocity_scaling_factor",
+  rosparam_shortcuts::getDoubleParam(parent_name, nh_, "approach_velocity_scaling_factor",
                                           approach_velocity_scaling_factor_);
-  ros_param_shortcuts::getDoubleParam(parent_name, nh_, "lift_velocity_scaling_factor",
+  rosparam_shortcuts::getDoubleParam(parent_name, nh_, "lift_velocity_scaling_factor",
                                           lift_velocity_scaling_factor_);
-  ros_param_shortcuts::getDoubleParam(parent_name, nh_, "retreat_velocity_scaling_factor",
+  rosparam_shortcuts::getDoubleParam(parent_name, nh_, "retreat_velocity_scaling_factor",
                                           retreat_velocity_scaling_factor_);
-  ros_param_shortcuts::getDoubleParam(parent_name, nh_, "calibration_velocity_scaling_factor",
+  rosparam_shortcuts::getDoubleParam(parent_name, nh_, "calibration_velocity_scaling_factor",
                                           calibration_velocity_scaling_factor_);
 
   if (fake_execution_)
@@ -80,57 +80,57 @@ bool ManipulationData::load(robot_model::RobotModelPtr robot_model, bool fake_ex
     calibration_velocity_scaling_factor_ = 1.0;
   }
 
-  // ros_param_shortcuts::getDoubleParam(parent_name, nh_, "wait_before_grasp",
+  // rosparam_shortcuts::getDoubleParam(parent_name, nh_, "wait_before_grasp",
   //                                         wait_before_grasp_);
-  // ros_param_shortcuts::getDoubleParam(parent_name, nh_, "wait_after_grasp", wait_after_grasp_);
-  // ros_param_shortcuts::getDoubleParam(parent_name, nh_, "place_goal_down_distance_desired",
+  // rosparam_shortcuts::getDoubleParam(parent_name, nh_, "wait_after_grasp", wait_after_grasp_);
+  // rosparam_shortcuts::getDoubleParam(parent_name, nh_, "place_goal_down_distance_desired",
   //                                          place_goal_down_distance_desired_);
-  // ros_param_shortcuts::getDoubleParam(parent_name, nh_, "goal_bin_clearance",
+  // rosparam_shortcuts::getDoubleParam(parent_name, nh_, "goal_bin_clearance",
   //                                          goal_bin_clearance_);
-  ros_param_shortcuts::getDoubleParam(parent_name, nh_, "jump_threshold", jump_threshold_);
+  rosparam_shortcuts::getDoubleParam(parent_name, nh_, "jump_threshold", jump_threshold_);
 
   // Load robot semantics
-  ros_param_shortcuts::getStringParam(parent_name, nh_, "start_pose", start_pose_);
-  ros_param_shortcuts::getStringParam(parent_name, nh_, "right_hand_name", right_hand_name_);
-  ros_param_shortcuts::getStringParam(parent_name, nh_, "left_hand_name", left_hand_name_);
-  ros_param_shortcuts::getStringParam(parent_name, nh_, "right_arm_name", right_arm_name_);
-  ros_param_shortcuts::getStringParam(parent_name, nh_, "right_arm_only_name",
+  rosparam_shortcuts::getStringParam(parent_name, nh_, "start_pose", start_pose_);
+  rosparam_shortcuts::getStringParam(parent_name, nh_, "right_hand_name", right_hand_name_);
+  rosparam_shortcuts::getStringParam(parent_name, nh_, "left_hand_name", left_hand_name_);
+  rosparam_shortcuts::getStringParam(parent_name, nh_, "right_arm_name", right_arm_name_);
+  rosparam_shortcuts::getStringParam(parent_name, nh_, "right_arm_only_name",
                                           right_arm_only_name_);
-  ros_param_shortcuts::getStringParam(parent_name, nh_, "left_arm_name", left_arm_name_);
-  ros_param_shortcuts::getStringParam(parent_name, nh_, "both_arms_name", both_arms_name_);
+  rosparam_shortcuts::getStringParam(parent_name, nh_, "left_arm_name", left_arm_name_);
+  rosparam_shortcuts::getStringParam(parent_name, nh_, "both_arms_name", both_arms_name_);
 
   // Load planning configs
-  ros_param_shortcuts::getBoolParam(parent_name, nh_, "moveit_ompl/use_experience_setup",
+  rosparam_shortcuts::getBoolParam(parent_name, nh_, "moveit_ompl/use_experience_setup",
                                         use_experience_setup_);
-  ros_param_shortcuts::getStringParam(parent_name, nh_, "moveit_ompl/experience_type",
+  rosparam_shortcuts::getStringParam(parent_name, nh_, "moveit_ompl/experience_type",
                                           experience_type_);
-  ros_param_shortcuts::getDoubleParam(parent_name, nh_, "moveit_ompl/planning_time",
+  rosparam_shortcuts::getDoubleParam(parent_name, nh_, "moveit_ompl/planning_time",
                                           planning_time_);
 
   // Behavior configs
-  ros_param_shortcuts::getBoolMap(parent_name, nh_, "behavior", enabled_);
+  rosparam_shortcuts::getBoolMap(parent_name, nh_, "behavior", enabled_);
 
   // Decide on dual arm mode we are in
-  ros_param_shortcuts::getBoolParam(parent_name, nh_, "dual_arm", dual_arm_);
+  rosparam_shortcuts::getBoolParam(parent_name, nh_, "dual_arm", dual_arm_);
 
   // Generic test variable
-  ros_param_shortcuts::getDoubleParam(parent_name, nh_, "test/test_double", test_double_);
+  rosparam_shortcuts::getDoubleParam(parent_name, nh_, "test/test_double", test_double_);
 
   // Get test pose
   std::vector<double> test_pose_doubles;
-  ros_param_shortcuts::getDoubleParams(parent_name, nh_, "test/test_pose", test_pose_doubles);
-  ros_param_shortcuts::convertDoublesToEigen(parent_name, test_pose_doubles, test_pose_);
+  rosparam_shortcuts::getDoubleParams(parent_name, nh_, "test/test_pose", test_pose_doubles);
+  rosparam_shortcuts::convertDoublesToEigen(parent_name, test_pose_doubles, test_pose_);
   // test_pose_ = rvt::RvizVisualTools::convertFromXYZRPY(test_pose_doubles_); // TODO
 
   // Get grasp location doubles
   // std::vector<double> grasp_location_transform_doubles;
-  // ros_param_shortcuts::getDoubleParams(parent_name, nh_, "grasp_location_transform",
+  // rosparam_shortcuts::getDoubleParams(parent_name, nh_, "grasp_location_transform",
   //                                          grasp_location_transform_doubles);
-  // ros_param_shortcuts::convertDoublesToEigen(parent_name, grasp_location_transform_doubles,
+  // rosparam_shortcuts::convertDoublesToEigen(parent_name, grasp_location_transform_doubles,
   //                                            grasp_location_transform_);
 
   // Pick Manager settings
-  ros_param_shortcuts::getStringParam(parent_name, nh_, "joint_state_topic",
+  rosparam_shortcuts::getStringParam(parent_name, nh_, "joint_state_topic",
                                           joint_state_topic_);
 
   // Load proper groups

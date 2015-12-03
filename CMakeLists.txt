@@ -5,12 +5,11 @@ project(moveit_boilerplate)
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall ${CMAKE_CXX_FLAGS}")
 
 find_package(catkin REQUIRED COMPONENTS
-  gflags
   moveit_core
   moveit_visual_tools
   cmake_modules
   controller_manager_msgs
-  ros_param_shortcuts
+  rosparam_shortcuts
   dashboard_msgs
 )
 
@@ -22,7 +21,7 @@ catkin_package(
     moveit_core
     moveit_visual_tools
     controller_manager_msgs
-    ros_param_shortcuts
+    rosparam_shortcuts
     dashboard_msgs
   DEPENDS
     Eigen
@@ -107,7 +106,6 @@ target_link_libraries(boilerplate
   execution_interface
   planning_interface
   trajectory_io
-  gflags
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )

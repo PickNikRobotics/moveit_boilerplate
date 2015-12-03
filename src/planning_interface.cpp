@@ -9,7 +9,7 @@
 #include <eigen_conversions/eigen_msg.h>
 
 // ROS parameter loading
-#include <ros_param_shortcuts/ros_param_shortcuts.h>
+#include <rosparam_shortcuts/rosparam_shortcuts.h>
 
 namespace moveit_boilerplate
 {
@@ -25,7 +25,7 @@ PlanningInterface::PlanningInterface(moveit_boilerplate::ExecutionInterfacePtr e
   // Load rosparams
   const std::string parent_name = "planning_interface";  // for namespacing logging messages
   ros::NodeHandle rosparam_nh(nh_, parent_name);
-  using namespace ros_param_shortcuts;
+  using namespace rosparam_shortcuts;
   // getDoubleParam(parent_name, rosparam_nh, "vel_scaling_factor", vel_scaling_factor_);
 
   // End effector parent link (arm tip for ik solving)

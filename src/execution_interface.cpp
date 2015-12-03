@@ -53,7 +53,7 @@
 #include <moveit/trajectory_execution_manager/trajectory_execution_manager.h>
 
 // Parameter loading
-#include <ros_param_shortcuts/ros_param_shortcuts.h>
+#include <rosparam_shortcuts/rosparam_shortcuts.h>
 
 // ros_control
 #include <controller_manager_msgs/ListControllers.h>
@@ -83,7 +83,7 @@ ExecutionInterface::ExecutionInterface(CommandMode mode, DebugInterfacePtr debug
   {
     const std::string parent_name = "execution_interface";  // for namespacing logging messages
     ros::NodeHandle rosparam_nh(nh_, parent_name);
-    using namespace ros_param_shortcuts;
+    using namespace rosparam_shortcuts;
     std::size_t error = 0;
     error += !getStringParam(parent_name, rosparam_nh, "joint_trajectory_topic", joint_trajectory_topic);
     error += !getStringParam(parent_name, rosparam_nh, "cartesian_command_topic", cartesian_command_topic);

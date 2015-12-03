@@ -57,7 +57,7 @@
 #include <moveit_boilerplate/planning_interface.h>
 
 // ROS parameter loading
-#include <ros_param_shortcuts/ros_param_shortcuts.h>
+#include <rosparam_shortcuts/rosparam_shortcuts.h>
 
 namespace moveit_boilerplate
 {
