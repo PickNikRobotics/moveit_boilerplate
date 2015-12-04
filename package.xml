@@ -19,10 +19,8 @@
 
   <build_depend>moveit_core</build_depend>
   <build_depend>moveit_visual_tools</build_depend>
-  <build_depend>ompl_visual_tools</build_depend>
   <build_depend>eigen</build_depend>
   <build_depend>cmake_modules</build_depend>
-  <build_depend>ompl</build_depend>
   <build_depend>dashboard_msgs</build_depend>
   <build_depend>controller_manager_msgs</build_depend>
   <build_depend>rosparam_shortcuts</build_depend>

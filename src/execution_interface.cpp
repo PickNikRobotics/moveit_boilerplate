@@ -60,13 +60,13 @@
 
 namespace moveit_boilerplate
 {
-ExecutionInterface::ExecutionInterface(CommandMode mode, DebugInterfacePtr debug_interface,
+ExecutionInterface::ExecutionInterface(DebugInterfacePtr debug_interface,
                                        psm::PlanningSceneMonitorPtr planning_scene_monitor)
   : nh_("~")
-  , mode_(mode)
   , debug_interface_(debug_interface)
   , planning_scene_monitor_(planning_scene_monitor)
 {
+
   // Create initial robot state
   {
     psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
@@ -78,6 +78,7 @@ ExecutionInterface::ExecutionInterface(CommandMode mode, DebugInterfacePtr debug
 
   std::string joint_trajectory_topic;
   std::string cartesian_command_topic;
+  std::string command_mode;
 
   // Load rosparams
   {
@@ -85,6 +86,7 @@ ExecutionInterface::ExecutionInterface(CommandMode mode, DebugInterfacePtr debug
     ros::NodeHandle rosparam_nh(nh_, parent_name);
     using namespace rosparam_shortcuts;
     std::size_t error = 0;
+    error += !getStringParam(parent_name, rosparam_nh, "command_mode", command_mode);
     error += !getStringParam(parent_name, rosparam_nh, "joint_trajectory_topic", joint_trajectory_topic);
     error += !getStringParam(parent_name, rosparam_nh, "cartesian_command_topic", cartesian_command_topic);
     error += !getStringParam(parent_name, rosparam_nh, "save_traj_to_file_path", save_traj_to_file_path_);
@@ -94,6 +96,9 @@ ExecutionInterface::ExecutionInterface(CommandMode mode, DebugInterfacePtr debug
     error += !getBoolParam(parent_name, rosparam_nh, "check_for_waypoint_jumps", check_for_waypoint_jumps_);
     shutdownIfParamErrors(parent_name, error);
   }
+
+  // Choose mode from string
+  mode_ = stringToCommandMode(command_mode);
 
   // Load the proper execution method
   switch (mode_)

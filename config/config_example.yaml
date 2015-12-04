@@ -5,6 +5,7 @@ boilerplate:
 
 # Execution Interface ------------------------
 execution_interface:
+  command_mode: joint_execution_manager
   cartesian_command_topic: /execution_interface/cartesian_command
   joint_trajectory_topic: /ROBOT/position_trajectory_controller/command
   save_traj_to_file: false

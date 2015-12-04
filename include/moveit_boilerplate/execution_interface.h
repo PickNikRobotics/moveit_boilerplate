@@ -89,8 +89,7 @@ public:
   /**
    * \brief Constructor
    */
-  ExecutionInterface(CommandMode mode, DebugInterfacePtr debug_interface,
-                     psm::PlanningSceneMonitorPtr planning_scene_monitor);
+  ExecutionInterface(DebugInterfacePtr debug_interface, psm::PlanningSceneMonitorPtr planning_scene_monitor);
 
   /**
    * \brief Execute a desired cartesian end effector pose

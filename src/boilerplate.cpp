@@ -59,7 +59,6 @@ Boilerplate::Boilerplate()
   using namespace rosparam_shortcuts;
   getStringParam(parent_name, rosparam_nh, "joint_state_topic", joint_state_topic);
   getStringParam(parent_name, rosparam_nh, "arm_joint_model_group", arm_joint_model_group);
-  getStringParam(parent_name, rosparam_nh, "execution_command_mode", execution_command_mode);
 
   // Load the loader
   robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(ROBOT_DESCRIPTION));
@@ -97,8 +96,7 @@ Boilerplate::Boilerplate()
   debug_interface_.reset(new DebugInterface(nh_));
 
   // Load execution interface
-  const moveit_boilerplate::CommandMode command_mode = moveit_boilerplate::stringToCommandMode(execution_command_mode);
-  execution_interface_.reset(new ExecutionInterface(command_mode, debug_interface_, planning_scene_monitor_));
+  execution_interface_.reset(new ExecutionInterface(debug_interface_, planning_scene_monitor_));
 
   // Load planning interface
   planning_interface_.reset(
@@ -121,8 +119,8 @@ bool Boilerplate::loadPlanningSceneMonitor(const std::string &joint_state_topic)
     // Optional monitors to start:
     planning_scene_monitor_->startStateMonitor(joint_state_topic, "");
     planning_scene_monitor_->startPublishingPlanningScene(
-        psm::PlanningSceneMonitor::UPDATE_SCENE, "picknik_planning_scene");
-    planning_scene_monitor_->getPlanningScene()->setName("picknik_planning_scene");
+        psm::PlanningSceneMonitor::UPDATE_SCENE, "planning_scene");
+    planning_scene_monitor_->getPlanningScene()->setName("planning_scene");
   }
   else
   {
