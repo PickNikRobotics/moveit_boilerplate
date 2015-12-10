@@ -151,6 +151,9 @@ private:
   // A shared node handle
   ros::NodeHandle nh_;
 
+  // Node name
+  std::string name_ = "execution_interface";
+
   // Configuration settings
   CommandMode mode_; // how to publish
   bool save_traj_to_file_ = false;

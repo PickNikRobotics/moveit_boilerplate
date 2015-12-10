@@ -62,11 +62,8 @@ namespace moveit_boilerplate
 {
 ExecutionInterface::ExecutionInterface(DebugInterfacePtr debug_interface,
                                        psm::PlanningSceneMonitorPtr planning_scene_monitor)
-  : nh_("~")
-  , debug_interface_(debug_interface)
-  , planning_scene_monitor_(planning_scene_monitor)
+  : nh_("~"), debug_interface_(debug_interface), planning_scene_monitor_(planning_scene_monitor)
 {
-
   // Create initial robot state
   {
     psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
@@ -81,21 +78,17 @@ ExecutionInterface::ExecutionInterface(DebugInterfacePtr debug_interface,
   std::string command_mode;
 
   // Load rosparams
-  {
-    const std::string parent_name = "execution_interface";  // for namespacing logging messages
-    ros::NodeHandle rosparam_nh(nh_, parent_name);
-    using namespace rosparam_shortcuts;
-    std::size_t error = 0;
-    error += !getStringParam(parent_name, rosparam_nh, "command_mode", command_mode);
-    error += !getStringParam(parent_name, rosparam_nh, "joint_trajectory_topic", joint_trajectory_topic);
-    error += !getStringParam(parent_name, rosparam_nh, "cartesian_command_topic", cartesian_command_topic);
-    error += !getStringParam(parent_name, rosparam_nh, "save_traj_to_file_path", save_traj_to_file_path_);
-    error += !getBoolParam(parent_name, rosparam_nh, "save_traj_to_file", save_traj_to_file_);
-    error += !getBoolParam(parent_name, rosparam_nh, "visualize_trajectory_line", visualize_trajectory_line_);
-    error += !getBoolParam(parent_name, rosparam_nh, "visualize_trajectory_path", visualize_trajectory_path_);
-    error += !getBoolParam(parent_name, rosparam_nh, "check_for_waypoint_jumps", check_for_waypoint_jumps_);
-    shutdownIfParamErrors(parent_name, error);
-  }
+  ros::NodeHandle rpnh(nh_, name_);
+  std::size_t error = 0;
+  error += !rosparam_shortcuts::getStringParam(name_, rpnh, "command_mode", command_mode);
+  error += !rosparam_shortcuts::getStringParam(name_, rpnh, "joint_trajectory_topic", joint_trajectory_topic);
+  error += !rosparam_shortcuts::getStringParam(name_, rpnh, "cartesian_command_topic", cartesian_command_topic);
+  error += !rosparam_shortcuts::getStringParam(name_, rpnh, "save_traj_to_file_path", save_traj_to_file_path_);
+  error += !rosparam_shortcuts::getBoolParam(name_, rpnh, "save_traj_to_file", save_traj_to_file_);
+  error += !rosparam_shortcuts::getBoolParam(name_, rpnh, "visualize_trajectory_line", visualize_trajectory_line_);
+  error += !rosparam_shortcuts::getBoolParam(name_, rpnh, "visualize_trajectory_path", visualize_trajectory_path_);
+  error += !rosparam_shortcuts::getBoolParam(name_, rpnh, "check_for_waypoint_jumps", check_for_waypoint_jumps_);
+  rosparam_shortcuts::shutdownIfParamErrors(name_, error);
 
   // Choose mode from string
   mode_ = stringToCommandMode(command_mode);
@@ -104,38 +97,34 @@ ExecutionInterface::ExecutionInterface(DebugInterfacePtr debug_interface,
   switch (mode_)
   {
     case JOINT_EXECUTION_MANAGER:
-      ROS_DEBUG_STREAM_NAMED("execution_interface","Connecting to trajectory execution manager");
+      ROS_DEBUG_STREAM_NAMED(name_, "Connecting to trajectory execution manager");
       if (!trajectory_execution_manager_)
       {
         using namespace trajectory_execution_manager;
-        trajectory_execution_manager_.reset(
-            new TrajectoryExecutionManager(planning_scene_monitor_->getRobotModel()));
+        trajectory_execution_manager_.reset(new TrajectoryExecutionManager(planning_scene_monitor_->getRobotModel()));
       }
       break;
     case JOINT_PUBLISHER:
-      ROS_DEBUG_STREAM_NAMED("execution_interface","Connecting to joint publisher on topic " << joint_trajectory_topic);
+      ROS_DEBUG_STREAM_NAMED(name_, "Connecting to joint publisher on topic " << joint_trajectory_topic);
       // Alternative method to sending trajectories than trajectory_execution_manager
-      joint_trajectory_pub_ =
-          nh_.advertise<trajectory_msgs::JointTrajectory>(joint_trajectory_topic, 1000);
+      joint_trajectory_pub_ = nh_.advertise<trajectory_msgs::JointTrajectory>(joint_trajectory_topic, 1000);
       break;
     case CARTESIAN_PUBLISHER:
-      ROS_DEBUG_STREAM_NAMED("execution_interface","Connecting to cartesian publisher on topic" << cartesian_command_topic);
-      cartesian_command_pub_ =
-          nh_.advertise<cartesian_msgs::CartesianCommand>(cartesian_command_topic, 1000);
+      ROS_DEBUG_STREAM_NAMED(name_, "Connecting to cartesian publisher on topic" << cartesian_command_topic);
+      cartesian_command_pub_ = nh_.advertise<cartesian_msgs::CartesianCommand>(cartesian_command_topic, 1000);
       break;
     default:
-      ROS_ERROR_STREAM_NAMED("execution_interface", "Unknown control mode");
+      ROS_ERROR_STREAM_NAMED(name_, "Unknown control mode");
   }
 
-  ROS_INFO_STREAM_NAMED("execution_interface", "ExecutionInterface Ready.");
+  ROS_INFO_STREAM_NAMED(name_, "ExecutionInterface Ready.");
 }
 
-bool ExecutionInterface::executePose(const Eigen::Affine3d &pose, JointModelGroup *arm_jmg,
-                                     const double &duration)
+bool ExecutionInterface::executePose(const Eigen::Affine3d &pose, JointModelGroup *arm_jmg, const double &duration)
 {
   if (mode_ != CARTESIAN_PUBLISHER)
   {
-    ROS_ERROR_STREAM_NAMED("execution_interface", "Unable to execute pose because in different mode");
+    ROS_ERROR_STREAM_NAMED(name_, "Unable to execute pose because in different mode");
     return false;
   }
 
@@ -145,20 +134,20 @@ bool ExecutionInterface::executePose(const Eigen::Affine3d &pose, JointModelGrou
   return true;
 }
 
-bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &trajectory_msg,
-                                           JointModelGroup *jmg, bool wait_for_execution)
+bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &trajectory_msg, JointModelGroup *jmg,
+                                           bool wait_for_execution)
 {
   trajectory_msgs::JointTrajectory &trajectory = trajectory_msg.joint_trajectory;
 
   // Debug
-  ROS_DEBUG_STREAM_NAMED("execution_interface.summary",
-                         "Executing trajectory with " << trajectory.points.size() << " waypoints");
+  ROS_DEBUG_STREAM_NAMED("execution_interface.summary", "Executing trajectory with " << trajectory.points.size()
+                                                                                     << " waypoints");
   ROS_DEBUG_STREAM_NAMED("execution_interface.trajectory", "Publishing:\n" << trajectory_msg);
 
   // Error check
   if (trajectory.points.empty())
   {
-    ROS_ERROR_STREAM_NAMED("execution_interface","No points to execute, aborting trajectory execution");
+    ROS_ERROR_STREAM_NAMED(name_, "No points to execute, aborting trajectory execution");
     return false;
   }
 
@@ -166,7 +155,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
   bool clear_dynamics = false;
   if (clear_dynamics)
   {
-    ROS_WARN_STREAM_NAMED("temp","clearing dynamics");
+    ROS_WARN_STREAM_NAMED("temp", "clearing dynamics");
     for (std::size_t i = 0; i < trajectory.points.size(); ++i)
     {
       trajectory.points[i].velocities.clear();
@@ -176,9 +165,8 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
 
   // Optionally save to file
   if (save_traj_to_file_)
-    saveTrajectory(trajectory_msg,
-                   jmg->getName() + "_moveit_trajectory_" +
-                       boost::lexical_cast<std::string>(trajectory_filename_count_++) + ".csv");
+    saveTrajectory(trajectory_msg, jmg->getName() + "_moveit_trajectory_" +
+                                       boost::lexical_cast<std::string>(trajectory_filename_count_++) + ".csv");
 
   // Optionally visualize the hand/wrist path in Rviz
   if (visualize_trajectory_line_)
@@ -193,10 +181,8 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
       // trajectory_msg, grasp_datas_[jmg]->parent_link_, config_->right_arm_, rvt::LIME_GREEN);
     }
     else
-      ROS_WARN_STREAM_NAMED("execution_interface",
-                            "Not visualizing path because trajectory only has "
-                                << trajectory.points.size()
-                                << " points or because is end effector");
+      ROS_WARN_STREAM_NAMED(name_, "Not visualizing path because trajectory only has "
+                                       << trajectory.points.size() << " points or because is end effector");
   }
 
   // Optionally visualize trajectory in Rviz
@@ -214,7 +200,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
   if (!debug_interface_->getFullAutonomous())
   {
     debug_interface_->waitForNextFullStep("execute trajectory");
-    ROS_INFO_STREAM_NAMED("execution_interface", "Remote confirmed trajectory execution.");
+    ROS_INFO_STREAM_NAMED(name_, "Remote confirmed trajectory execution.");
   }
 
   // Send new trajectory
@@ -234,7 +220,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
       }
       else
       {
-        ROS_ERROR_STREAM_NAMED("execution_interface", "Failed to execute trajectory");
+        ROS_ERROR_STREAM_NAMED(name_, "Failed to execute trajectory");
         return false;
       }
       break;
@@ -243,15 +229,15 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
 
       if (wait_for_execution)
       {
-        ROS_INFO_STREAM_NAMED("execution_interface","Sleeping while trajectory executes");
+        ROS_INFO_STREAM_NAMED(name_, "Sleeping while trajectory executes");
         ros::Duration(trajectory.points.back().time_from_start).sleep();
       }
       break;
     case CARTESIAN_PUBLISHER:
-      ROS_ERROR_STREAM_NAMED("execution_interface", "Incorrect control mode: CARTESIAN");
+      ROS_ERROR_STREAM_NAMED(name_, "Incorrect control mode: CARTESIAN");
       break;
     default:
-      ROS_ERROR_STREAM_NAMED("execution_interface", "Unknown control mode");
+      ROS_ERROR_STREAM_NAMED(name_, "Unknown control mode");
   }
 
   return true;
@@ -259,14 +245,14 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
 
 bool ExecutionInterface::stopExecution()
 {
-  ROS_WARN_STREAM_NAMED("temp","Execution stop requested");
+  ROS_WARN_STREAM_NAMED("temp", "Execution stop requested");
 
   trajectory_msgs::JointTrajectory blank_trajectory;
 
   switch (mode_)
   {
     case JOINT_EXECUTION_MANAGER:
-      ROS_ERROR_STREAM_NAMED("temp","Not implemented");
+      ROS_ERROR_STREAM_NAMED("temp", "Not implemented");
       // TODO Just send a blank trajectory
       break;
     case JOINT_PUBLISHER:
@@ -275,10 +261,10 @@ bool ExecutionInterface::stopExecution()
       return true;
       break;
     case CARTESIAN_PUBLISHER:
-      ROS_ERROR_STREAM_NAMED("temp","Not implemented");
+      ROS_ERROR_STREAM_NAMED("temp", "Not implemented");
       break;
     default:
-      ROS_ERROR_STREAM_NAMED("execution_interface", "Unknown control mode");
+      ROS_ERROR_STREAM_NAMED(name_, "Unknown control mode");
   }
   return false;
 }
@@ -287,28 +273,27 @@ bool ExecutionInterface::waitForExecution()
 {
   if (mode_ != JOINT_EXECUTION_MANAGER)
   {
-    ROS_WARN_STREAM_NAMED("execution_interface", "Not waiting for execution because not in execution_manager "
-                                  "mode");
+    ROS_WARN_STREAM_NAMED(name_, "Not waiting for execution because not in execution_manager "
+                                 "mode");
     return true;
   }
 
-  ROS_DEBUG_STREAM_NAMED("execution_interface", "Waiting for executing trajectory to finish");
+  ROS_DEBUG_STREAM_NAMED(name_, "Waiting for executing trajectory to finish");
 
   // wait for the trajectory to complete
-  moveit_controller_manager::ExecutionStatus execution_status =
-      trajectory_execution_manager_->waitForExecution();
+  moveit_controller_manager::ExecutionStatus execution_status = trajectory_execution_manager_->waitForExecution();
   if (execution_status == moveit_controller_manager::ExecutionStatus::SUCCEEDED)
   {
-    ROS_DEBUG_STREAM_NAMED("execution_interface", "Trajectory execution succeeded");
+    ROS_DEBUG_STREAM_NAMED(name_, "Trajectory execution succeeded");
     return true;
   }
 
   if (execution_status == moveit_controller_manager::ExecutionStatus::PREEMPTED)
-    ROS_INFO_STREAM_NAMED("execution_interface", "Trajectory execution preempted");
+    ROS_INFO_STREAM_NAMED(name_, "Trajectory execution preempted");
   else if (execution_status == moveit_controller_manager::ExecutionStatus::TIMED_OUT)
-    ROS_ERROR_STREAM_NAMED("execution_interface", "Trajectory execution timed out");
+    ROS_ERROR_STREAM_NAMED(name_, "Trajectory execution timed out");
   else
-    ROS_ERROR_STREAM_NAMED("execution_interface", "Trajectory execution control failed");
+    ROS_ERROR_STREAM_NAMED(name_, "Trajectory execution control failed");
 
   return false;
 }
@@ -327,8 +312,7 @@ void ExecutionInterface::checkForWaypointJumps(const trajectory_msgs::JointTraje
     if (diff > max_time_step)
     {
       ROS_ERROR_STREAM_NAMED(
-          "execution_interface",
-          "Max time step between points exceeded, likely because of wrap around/IK bug. Point " << i);
+          name_, "Max time step between points exceeded, likely because of wrap around/IK bug. Point " << i);
       std::cout << "First time: " << trajectory.points[i].time_from_start.toSec() << std::endl;
       std::cout << "Next time: " << trajectory.points[i + 1].time_from_start.toSec() << std::endl;
       std::cout << "Diff time: " << diff.toSec() << std::endl;
@@ -343,9 +327,7 @@ void ExecutionInterface::checkForWaypointJumps(const trajectory_msgs::JointTraje
     else if (diff > warn_time_step)
     {
       ROS_WARN_STREAM_NAMED(
-          "execution_interface",
-          "Warn time step between points exceeded, likely because of wrap around/IK bug. Point "
-              << i);
+          name_, "Warn time step between points exceeded, likely because of wrap around/IK bug. Point " << i);
       std::cout << "First time: " << trajectory.points[i].time_from_start.toSec() << std::endl;
       std::cout << "Next time: " << trajectory.points[i + 1].time_from_start.toSec() << std::endl;
       std::cout << "Diff time: " << diff.toSec() << std::endl;
@@ -357,7 +339,7 @@ void ExecutionInterface::checkForWaypointJumps(const trajectory_msgs::JointTraje
 
 bool ExecutionInterface::checkExecutionManager()
 {
-  ROS_INFO_STREAM_NAMED("execution_interface", "Checking that execution manager is loaded.");
+  ROS_INFO_STREAM_NAMED(name_, "Checking that execution manager is loaded.");
 
   /*
   JointModelGroup *arm_jmg = config_->dual_arm_ ? config_->both_arms_ : config_->right_arm_;
@@ -369,7 +351,7 @@ bool ExecutionInterface::checkExecutionManager()
   // Check active controllers are running
   if (!trajectory_execution_manager_->ensureActiveControllersForGroup(arm_jmg->getName()))
   {
-    ROS_ERROR_STREAM_NAMED("execution_interface",
+    ROS_ERROR_STREAM_NAMED(name_,
                            "Group '" << arm_jmg->getName() << "' does not have controllers loaded");
     std::cout << "Available controllers: " << std::endl;
     std::copy(controller_list.begin(), controller_list.end(),
@@ -380,7 +362,7 @@ bool ExecutionInterface::checkExecutionManager()
   // Check active controllers are running
   if (!trajectory_execution_manager_->ensureActiveControllers(controller_list))
   {
-    ROS_ERROR_STREAM_NAMED("execution_interface", "Robot does not have the desired controllers "
+    ROS_ERROR_STREAM_NAMED(name_, "Robot does not have the desired controllers "
                                                   "active");
     return false;
   }
@@ -389,19 +371,18 @@ bool ExecutionInterface::checkExecutionManager()
   return true;
 }
 
-bool ExecutionInterface::checkTrajectoryController(ros::ServiceClient &service_client,
-                                                   const std::string &hardware_name, bool has_ee)
+bool ExecutionInterface::checkTrajectoryController(ros::ServiceClient &service_client, const std::string &hardware_name,
+                                                   bool has_ee)
 {
   // Try to communicate with controller manager
   controller_manager_msgs::ListControllers service;
-  ROS_DEBUG_STREAM_NAMED("execution_interface", "Calling list controllers service client");
+  ROS_DEBUG_STREAM_NAMED(name_, "Calling list controllers service client");
   if (!service_client.call(service))
   {
-    ROS_ERROR_STREAM_THROTTLE_NAMED(2, "execution_interface",
-                                    "Unable to check if controllers for "
-                                        << hardware_name << " are loaded, failing. Using nh "
-                                                            "namespace " << nh_.getNamespace()
-                                        << ". Service response: " << service.response);
+    ROS_ERROR_STREAM_THROTTLE_NAMED(2, name_, "Unable to check if controllers for "
+                                                  << hardware_name << " are loaded, failing. Using nh "
+                                                                      "namespace " << nh_.getNamespace()
+                                                  << ". Service response: " << service.response);
     return false;
   }
 
@@ -418,8 +399,7 @@ bool ExecutionInterface::checkTrajectoryController(ros::ServiceClient &service_c
       found_main_controller = true;
       if (service.response.controller[i].state != "running")
       {
-        ROS_WARN_STREAM_THROTTLE_NAMED(2, "execution_interface",
-                                       "Controller for " << hardware_name << " is in manual mode");
+        ROS_WARN_STREAM_THROTTLE_NAMED(2, name_, "Controller for " << hardware_name << " is in manual mode");
         return false;
       }
     }
@@ -428,8 +408,7 @@ bool ExecutionInterface::checkTrajectoryController(ros::ServiceClient &service_c
       found_ee_controller = true;
       if (service.response.controller[i].state != "running")
       {
-        ROS_WARN_STREAM_THROTTLE_NAMED(2, "execution_interface",
-                                       "Controller for " << hardware_name << " is in manual mode");
+        ROS_WARN_STREAM_THROTTLE_NAMED(2, name_, "Controller for " << hardware_name << " is in manual mode");
         return false;
       }
     }
@@ -437,16 +416,14 @@ bool ExecutionInterface::checkTrajectoryController(ros::ServiceClient &service_c
 
   if (has_ee && !found_ee_controller)
   {
-    ROS_ERROR_STREAM_THROTTLE_NAMED(
-        2, "execution_interface", "No end effector controller found for "
-                                      << hardware_name << ". Controllers are: " << service.response);
+    ROS_ERROR_STREAM_THROTTLE_NAMED(2, name_, "No end effector controller found for "
+                                                  << hardware_name << ". Controllers are: " << service.response);
     return false;
   }
   if (!found_main_controller)
   {
-    ROS_ERROR_STREAM_THROTTLE_NAMED(
-        2, "execution_interface", "No main controller found for "
-                                      << hardware_name << ". Controllers are: " << service.response);
+    ROS_ERROR_STREAM_THROTTLE_NAMED(2, name_, "No main controller found for "
+                                                  << hardware_name << ". Controllers are: " << service.response);
     return false;
   }
 
@@ -461,7 +438,7 @@ bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &traj
   // Error check
   if (!joint_trajectory.points.size() || !joint_trajectory.points[0].positions.size())
   {
-    ROS_ERROR_STREAM_NAMED("execution_interface", "No trajectory points available to save");
+    ROS_ERROR_STREAM_NAMED(name_, "No trajectory points available to save");
     return false;
   }
   bool has_accelerations = true;
@@ -479,8 +456,7 @@ bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &traj
   output_file << "time_from_start,";
   for (std::size_t j = 0; j < joint_trajectory.joint_names.size(); ++j)
   {
-    output_file << joint_trajectory.joint_names[j] << "_pos," << joint_trajectory.joint_names[j]
-                << "_vel,";
+    output_file << joint_trajectory.joint_names[j] << "_pos," << joint_trajectory.joint_names[j] << "_vel,";
     if (has_accelerations)
       output_file << joint_trajectory.joint_names[j] << "_acc,";
   }
@@ -491,7 +467,7 @@ bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &traj
   {
     // Timestamp
     output_file.precision(20);
-    //output_file << (joint_trajectory.header.stamp + joint_trajectory.points[i].time_from_start).toSec() << ",";
+    // output_file << (joint_trajectory.header.stamp + joint_trajectory.points[i].time_from_start).toSec() << ",";
     output_file << (joint_trajectory.points[i].time_from_start).toSec() << ",";
     output_file.precision(5);
     // Output entire trajectory to single line
@@ -508,7 +484,7 @@ bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &traj
     output_file << std::endl;
   }
   output_file.close();
-  ROS_INFO_STREAM_NAMED("execution_interface", "Saved trajectory to file " << file_name);
+  ROS_INFO_STREAM_NAMED(name_, "Saved trajectory to file " << file_name);
   return true;
 }
 
@@ -522,9 +498,8 @@ moveit::core::RobotStatePtr ExecutionInterface::getCurrentState()
 
 void ExecutionInterface::loadVisualTools()
 {
-  visual_tools_.reset(
-      new mvt::MoveItVisualTools(planning_scene_monitor_->getRobotModel()->getModelFrame(),
-                                 "/moveit_boilerplate/markers", planning_scene_monitor_));
+  visual_tools_.reset(new mvt::MoveItVisualTools(planning_scene_monitor_->getRobotModel()->getModelFrame(),
+                                                 "/moveit_boilerplate/markers", planning_scene_monitor_));
 
   visual_tools_->loadRobotStatePub("/moveit_boilerplate/robot_state");
   visual_tools_->loadTrajectoryPub("/moveit_boilerplate/display_trajectory");
