@@ -16,6 +16,9 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen REQUIRED)
 find_package(Boost REQUIRED)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+find_package(Gflags REQUIRED)
+
 catkin_package(
   CATKIN_DEPENDS
     moveit_core
@@ -33,6 +36,7 @@ catkin_package(
     execution_interface
     #planning_interface
     trajectory_io
+    ${PROJECT_NAME}_moveit_base
     boilerplate
 )
 
@@ -42,6 +46,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${Gflags_INCLUDE_DIRS}
 )
 
 include_directories(SYSTEM
@@ -54,6 +59,7 @@ add_library(debug_interface
   src/debug_interface.cpp
 )
 target_link_libraries(debug_interface
+  ${Gflags_LIBRARIES}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
@@ -67,7 +73,7 @@ target_link_libraries(fix_state_bounds
   ${Boost_LIBRARIES}
 )
 
-# execution interface library
+# execution interfaceX library
 add_library(execution_interface
   src/execution_interface.cpp
 )
@@ -97,7 +103,17 @@ target_link_libraries(trajectory_io
   ${Boost_LIBRARIES}
 )
 
+# Simplified reusable class for MoveIt!
+add_library(${PROJECT_NAME}_moveit_base
+  src/moveit_base.cpp
+)
+target_link_libraries(${PROJECT_NAME}_moveit_base
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
 # Reusable class for MoveIt!
+# TODO(davetcoleman) depend on ${PROJECT_NAME}_moveit_base
 add_library(boilerplate
   src/boilerplate.cpp
 )
@@ -105,7 +121,14 @@ target_link_libraries(boilerplate
   debug_interface
   execution_interface
   planning_interface
-  trajectory_io
+  ${Gflags_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+add_executable(${PROJECT_NAME}_example src/example.cpp)
+target_link_libraries(${PROJECT_NAME}_example
+  ${PROJECT_NAME}_moveit_base
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
