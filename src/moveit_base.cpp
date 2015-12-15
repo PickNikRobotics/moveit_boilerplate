@@ -109,10 +109,13 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string &joint_state_topic)
   if (planning_scene_monitor_->getPlanningScene())
   {
     // Optional monitors to start:
-    planning_scene_monitor_->startStateMonitor(joint_state_topic, "");
-    planning_scene_monitor_->startPublishingPlanningScene(
-        psm::PlanningSceneMonitor::UPDATE_SCENE, "planning_scene");
-    planning_scene_monitor_->getPlanningScene()->setName("planning_scene");
+    //planning_scene_monitor_->startStateMonitor(joint_state_topic, "");
+    //planning_scene_monitor_->startPublishingPlanningScene(
+    //psm::PlanningSceneMonitor::UPDATE_SCENE, "planning_scene");
+    //planning_scene_monitor_->getPlanningScene()->setName("planning_scene");
+    const std::string planning_scene_topic = "/moveit_teleop/planning_scene";
+    planning_scene_monitor_->startSceneMonitor(planning_scene_topic);
+    //psm::PlanningSceneMonitor::UPDATE_SCENE, "planning_scene");
   }
   else
   {

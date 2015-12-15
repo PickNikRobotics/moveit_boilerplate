@@ -40,8 +40,8 @@
    Methods for publishing commands:
 
    TrajectoryExecutionInterface using MoveItControllerMananger:
-     moveit_simple_controller_manager average: 0.00450083
-     moveit_ros_control_interface     average: 0.222877
+   moveit_simple_controller_manager average: 0.00450083
+   moveit_ros_control_interface     average: 0.222877
    Direct publishing on ROS topic:    average: 0.00184441  (59% faster)
 
 */
@@ -80,20 +80,21 @@ ExecutionInterface::ExecutionInterface(DebugInterfacePtr debug_interface,
   // Load rosparams
   ros::NodeHandle rpnh(nh_, name_);
   std::size_t error = 0;
-  error += !rosparam_shortcuts::getStringParam(name_, rpnh, "command_mode", command_mode);
-  error += !rosparam_shortcuts::getStringParam(name_, rpnh, "joint_trajectory_topic", joint_trajectory_topic);
-  error += !rosparam_shortcuts::getStringParam(name_, rpnh, "cartesian_command_topic", cartesian_command_topic);
-  error += !rosparam_shortcuts::getStringParam(name_, rpnh, "save_traj_to_file_path", save_traj_to_file_path_);
-  error += !rosparam_shortcuts::getBoolParam(name_, rpnh, "save_traj_to_file", save_traj_to_file_);
-  error += !rosparam_shortcuts::getBoolParam(name_, rpnh, "visualize_trajectory_line", visualize_trajectory_line_);
-  error += !rosparam_shortcuts::getBoolParam(name_, rpnh, "visualize_trajectory_path", visualize_trajectory_path_);
-  error += !rosparam_shortcuts::getBoolParam(name_, rpnh, "check_for_waypoint_jumps", check_for_waypoint_jumps_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "command_mode", command_mode);
+  error += !rosparam_shortcuts::get(name_, rpnh, "joint_trajectory_topic", joint_trajectory_topic);
+  error += !rosparam_shortcuts::get(name_, rpnh, "cartesian_command_topic", cartesian_command_topic);
+  error += !rosparam_shortcuts::get(name_, rpnh, "save_traj_to_file_path", save_traj_to_file_path_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "save_traj_to_file", save_traj_to_file_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "visualize_trajectory_line", visualize_trajectory_line_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "visualize_trajectory_path", visualize_trajectory_path_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "check_for_waypoint_jumps", check_for_waypoint_jumps_);
   rosparam_shortcuts::shutdownIfParamErrors(name_, error);
 
   // Choose mode from string
   mode_ = stringToCommandMode(command_mode);
 
   // Load the proper execution method
+  const std::size_t queue_size = 1;
   switch (mode_)
   {
     case JOINT_EXECUTION_MANAGER:
@@ -107,11 +108,11 @@ ExecutionInterface::ExecutionInterface(DebugInterfacePtr debug_interface,
     case JOINT_PUBLISHER:
       ROS_DEBUG_STREAM_NAMED(name_, "Connecting to joint publisher on topic " << joint_trajectory_topic);
       // Alternative method to sending trajectories than trajectory_execution_manager
-      joint_trajectory_pub_ = nh_.advertise<trajectory_msgs::JointTrajectory>(joint_trajectory_topic, 1000);
+      joint_trajectory_pub_ = nh_.advertise<trajectory_msgs::JointTrajectory>(joint_trajectory_topic, queue_size);
       break;
     case CARTESIAN_PUBLISHER:
       ROS_DEBUG_STREAM_NAMED(name_, "Connecting to cartesian publisher on topic" << cartesian_command_topic);
-      cartesian_command_pub_ = nh_.advertise<cartesian_msgs::CartesianCommand>(cartesian_command_topic, 1000);
+      cartesian_command_pub_ = nh_.advertise<cartesian_msgs::CartesianCommand>(cartesian_command_topic, queue_size);
       break;
     default:
       ROS_ERROR_STREAM_NAMED(name_, "Unknown control mode");
@@ -141,7 +142,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
 
   // Debug
   ROS_DEBUG_STREAM_NAMED("execution_interface.summary", "Executing trajectory with " << trajectory.points.size()
-                                                                                     << " waypoints");
+                         << " waypoints");
   ROS_DEBUG_STREAM_NAMED("execution_interface.trajectory", "Publishing:\n" << trajectory_msg);
 
   // Error check
@@ -166,7 +167,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
   // Optionally save to file
   if (save_traj_to_file_)
     saveTrajectory(trajectory_msg, jmg->getName() + "_moveit_trajectory_" +
-                                       boost::lexical_cast<std::string>(trajectory_filename_count_++) + ".csv");
+                   boost::lexical_cast<std::string>(trajectory_filename_count_++) + ".csv");
 
   // Optionally visualize the hand/wrist path in Rviz
   if (visualize_trajectory_line_)
@@ -182,7 +183,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
     }
     else
       ROS_WARN_STREAM_NAMED(name_, "Not visualizing path because trajectory only has "
-                                       << trajectory.points.size() << " points or because is end effector");
+                            << trajectory.points.size() << " points or because is end effector");
   }
 
   // Optionally visualize trajectory in Rviz
@@ -274,7 +275,7 @@ bool ExecutionInterface::waitForExecution()
   if (mode_ != JOINT_EXECUTION_MANAGER)
   {
     ROS_WARN_STREAM_NAMED(name_, "Not waiting for execution because not in execution_manager "
-                                 "mode");
+                          "mode");
     return true;
   }
 
@@ -312,7 +313,7 @@ void ExecutionInterface::checkForWaypointJumps(const trajectory_msgs::JointTraje
     if (diff > max_time_step)
     {
       ROS_ERROR_STREAM_NAMED(
-          name_, "Max time step between points exceeded, likely because of wrap around/IK bug. Point " << i);
+                             name_, "Max time step between points exceeded, likely because of wrap around/IK bug. Point " << i);
       std::cout << "First time: " << trajectory.points[i].time_from_start.toSec() << std::endl;
       std::cout << "Next time: " << trajectory.points[i + 1].time_from_start.toSec() << std::endl;
       std::cout << "Diff time: " << diff.toSec() << std::endl;
@@ -327,7 +328,7 @@ void ExecutionInterface::checkForWaypointJumps(const trajectory_msgs::JointTraje
     else if (diff > warn_time_step)
     {
       ROS_WARN_STREAM_NAMED(
-          name_, "Warn time step between points exceeded, likely because of wrap around/IK bug. Point " << i);
+                            name_, "Warn time step between points exceeded, likely because of wrap around/IK bug. Point " << i);
       std::cout << "First time: " << trajectory.points[i].time_from_start.toSec() << std::endl;
       std::cout << "Next time: " << trajectory.points[i + 1].time_from_start.toSec() << std::endl;
       std::cout << "Diff time: " << diff.toSec() << std::endl;
@@ -342,30 +343,30 @@ bool ExecutionInterface::checkExecutionManager()
   ROS_INFO_STREAM_NAMED(name_, "Checking that execution manager is loaded.");
 
   /*
-  JointModelGroup *arm_jmg = config_->dual_arm_ ? config_->both_arms_ : config_->right_arm_;
+    JointModelGroup *arm_jmg = config_->dual_arm_ ? config_->both_arms_ : config_->right_arm_;
 
-  // Get the controllers List
-  std::vector<std::string> controller_list;
-  trajectory_execution_manager_->getControllerManager()->getControllersList(controller_list);
+    // Get the controllers List
+    std::vector<std::string> controller_list;
+    trajectory_execution_manager_->getControllerManager()->getControllersList(controller_list);
 
-  // Check active controllers are running
-  if (!trajectory_execution_manager_->ensureActiveControllersForGroup(arm_jmg->getName()))
-  {
+    // Check active controllers are running
+    if (!trajectory_execution_manager_->ensureActiveControllersForGroup(arm_jmg->getName()))
+    {
     ROS_ERROR_STREAM_NAMED(name_,
-                           "Group '" << arm_jmg->getName() << "' does not have controllers loaded");
+    "Group '" << arm_jmg->getName() << "' does not have controllers loaded");
     std::cout << "Available controllers: " << std::endl;
     std::copy(controller_list.begin(), controller_list.end(),
-              std::ostream_iterator<std::string>(std::cout, "\n"));
+    std::ostream_iterator<std::string>(std::cout, "\n"));
     return false;
-  }
+    }
 
-  // Check active controllers are running
-  if (!trajectory_execution_manager_->ensureActiveControllers(controller_list))
-  {
+    // Check active controllers are running
+    if (!trajectory_execution_manager_->ensureActiveControllers(controller_list))
+    {
     ROS_ERROR_STREAM_NAMED(name_, "Robot does not have the desired controllers "
-                                                  "active");
+    "active");
     return false;
-  }
+    }
   */
 
   return true;
@@ -380,9 +381,9 @@ bool ExecutionInterface::checkTrajectoryController(ros::ServiceClient &service_c
   if (!service_client.call(service))
   {
     ROS_ERROR_STREAM_THROTTLE_NAMED(2, name_, "Unable to check if controllers for "
-                                                  << hardware_name << " are loaded, failing. Using nh "
-                                                                      "namespace " << nh_.getNamespace()
-                                                  << ". Service response: " << service.response);
+                                    << hardware_name << " are loaded, failing. Using nh "
+                                    "namespace " << nh_.getNamespace()
+                                    << ". Service response: " << service.response);
     return false;
   }
 
@@ -417,13 +418,13 @@ bool ExecutionInterface::checkTrajectoryController(ros::ServiceClient &service_c
   if (has_ee && !found_ee_controller)
   {
     ROS_ERROR_STREAM_THROTTLE_NAMED(2, name_, "No end effector controller found for "
-                                                  << hardware_name << ". Controllers are: " << service.response);
+                                    << hardware_name << ". Controllers are: " << service.response);
     return false;
   }
   if (!found_main_controller)
   {
     ROS_ERROR_STREAM_THROTTLE_NAMED(2, name_, "No main controller found for "
-                                                  << hardware_name << ". Controllers are: " << service.response);
+                                    << hardware_name << ". Controllers are: " << service.response);
     return false;
   }
 
