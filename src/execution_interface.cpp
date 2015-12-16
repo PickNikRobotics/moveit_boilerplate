@@ -167,7 +167,8 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
   // Optionally save to file
   if (save_traj_to_file_)
     saveTrajectory(trajectory_msg, jmg->getName() + "_moveit_trajectory_" +
-                   boost::lexical_cast<std::string>(trajectory_filename_count_++) + ".csv");
+                   boost::lexical_cast<std::string>(trajectory_filename_count_++) + ".csv",
+                   save_traj_to_file_path_);
 
   // Optionally visualize the hand/wrist path in Rviz
   if (visualize_trajectory_line_)
@@ -432,14 +433,16 @@ bool ExecutionInterface::checkTrajectoryController(ros::ServiceClient &service_c
 }
 
 bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &trajectory_msg,
-                                        const std::string &file_name)
+                                        const std::string &file_name,
+                                        const std::string &save_traj_to_file_path)
 {
+  const std::string name = "execution_interface";
   const trajectory_msgs::JointTrajectory &joint_trajectory = trajectory_msg.joint_trajectory;
 
   // Error check
   if (!joint_trajectory.points.size() || !joint_trajectory.points[0].positions.size())
   {
-    ROS_ERROR_STREAM_NAMED(name_, "No trajectory points available to save");
+    ROS_ERROR_STREAM_NAMED(name, "No trajectory points available to save");
     return false;
   }
   bool has_accelerations = true;
@@ -448,7 +451,7 @@ bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &traj
     has_accelerations = false;
   }
 
-  std::string file_path = save_traj_to_file_path_ + "/" + file_name;
+  std::string file_path = save_traj_to_file_path + "/" + file_name;
 
   std::ofstream output_file;
   output_file.open(file_path.c_str());
@@ -485,7 +488,7 @@ bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &traj
     output_file << std::endl;
   }
   output_file.close();
-  ROS_INFO_STREAM_NAMED(name_, "Saved trajectory to file " << file_name);
+  ROS_INFO_STREAM_NAMED(name, "Saved trajectory to file " << file_name);
   return true;
 }
 

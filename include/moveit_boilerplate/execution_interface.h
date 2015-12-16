@@ -106,6 +106,11 @@ public:
     return trajectory_execution_manager_;
   }
 
+  /** \brief Save a trajectory that is about to be executed to file, for later debugging */
+  static bool saveTrajectory(const moveit_msgs::RobotTrajectory &trajectory_msg,
+                             const std::string &file_name,
+                             const std::string &save_traj_to_file_path);
+
 private:
 
   /**
@@ -129,10 +134,6 @@ private:
   bool checkTrajectoryController(ros::ServiceClient &service_client,
                                  const std::string &hardware_name, bool has_ee = false);
 
-  /** \brief Save a trajectory that is about to be executed to file, for later debugging */
-  bool saveTrajectory(const moveit_msgs::RobotTrajectory &trajectory_msg,
-                      const std::string &file_name);
-
   /** \brief Convert to type of command interface */
   CommandMode stringToCommandMode(const std::string& command_mode)
   {
@@ -153,7 +154,7 @@ private:
   ros::NodeHandle nh_;
 
   // Node name
-  std::string name_ = "execution_interface";
+  const std::string name_ = "execution_interface";
 
   // Configuration settings
   CommandMode mode_; // how to publish
