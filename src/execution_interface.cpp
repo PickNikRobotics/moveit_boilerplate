@@ -445,11 +445,6 @@ bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &traj
     ROS_ERROR_STREAM_NAMED(name, "No trajectory points available to save");
     return false;
   }
-  bool has_accelerations = true;
-  if (joint_trajectory.points[0].accelerations.size() == 0)
-  {
-    has_accelerations = false;
-  }
 
   std::string file_path = save_traj_to_file_path + "/" + file_name;
 
@@ -460,9 +455,8 @@ bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &traj
   output_file << "time_from_start,";
   for (std::size_t j = 0; j < joint_trajectory.joint_names.size(); ++j)
   {
-    output_file << joint_trajectory.joint_names[j] << "_pos," << joint_trajectory.joint_names[j] << "_vel,";
-    if (has_accelerations)
-      output_file << joint_trajectory.joint_names[j] << "_acc,";
+    output_file << joint_trajectory.joint_names[j] << "_pos," << joint_trajectory.joint_names[j] << "_vel,"
+                << joint_trajectory.joint_names[j] << "_acc,";
   }
   output_file << std::endl;
 
@@ -481,8 +475,12 @@ bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &traj
       output_file << joint_trajectory.points[i].positions[j] << ",";
       if (joint_trajectory.points[i].velocities.size())
         output_file << joint_trajectory.points[i].velocities[j] << ",";
+      else
+        output_file << 0 << ",";
       if (joint_trajectory.points[i].accelerations.size())
         output_file << joint_trajectory.points[i].accelerations[j] << ",";
+      else
+        output_file << 0 << ",";
     }
 
     output_file << std::endl;
