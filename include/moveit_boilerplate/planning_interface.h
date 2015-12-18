@@ -41,7 +41,8 @@ public:
    * utilize
    * \return true on success
    */
-  bool moveToSRDFPoseNoPlan(JointModelGroup* jmg, const std::string& pose_name, double velocity_scaling_factor);
+  bool moveToSRDFPoseNoPlan(JointModelGroup* jmg, const std::string& pose_name, double velocity_scaling_factor,
+                            const bool wait_for_execution = true);
 
   /**
    * \brief Send a single state to the controllers for execution
@@ -50,7 +51,8 @@ public:
    * \param velocity_scaling_factor - the percent of max speed all joints should be allowed to utilize
    * \return true on success
    */
-  bool executeState(JointModelGroup* jmg, const moveit::core::RobotStatePtr goal_state, double velocity_scaling_factor);
+  bool executeState(JointModelGroup* jmg, const moveit::core::RobotStatePtr goal_state, double velocity_scaling_factor,
+                    const bool wait_for_execution = true);
 
   /**
    * \brief Convert and parameterize a trajectory with velocity information
@@ -90,6 +92,9 @@ private:
   moveit::core::RobotStatePtr getCurrentState();
 
   // --------------------------------------------------------
+
+  // Short name of class
+  const std::string name_ = "planning_interface";
 
   // A shared node handle
   ros::NodeHandle nh_;

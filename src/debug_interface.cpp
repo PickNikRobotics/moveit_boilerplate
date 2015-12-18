@@ -60,9 +60,9 @@ DebugInterface::DebugInterface(ros::NodeHandle nh)
 {
   // Warnings
   if (autonomous_)
-    ROS_WARN_STREAM_NAMED("debug_interface", "In autonomous mode - will only stop at breakpoints");
+    ROS_INFO_STREAM_NAMED("debug_interface", "In autonomous mode - will only stop at breakpoints");
   if (full_autonomous_)
-    ROS_WARN_STREAM_NAMED("debug_interface", "In FULL autonomous mode - will ignore breakpoints");
+    ROS_INFO_STREAM_NAMED("debug_interface", "In FULL autonomous mode - will ignore breakpoints");
 
   ROS_INFO_STREAM_NAMED("debug_interface", "DebugInterface Ready.");
 }

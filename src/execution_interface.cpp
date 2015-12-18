@@ -150,7 +150,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
   bool clear_dynamics = false;
   if (clear_dynamics)
   {
-    ROS_WARN_STREAM_NAMED("temp", "clearing dynamics");
+    ROS_WARN_STREAM_NAMED(name_, "clearing dynamics");
     for (std::size_t i = 0; i < trajectory.points.size(); ++i)
     {
       trajectory.points[i].velocities.clear();
@@ -238,20 +238,17 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
 
 bool ExecutionInterface::stopExecution()
 {
-  ROS_WARN_STREAM_NAMED("temp", "Execution stop requested");
-
-  ROS_WARN_STREAM_NAMED(name_, "Stopping cartesian execution is not implemented");
-
   trajectory_msgs::JointTrajectory blank_trajectory;
 
   switch (joint_command_mode_)
   {
     case JOINT_EXECUTION_MANAGER:
-      ROS_ERROR_STREAM_NAMED("temp", "Not implemented");
+      ROS_ERROR_STREAM_NAMED(name_, "Joint execution manager stopping not implemented");
       // TODO Just send a blank trajectory
       break;
     case JOINT_PUBLISHER:
       // Just send a blank trajectory
+      ROS_DEBUG_STREAM_NAMED(name_, "Recieved stop motion command");
       joint_trajectory_pub_.publish(blank_trajectory);
       return true;
       break;
