@@ -41,7 +41,7 @@
 
 // ROS
 #include <ros/ros.h>
-#include <cartesian_msgs/CartesianCommand.h>
+#include <geometry_msgs/PoseStamped.h>
 
 // Visual tools
 #include <moveit_visual_tools/moveit_visual_tools.h>
@@ -62,10 +62,9 @@ namespace moveit_boilerplate
 {
 MOVEIT_CLASS_FORWARD(ExecutionInterface);
 
-enum CommandMode {
+enum JointCommandMode {
   JOINT_EXECUTION_MANAGER, // use the default MoveIt! method for sending trajectories using actionlib
   JOINT_PUBLISHER,         // send trajectories direct to ros_control using ROS messages
-  CARTESIAN_PUBLISHER      // send cartesian poses direclty to your controller using ROS messages
 };
 
 class ExecutionInterface
@@ -135,12 +134,10 @@ private:
                                  const std::string &hardware_name, bool has_ee = false);
 
   /** \brief Convert to type of command interface */
-  CommandMode stringToCommandMode(const std::string& command_mode)
+  JointCommandMode stringToJointCommandMode(const std::string& command_mode)
   {
     if (command_mode == "joint_publisher")
       return JOINT_PUBLISHER;
-    else if (command_mode == "cartesian_publisher")
-      return CARTESIAN_PUBLISHER;
     else if (command_mode == "joint_execution_manager")
       return JOINT_EXECUTION_MANAGER; // use actionlib
     else
@@ -157,7 +154,7 @@ private:
   const std::string name_ = "execution_interface";
 
   // Configuration settings
-  CommandMode mode_; // how to publish
+  JointCommandMode joint_command_mode_; // how to publish
   bool save_traj_to_file_ = false;
   std::string save_traj_to_file_path_;
   bool visualize_trajectory_line_ = false;
@@ -182,7 +179,7 @@ private:
   ros::Publisher joint_trajectory_pub_;
 
   // Cartesian execution
-  cartesian_msgs::CartesianCommand cartesian_command_msg_;
+  geometry_msgs::PoseStamped cartesian_command_msg_;
   ros::Publisher cartesian_command_pub_;
 
 };  // end class

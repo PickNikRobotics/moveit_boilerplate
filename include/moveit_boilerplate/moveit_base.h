@@ -81,7 +81,8 @@ public:
   /**
    * \brief Connect to the MoveIt! planning scene messages
    */
-  bool loadPlanningSceneMonitor(const std::string &joint_state_topic);
+  bool loadPlanningSceneMonitor(const std::string &joint_state_topic,
+                                const std::string &planning_scene_topic);
 
   /**
    * \brief Load visual tools

@@ -56,9 +56,6 @@
 #include <moveit_boilerplate/execution_interface.h>
 #include <moveit_boilerplate/planning_interface.h>
 
-// ROS parameter loading
-#include <rosparam_shortcuts/rosparam_shortcuts.h>
-
 namespace moveit_boilerplate
 {
 static const std::string ROBOT_DESCRIPTION = "robot_description";
@@ -74,7 +71,8 @@ public:
   /**
    * \brief Connect to the MoveIt! planning scene messages
    */
-  bool loadPlanningSceneMonitor(const std::string &joint_state_topic);
+  bool loadPlanningSceneMonitor(const std::string &joint_state_topic,
+                                const std::string &planning_scene_topic);
 
   /**
    * \brief Load visual tools
@@ -89,7 +87,15 @@ public:
    */
   moveit::core::RobotStatePtr getCurrentState();
 
+  /**
+   * \brief Get pose of the end effector
+   */
+  const Eigen::Affine3d& getCurrentPose();
+
 protected:
+
+  // Name of this class
+  std::string name_;
 
   // A shared node handle
   ros::NodeHandle nh_;

@@ -53,12 +53,15 @@ bool MoveItBase::init(ros::NodeHandle &nh)
   std::string joint_state_topic;
   std::string joint_model_group;
   std::string execution_command_mode;
+  std::string planning_scene_topic;
 
   // Load rosparams
-  ros::NodeHandle rosparam_nh(nh_, name1_);
-  using namespace rosparam_shortcuts;
-  getStringParam(name1_, rosparam_nh, "joint_state_topic", joint_state_topic);
-  getStringParam(name1_, rosparam_nh, "joint_model_group", joint_model_group);
+  ros::NodeHandle rpnh(nh_, name1_);
+  int error = 0;
+  error += !rosparam_shortcuts::get(name1_, rpnh, "joint_state_topic", joint_state_topic);
+  error += !rosparam_shortcuts::get(name1_, rpnh, "joint_model_group", joint_model_group);
+  error += !rosparam_shortcuts::get(name1_, rpnh, "planning_scene_topic", planning_scene_topic);
+  rosparam_shortcuts::shutdownIfError(name1_, error);
 
   // Load the loader
   robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(ROBOT_DESCRIPTION));
@@ -73,7 +76,7 @@ bool MoveItBase::init(ros::NodeHandle &nh)
   planning_scene_.reset(new planning_scene::PlanningScene(robot_model_));
 
   // Load planning scene monitor
-  if (!loadPlanningSceneMonitor(joint_state_topic))
+  if (!loadPlanningSceneMonitor(joint_state_topic, planning_scene_topic))
   {
     ROS_ERROR_STREAM_NAMED(name1_, "Unable to load planning scene monitor");
   }
@@ -92,7 +95,8 @@ bool MoveItBase::init(ros::NodeHandle &nh)
   return true;
 }
 
-bool MoveItBase::loadPlanningSceneMonitor(const std::string &joint_state_topic)
+bool MoveItBase::loadPlanningSceneMonitor(const std::string &joint_state_topic,
+                                          const std::string &planning_scene_topic)
 {
   // Create tf transformer
   tf_.reset(new tf::TransformListener(nh_));
@@ -113,7 +117,6 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string &joint_state_topic)
     //planning_scene_monitor_->startPublishingPlanningScene(
     //psm::PlanningSceneMonitor::UPDATE_SCENE, "planning_scene");
     //planning_scene_monitor_->getPlanningScene()->setName("planning_scene");
-    const std::string planning_scene_topic = "/moveit_teleop/planning_scene";
     planning_scene_monitor_->startSceneMonitor(planning_scene_topic);
     //psm::PlanningSceneMonitor::UPDATE_SCENE, "planning_scene");
   }

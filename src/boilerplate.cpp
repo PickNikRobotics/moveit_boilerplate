@@ -42,23 +42,29 @@
 // MoveItManipulation
 #include <moveit_boilerplate/boilerplate.h>
 
+// ROS parameter loading
+#include <rosparam_shortcuts/rosparam_shortcuts.h>
+
 namespace moveit_boilerplate
 {
 DEFINE_int32(id, 0, "Identification number for various component modes");
 
 Boilerplate::Boilerplate()
   : nh_("~")
+  , name_("boilerplate")
 {
   std::string joint_state_topic;
   std::string arm_joint_model_group;
   std::string execution_command_mode;
+  std::string planning_scene_topic;
 
   // Load rosparams
-  const std::string parent_name = "boilerplate";  // for namespacing logging messages
-  ros::NodeHandle rosparam_nh(nh_, parent_name);
-  using namespace rosparam_shortcuts;
-  getStringParam(parent_name, rosparam_nh, "joint_state_topic", joint_state_topic);
-  getStringParam(parent_name, rosparam_nh, "arm_joint_model_group", arm_joint_model_group);
+  ros::NodeHandle rpnh(nh_, name_);
+  int error = 0;
+  error += !rosparam_shortcuts::get(name_, rpnh, "joint_state_topic", joint_state_topic);
+  error += !rosparam_shortcuts::get(name_, rpnh, "arm_joint_model_group", arm_joint_model_group);
+  error += !rosparam_shortcuts::get(name_, rpnh, "planning_scene_topic", planning_scene_topic);
+  rosparam_shortcuts::shutdownIfError(name_, error);
 
   // Load the loader
   robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(ROBOT_DESCRIPTION));
@@ -78,7 +84,7 @@ Boilerplate::Boilerplate()
   ros::spinOnce();
 
   // Load planning scene monitor
-  if (!loadPlanningSceneMonitor(joint_state_topic))
+  if (!loadPlanningSceneMonitor(joint_state_topic, planning_scene_topic))
   {
     ROS_ERROR_STREAM_NAMED("boilerplate", "Unable to load planning scene monitor");
   }
@@ -105,7 +111,8 @@ Boilerplate::Boilerplate()
   ROS_INFO_STREAM_NAMED("boilerplate", "Boilerplate Ready.");
 }
 
-bool Boilerplate::loadPlanningSceneMonitor(const std::string &joint_state_topic)
+bool Boilerplate::loadPlanningSceneMonitor(const std::string &joint_state_topic,
+                                           const std::string &planning_scene_topic)
 {
   // Allows us to sycronize to Rviz and also publish collision objects to ourselves
   ROS_DEBUG_STREAM_NAMED("boilerplate", "Loading Planning Scene Monitor");
@@ -119,7 +126,7 @@ bool Boilerplate::loadPlanningSceneMonitor(const std::string &joint_state_topic)
     // Optional monitors to start:
     planning_scene_monitor_->startStateMonitor(joint_state_topic, "");
     planning_scene_monitor_->startPublishingPlanningScene(
-        psm::PlanningSceneMonitor::UPDATE_SCENE, "planning_scene");
+        psm::PlanningSceneMonitor::UPDATE_SCENE, planning_scene_topic);
     planning_scene_monitor_->getPlanningScene()->setName("planning_scene");
   }
   else
@@ -234,6 +241,11 @@ moveit::core::RobotStatePtr Boilerplate::getCurrentState()
   psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
   (*current_state_) = scene->getCurrentState();
   return current_state_;
+}
+
+const Eigen::Affine3d& Boilerplate::getCurrentPose()
+{
+  return getCurrentState()->getGlobalLinkTransform(arm_jmg_->getOnlyOneEndEffectorTip());
 }
 
 }  // end namespace

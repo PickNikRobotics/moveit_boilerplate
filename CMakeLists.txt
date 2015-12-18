@@ -31,11 +31,11 @@ catkin_package(
   INCLUDE_DIRS
     include
   LIBRARIES
-    debug_interface
-    fix_state_bounds
-    execution_interface
-    #planning_interface
-    trajectory_io
+    ${PROJECT_NAME}_debug_interface
+    ${PROJECT_NAME}_fix_state_bounds
+    ${PROJECT_NAME}_execution_interface
+    ${PROJECT_NAME}_planning_interface
+    ${PROJECT_NAME}_trajectory_io
     ${PROJECT_NAME}_moveit_base
     boilerplate
 )
@@ -55,50 +55,50 @@ include_directories(SYSTEM
 )
 
 # debug_interface library
-add_library(debug_interface
+add_library(${PROJECT_NAME}_debug_interface
   src/debug_interface.cpp
 )
-target_link_libraries(debug_interface
+target_link_libraries(${PROJECT_NAME}_debug_interface
   ${Gflags_LIBRARIES}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
 # Fix_state_bounds library
-add_library(fix_state_bounds
+add_library(${PROJECT_NAME}_fix_state_bounds
   src/fix_state_bounds.cpp
 )
-target_link_libraries(fix_state_bounds
+target_link_libraries(${PROJECT_NAME}_fix_state_bounds
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
 # execution interfaceX library
-add_library(execution_interface
+add_library(${PROJECT_NAME}_execution_interface
   src/execution_interface.cpp
 )
-target_link_libraries(execution_interface
+target_link_libraries(${PROJECT_NAME}_execution_interface
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
 # Joint-space path planners
-add_library(planning_interface
+add_library(${PROJECT_NAME}_planning_interface
   src/planning_interface.cpp
 )
-target_link_libraries(planning_interface
-  execution_interface
-  debug_interface
-  fix_state_bounds
+target_link_libraries(${PROJECT_NAME}_planning_interface
+  ${PROJECT_NAME}_execution_interface
+  ${PROJECT_NAME}_debug_interface
+  ${PROJECT_NAME}_fix_state_bounds
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
 # Trajectory input/output
-add_library(trajectory_io
+add_library(${PROJECT_NAME}_trajectory_io
   src/trajectory_io.cpp
 )
-target_link_libraries(trajectory_io
+target_link_libraries(${PROJECT_NAME}_trajectory_io
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
@@ -118,9 +118,9 @@ add_library(boilerplate
   src/boilerplate.cpp
 )
 target_link_libraries(boilerplate
-  debug_interface
-  execution_interface
-  planning_interface
+  ${PROJECT_NAME}_debug_interface
+  ${PROJECT_NAME}_execution_interface
+  ${PROJECT_NAME}_planning_interface
   ${Gflags_LIBRARIES}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}

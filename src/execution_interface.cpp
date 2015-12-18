@@ -40,10 +40,9 @@
    Methods for publishing commands:
 
    TrajectoryExecutionInterface using MoveItControllerMananger:
-   moveit_simple_controller_manager average: 0.00450083
-   moveit_ros_control_interface     average: 0.222877
+   moveit_simple_controller_manager   average: 0.00450083
+   moveit_ros_control_interface       average: 0.222877 TODO this has gotten faster
    Direct publishing on ROS topic:    average: 0.00184441  (59% faster)
-
 */
 
 // MoveItManipulation
@@ -88,14 +87,14 @@ ExecutionInterface::ExecutionInterface(DebugInterfacePtr debug_interface,
   error += !rosparam_shortcuts::get(name_, rpnh, "visualize_trajectory_line", visualize_trajectory_line_);
   error += !rosparam_shortcuts::get(name_, rpnh, "visualize_trajectory_path", visualize_trajectory_path_);
   error += !rosparam_shortcuts::get(name_, rpnh, "check_for_waypoint_jumps", check_for_waypoint_jumps_);
-  rosparam_shortcuts::shutdownIfParamErrors(name_, error);
+  rosparam_shortcuts::shutdownIfError(name_, error);
 
   // Choose mode from string
-  mode_ = stringToCommandMode(command_mode);
+  joint_command_mode_ = stringToJointCommandMode(command_mode);
 
-  // Load the proper execution method
+  // Load the proper joint command execution method
   const std::size_t queue_size = 1;
-  switch (mode_)
+  switch (joint_command_mode_)
   {
     case JOINT_EXECUTION_MANAGER:
       ROS_DEBUG_STREAM_NAMED(name_, "Connecting to trajectory execution manager");
@@ -110,27 +109,22 @@ ExecutionInterface::ExecutionInterface(DebugInterfacePtr debug_interface,
       // Alternative method to sending trajectories than trajectory_execution_manager
       joint_trajectory_pub_ = nh_.advertise<trajectory_msgs::JointTrajectory>(joint_trajectory_topic, queue_size);
       break;
-    case CARTESIAN_PUBLISHER:
-      ROS_DEBUG_STREAM_NAMED(name_, "Connecting to cartesian publisher on topic" << cartesian_command_topic);
-      cartesian_command_pub_ = nh_.advertise<cartesian_msgs::CartesianCommand>(cartesian_command_topic, queue_size);
-      break;
     default:
       ROS_ERROR_STREAM_NAMED(name_, "Unknown control mode");
   }
+
+  // TODO(davetcoleman): check if publishers have connected yet
+
+  // Load cartesian control method
+  ROS_DEBUG_STREAM_NAMED(name_, "Connecting to cartesian publisher on topic " << cartesian_command_topic);
+  cartesian_command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>(cartesian_command_topic, queue_size);
 
   ROS_INFO_STREAM_NAMED(name_, "ExecutionInterface Ready.");
 }
 
 bool ExecutionInterface::executePose(const Eigen::Affine3d &pose, JointModelGroup *arm_jmg, const double &duration)
 {
-  if (mode_ != CARTESIAN_PUBLISHER)
-  {
-    ROS_ERROR_STREAM_NAMED(name_, "Unable to execute pose because in different mode");
-    return false;
-  }
-
-  visual_tools_->convertPoseSafe(pose, cartesian_command_msg_.desired_pose.pose);
-  cartesian_command_msg_.duration = duration;
+  visual_tools_->convertPoseSafe(pose, cartesian_command_msg_.pose);
   cartesian_command_pub_.publish(cartesian_command_msg_);
   return true;
 }
@@ -206,7 +200,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
   }
 
   // Send new trajectory
-  switch (mode_)
+  switch (joint_command_mode_)
   {
     case JOINT_EXECUTION_MANAGER:
       // Reset trajectory manager
@@ -235,9 +229,6 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
         ros::Duration(trajectory.points.back().time_from_start).sleep();
       }
       break;
-    case CARTESIAN_PUBLISHER:
-      ROS_ERROR_STREAM_NAMED(name_, "Incorrect control mode: CARTESIAN");
-      break;
     default:
       ROS_ERROR_STREAM_NAMED(name_, "Unknown control mode");
   }
@@ -249,9 +240,11 @@ bool ExecutionInterface::stopExecution()
 {
   ROS_WARN_STREAM_NAMED("temp", "Execution stop requested");
 
+  ROS_WARN_STREAM_NAMED(name_, "Stopping cartesian execution is not implemented");
+
   trajectory_msgs::JointTrajectory blank_trajectory;
 
-  switch (mode_)
+  switch (joint_command_mode_)
   {
     case JOINT_EXECUTION_MANAGER:
       ROS_ERROR_STREAM_NAMED("temp", "Not implemented");
@@ -262,9 +255,6 @@ bool ExecutionInterface::stopExecution()
       joint_trajectory_pub_.publish(blank_trajectory);
       return true;
       break;
-    case CARTESIAN_PUBLISHER:
-      ROS_ERROR_STREAM_NAMED("temp", "Not implemented");
-      break;
     default:
       ROS_ERROR_STREAM_NAMED(name_, "Unknown control mode");
   }
@@ -273,7 +263,7 @@ bool ExecutionInterface::stopExecution()
 
 bool ExecutionInterface::waitForExecution()
 {
-  if (mode_ != JOINT_EXECUTION_MANAGER)
+  if (joint_command_mode_ != JOINT_EXECUTION_MANAGER)
   {
     ROS_WARN_STREAM_NAMED(name_, "Not waiting for execution because not in execution_manager "
                           "mode");
