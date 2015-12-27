@@ -44,8 +44,8 @@
 
 namespace moveit_boilerplate
 {
-DEFINE_bool(auto_step, false, "Automatically go through each step");
-DEFINE_bool(full_auto, false, "Automatically run ignoring all errors");
+DEFINE_bool(auto_step, true, "Automatically go through each step");
+DEFINE_bool(full_auto, true, "Automatically run ignoring all errors");
 
 /**
  * \brief Constructor
