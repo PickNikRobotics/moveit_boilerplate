@@ -51,10 +51,12 @@ namespace moveit_boilerplate
 FixStateBounds::FixStateBounds()
   : nh_("~")
 {
-  const std::string parent_name = "fix_state_bounds";  // for namespacing logging messages
+  const std::string name_ = "fix_state_bounds";  // for namespacing logging messages
 
-  rosparam_shortcuts::getDoubleParam(parent_name, nh_, BOUNDS_PARAM_NAME, bounds_dist_);
-  rosparam_shortcuts::getDoubleParam(parent_name, nh_, DT_PARAM_NAME, max_dt_offset_);
+  std::size_t error = 0;
+  error += !rosparam_shortcuts::get(name_, nh_, BOUNDS_PARAM_NAME, bounds_dist_);
+  error += !rosparam_shortcuts::get(name_, nh_, DT_PARAM_NAME, max_dt_offset_);
+  rosparam_shortcuts::shutdownIfError(name_, error);
 }
 
 bool FixStateBounds::fixBounds(robot_state::RobotState &robot_state,
