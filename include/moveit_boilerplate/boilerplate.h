@@ -55,6 +55,7 @@
 #include <moveit_boilerplate/debug_interface.h>
 #include <moveit_boilerplate/execution_interface.h>
 #include <moveit_boilerplate/planning_interface.h>
+#include <moveit_boilerplate/get_planning_scene_service.h>
 
 namespace moveit_boilerplate
 {
@@ -71,8 +72,7 @@ public:
   /**
    * \brief Connect to the MoveIt! planning scene messages
    */
-  bool loadPlanningSceneMonitor(const std::string &joint_state_topic,
-                                const std::string &planning_scene_topic);
+  bool loadPlanningSceneMonitor(const std::string &joint_state_topic, const std::string &planning_scene_topic);
 
   /**
    * \brief Load visual tools
@@ -80,7 +80,7 @@ public:
   void loadVisualTools();
 
   /** \brief Output to console the current state of the robot's joint limits */
-  bool showJointLimits(JointModelGroup* jmg);
+  bool showJointLimits(JointModelGroup *jmg);
 
   /**
    * \brief Use the planning scene to get the robot's current state
@@ -90,10 +90,9 @@ public:
   /**
    * \brief Get pose of the end effector
    */
-  const Eigen::Affine3d& getCurrentPose();
+  const Eigen::Affine3d &getCurrentPose();
 
 protected:
-
   // Name of this class
   std::string name_;
 
@@ -112,6 +111,9 @@ protected:
   planning_scene::PlanningScenePtr planning_scene_;
   psm::PlanningSceneMonitorPtr planning_scene_monitor_;
 
+  // Service for sharing the planning scene
+  moveit_boilerplate::GetPlanningSceneService get_planning_scene_service_;
+
   // For executing joint and cartesian trajectories
   ExecutionInterfacePtr execution_interface_;
 
@@ -126,7 +128,6 @@ protected:
 
   // Desired planning group to work with
   JointModelGroup *arm_jmg_;
-
 
 };  // end class
 

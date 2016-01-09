@@ -50,10 +50,9 @@
 
 namespace moveit_boilerplate
 {
-PlanningInterface::PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor,
-                                     ManipulationDataPtr config,
-                                     ExecutionInterface execution_interface,
-                                     DebugInterfacePtr debug_interface, bool fake_execution)
+PlanningInterface::PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor, ManipulationDataPtr config,
+                                     ExecutionInterface execution_interface, DebugInterfacePtr debug_interface,
+                                     bool fake_execution)
   : nh_("~")
   , planning_scene_monitor_(planning_scene_monitor)
   , config_(config)
@@ -89,21 +88,18 @@ bool PlanningInterface::moveToSRDFPose(JointModelGroup* arm_jmg, const std::stri
   getCurrentState();
 
   // Set goal state to initial pose
-  moveit::core::RobotStatePtr goal_state(
-      new moveit::core::RobotState(*current_state_));  // Allocate robot states
+  moveit::core::RobotStatePtr goal_state(new moveit::core::RobotState(*current_state_));  // Allocate robot states
   if (!goal_state->setToDefaultValues(arm_jmg, pose_name))
   {
-    ROS_ERROR_STREAM_NAMED("planning_interface", "Failed to set pose '" << pose_name
-                                                                  << "' for planning group '"
-                                                                  << arm_jmg->getName() << "'");
+    ROS_ERROR_STREAM_NAMED("planning_interface", "Failed to set pose '" << pose_name << "' for planning group '"
+                                                                        << arm_jmg->getName() << "'");
     return false;
   }
 
   // Plan
   bool execute_trajectory = true;
   bool verbose = false;
-  if (!move(current_state_, goal_state, arm_jmg, velocity_scaling_factor, verbose,
-            execute_trajectory, check_validity))
+  if (!move(current_state_, goal_state, arm_jmg, velocity_scaling_factor, verbose, execute_trajectory, check_validity))
   {
     ROS_ERROR_STREAM_NAMED("planning_interface", "Unable to move to new position");
     return false;
@@ -112,8 +108,7 @@ bool PlanningInterface::moveToSRDFPose(JointModelGroup* arm_jmg, const std::stri
   return true;
 }
 
-bool PlanningInterface::moveToSRDFPoseNoPlan(JointModelGroup* arm_jmg, const std::string& pose_name,
-                                             double duration)
+bool PlanningInterface::moveToSRDFPoseNoPlan(JointModelGroup* arm_jmg, const std::string& pose_name, double duration)
 {
   ROS_DEBUG_STREAM_NAMED("planning_interface.superdebug", "moveToSRDFPose()");
 
@@ -121,19 +116,16 @@ bool PlanningInterface::moveToSRDFPoseNoPlan(JointModelGroup* arm_jmg, const std
   getCurrentState();
 
   // Set goal state to initial pose
-  moveit::core::RobotStatePtr goal_state(
-      new moveit::core::RobotState(*current_state_));  // Allocate robot states
+  moveit::core::RobotStatePtr goal_state(new moveit::core::RobotState(*current_state_));  // Allocate robot states
   if (!goal_state->setToDefaultValues(arm_jmg, pose_name))
   {
-    ROS_ERROR_STREAM_NAMED("planning_interface", "Failed to set pose '" << pose_name
-                                                                  << "' for planning group '"
-                                                                  << arm_jmg->getName() << "'");
+    ROS_ERROR_STREAM_NAMED("planning_interface", "Failed to set pose '" << pose_name << "' for planning group '"
+                                                                        << arm_jmg->getName() << "'");
     return false;
   }
 
   // Get EE pose of goal stae
-  Eigen::Affine3d goal_world_to_ee =
-      goal_state->getGlobalLinkTransform(grasp_datas_[arm_jmg]->parent_link_);
+  Eigen::Affine3d goal_world_to_ee = goal_state->getGlobalLinkTransform(grasp_datas_[arm_jmg]->parent_link_);
 
   Eigen::Affine3d goal_base_to_ee;
   transformWorldToBase(goal_world_to_ee, goal_base_to_ee);
@@ -161,8 +153,7 @@ bool PlanningInterface::moveToEEPose(const Eigen::Affine3d& ee_pose, double velo
   bool verbose = true;
   bool execute_trajectory = true;
   bool check_validity = true;
-  if (!move(current_state_, goal_state, arm_jmg, velocity_scaling_factor, verbose,
-            execute_trajectory, check_validity))
+  if (!move(current_state_, goal_state, arm_jmg, velocity_scaling_factor, verbose, execute_trajectory, check_validity))
   {
     ROS_ERROR_STREAM_NAMED("planning_interface", "Failed to move EE to desired pose");
     return false;
@@ -173,24 +164,23 @@ bool PlanningInterface::moveToEEPose(const Eigen::Affine3d& ee_pose, double velo
   return true;
 }
 
-bool PlanningInterface::move(const moveit::core::RobotStatePtr& start,
-                             const moveit::core::RobotStatePtr& goal, JointModelGroup* arm_jmg,
-                             double velocity_scaling_factor, bool verbose, bool execute_trajectory,
-                             bool check_validity)
+bool PlanningInterface::move(const moveit::core::RobotStatePtr& start, const moveit::core::RobotStatePtr& goal,
+                             JointModelGroup* arm_jmg, double velocity_scaling_factor, bool verbose,
+                             bool execute_trajectory, bool check_validity)
 {
   ROS_INFO_STREAM_NAMED("planning_interface.move", "Planning to new pose with velocity scale "
-                                                 << velocity_scaling_factor);
+                                                       << velocity_scaling_factor);
 
   // Check validity of start and goal
   if (check_validity && !checkCollisionAndBounds(start, goal))
   {
     ROS_ERROR_STREAM_NAMED("planning_interface.move", "Potential issue with start and goal state, but "
-                                                "perhaps this should not fail in the future");
+                                                      "perhaps this should not fail in the future");
     return false;
   }
   else if (!check_validity)
     ROS_WARN_STREAM_NAMED("planning_interface.move", "Start/goal state collision checking for move() was "
-                                               "disabled");
+                                                     "disabled");
 
   // Visualize start and goal
   if (verbose)
@@ -203,7 +193,7 @@ bool PlanningInterface::move(const moveit::core::RobotStatePtr& start,
   if (statesEqual(*start, *goal, arm_jmg))
   {
     ROS_INFO_STREAM_NAMED("planning_interface", "Not planning motion because current state and goal "
-                                          "state are close enough.");
+                                                "state are close enough.");
     return true;
   }
 
@@ -214,7 +204,7 @@ bool PlanningInterface::move(const moveit::core::RobotStatePtr& start,
   {
     if (plan_attempts > 0)
       ROS_WARN_STREAM_NAMED("planning_interface", "Previous plan attempt failed, trying again on attempt "
-                                                << plan_attempts);
+                                                      << plan_attempts);
 
     if (plan(start, goal, arm_jmg, velocity_scaling_factor, verbose, trajectory_msg))
     {
@@ -232,9 +222,8 @@ bool PlanningInterface::move(const moveit::core::RobotStatePtr& start,
   // Hack: do not allow a two point trajectory to be executed because there is no velcity?
   if (trajectory_msg.joint_trajectory.points.size() < 3)
   {
-    ROS_ERROR_STREAM_NAMED("planning_interface", "Trajectory only has "
-                                               << trajectory_msg.joint_trajectory.points.size()
-                                               << " points");
+    ROS_ERROR_STREAM_NAMED("planning_interface", "Trajectory only has " << trajectory_msg.joint_trajectory.points.size()
+                                                                        << " points");
 
     if (trajectory_msg.joint_trajectory.points.size() == 2)
     {
@@ -246,8 +235,7 @@ bool PlanningInterface::move(const moveit::core::RobotStatePtr& start,
       }
 
       // Add more waypoints
-      robot_trajectory::RobotTrajectoryPtr robot_traj(
-          new robot_trajectory::RobotTrajectory(robot_model_, arm_jmg));
+      robot_trajectory::RobotTrajectoryPtr robot_traj(new robot_trajectory::RobotTrajectory(robot_model_, arm_jmg));
       robot_traj->setRobotTrajectoryMsg(*current_state_, trajectory_msg);
 
       // Interpolate
@@ -280,7 +268,7 @@ bool PlanningInterface::move(const moveit::core::RobotStatePtr& start,
   else
   {
     ROS_WARN_STREAM_NAMED("planning_interface", "Trajectory not executed as because was requested not "
-                                          "to");
+                                                "to");
   }
 
   // Do processing while trajectory is execute
@@ -301,8 +289,7 @@ bool PlanningInterface::move(const moveit::core::RobotStatePtr& start,
 
 bool PlanningInterface::createPlanningRequest(planning_interface::MotionPlanRequest& request,
                                               const moveit::core::RobotStatePtr& start,
-                                              const moveit::core::RobotStatePtr& goal,
-                                              JointModelGroup* arm_jmg,
+                                              const moveit::core::RobotStatePtr& goal, JointModelGroup* arm_jmg,
                                               double velocity_scaling_factor)
 {
   moveit::core::robotStateToRobotStateMsg(*start, request.start_state);
@@ -318,10 +305,9 @@ bool PlanningInterface::createPlanningRequest(planning_interface::MotionPlanRequ
   // request.planner_id = "RRTstarkConfigDefault";
   request.group_name = arm_jmg->getName();
   if (config_->use_experience_setup_)
-    request.num_planning_attempts =
-        1;  // this must be one else it threads and doesn't use lightning/thunder correctly
+    request.num_planning_attempts = 1;  // this must be one else it threads and doesn't use lightning/thunder correctly
   else
-    request.num_planning_attempts = 3;  // this is also the number of threads to use
+    request.num_planning_attempts = 3;                      // this is also the number of threads to use
   request.allowed_planning_time = config_->planning_time_;  // seconds
   request.use_experience = config_->use_experience_setup_;
   request.experience_method = config_->experience_type_;
@@ -330,26 +316,20 @@ bool PlanningInterface::createPlanningRequest(planning_interface::MotionPlanRequ
   // Parameters for the workspace that the planner should work inside relative to center of robot
   double workspace_size = 1;
   request.workspace_parameters.header.frame_id = robot_model_->getModelFrame();
-  request.workspace_parameters.min_corner.x =
-      start->getVariablePosition("virtual_joint/trans_x") - workspace_size;
-  request.workspace_parameters.min_corner.y =
-      start->getVariablePosition("virtual_joint/trans_y") - workspace_size;
+  request.workspace_parameters.min_corner.x = start->getVariablePosition("virtual_joint/trans_x") - workspace_size;
+  request.workspace_parameters.min_corner.y = start->getVariablePosition("virtual_joint/trans_y") - workspace_size;
   request.workspace_parameters.min_corner.z =
       0;  // floor start->getVariablePosition("virtual_joint/trans_z") - workspace_size;
-  request.workspace_parameters.max_corner.x =
-      start->getVariablePosition("virtual_joint/trans_x") + workspace_size;
-  request.workspace_parameters.max_corner.y =
-      start->getVariablePosition("virtual_joint/trans_y") + workspace_size;
-  request.workspace_parameters.max_corner.z =
-      start->getVariablePosition("virtual_joint/trans_z") + workspace_size;
+  request.workspace_parameters.max_corner.x = start->getVariablePosition("virtual_joint/trans_x") + workspace_size;
+  request.workspace_parameters.max_corner.y = start->getVariablePosition("virtual_joint/trans_y") + workspace_size;
+  request.workspace_parameters.max_corner.z = start->getVariablePosition("virtual_joint/trans_z") + workspace_size;
   // visual_tools_->publishWorkspaceParameters(request.workspace_parameters);
 
   return true;
 }
 
-bool PlanningInterface::plan(const moveit::core::RobotStatePtr& start,
-                             const moveit::core::RobotStatePtr& goal, JointModelGroup* arm_jmg,
-                             double velocity_scaling_factor, bool verbose,
+bool PlanningInterface::plan(const moveit::core::RobotStatePtr& start, const moveit::core::RobotStatePtr& goal,
+                             JointModelGroup* arm_jmg, double velocity_scaling_factor, bool verbose,
                              moveit_msgs::RobotTrajectory& trajectory_msg)
 {
   // Create motion planning request
@@ -390,10 +370,12 @@ bool PlanningInterface::plan(const moveit::core::RobotStatePtr& start,
   return true;
 }
 
-bool PlanningInterface::planPostProcessing() { return true; }
+bool PlanningInterface::planPostProcessing()
+{
+  return true;
+}
 
-bool PlanningInterface::interpolate(robot_trajectory::RobotTrajectoryPtr robot_traj,
-                                    const double& discretization)
+bool PlanningInterface::interpolate(robot_trajectory::RobotTrajectoryPtr robot_traj, const double& discretization)
 {
   double dummy_dt = 1;  // dummy value until parameterization
 
@@ -424,8 +406,7 @@ bool PlanningInterface::interpolate(robot_trajectory::RobotTrajectoryPtr robot_t
     for (double t = discretization; t < 1; t += discretization)
     {
       // Create new state
-      moveit::core::RobotStatePtr interpolated_state(
-          new moveit::core::RobotState(robot_traj->getFirstWayPoint()));
+      moveit::core::RobotStatePtr interpolated_state(new moveit::core::RobotState(robot_traj->getFirstWayPoint()));
       // Fill in new values
       robot_traj->getWayPoint(i).interpolate(robot_traj->getWayPoint(i + 1), t, *interpolated_state);
       // Add to trajectory
@@ -445,9 +426,8 @@ bool PlanningInterface::interpolate(robot_trajectory::RobotTrajectoryPtr robot_t
   // }
 
   std::size_t modified_num_waypoints = new_robot_traj->getWayPointCount();
-  ROS_DEBUG_STREAM_NAMED("planning_interface.interpolation", "Interpolated trajectory from "
-                                                           << original_num_waypoints << " to "
-                                                           << modified_num_waypoints);
+  ROS_DEBUG_STREAM_NAMED("planning_interface.interpolation",
+                         "Interpolated trajectory from " << original_num_waypoints << " to " << modified_num_waypoints);
 
   // Copy back to original datastructure
   *robot_traj = *new_robot_traj;
@@ -480,8 +460,7 @@ std::string PlanningInterface::getActionResultString(const moveit_msgs::MoveItEr
   }
   else if (error_code.val == moveit_msgs::MoveItErrorCodes::UNABLE_TO_AQUIRE_SENSOR_DATA)
     return "Motion plan was found but it seems to be too costly and looking around did not help.";
-  else if (error_code.val ==
-           moveit_msgs::MoveItErrorCodes::MOTION_PLAN_INVALIDATED_BY_ENVIRONMENT_CHANGE)
+  else if (error_code.val == moveit_msgs::MoveItErrorCodes::MOTION_PLAN_INVALIDATED_BY_ENVIRONMENT_CHANGE)
     return "Solution found but the environment changed during execution and the path was aborted";
   else if (error_code.val == moveit_msgs::MoveItErrorCodes::CONTROL_FAILED)
     return "Solution found but controller failed during execution";
@@ -498,8 +477,8 @@ std::string PlanningInterface::getActionResultString(const moveit_msgs::MoveItEr
   return "Unknown event";
 }
 
-bool PlanningInterface::executeState(const moveit::core::RobotStatePtr goal_state,
-                                     JointModelGroup* jmg, double velocity_scaling_factor)
+bool PlanningInterface::executeState(const moveit::core::RobotStatePtr goal_state, JointModelGroup* jmg,
+                                     double velocity_scaling_factor)
 {
   // Get the start state
   getCurrentState();
@@ -515,7 +494,7 @@ bool PlanningInterface::executeState(const moveit::core::RobotStatePtr goal_stat
   if (statesEqual(*current_state_, *goal_state, jmg))
   {
     ROS_INFO_STREAM_NAMED("planning_interface", "Not executing because current state and goal state are "
-                                          "close enough.");
+                                                "close enough.");
     return true;
   }
 
@@ -531,8 +510,8 @@ bool PlanningInterface::executeState(const moveit::core::RobotStatePtr goal_stat
 
   // Convert trajectory to a message
   bool interpolate = false;
-  if (!convertRobotStatesToTrajectory(robot_state_trajectory, trajectory_msg, jmg,
-                                      velocity_scaling_factor, interpolate))
+  if (!convertRobotStatesToTrajectory(robot_state_trajectory, trajectory_msg, jmg, velocity_scaling_factor,
+                                      interpolate))
   {
     ROS_ERROR_STREAM_NAMED("planning_interface", "Failed to convert to parameterized trajectory");
     return false;
@@ -548,8 +527,8 @@ bool PlanningInterface::executeState(const moveit::core::RobotStatePtr goal_stat
   return true;
 }
 
-bool PlanningInterface::moveDirectToState(const moveit::core::RobotStatePtr goal_state,
-                                          JointModelGroup* jmg, double velocity_scaling_factor)
+bool PlanningInterface::moveDirectToState(const moveit::core::RobotStatePtr goal_state, JointModelGroup* jmg,
+                                          double velocity_scaling_factor)
 {
   // Visualize goal
   visual_goal_state_->publishRobotState(goal_state, rvt::ORANGE);
@@ -589,16 +568,15 @@ bool PlanningInterface::moveDirectToState(const moveit::core::RobotStatePtr goal
   return true;
 }
 
-bool PlanningInterface::executeVerticlePathWithIK(JointModelGroup* arm_jmg,
-                                                  const double& desired_lift_distance, bool up,
-                                                  bool ignore_collision)
+bool PlanningInterface::executeVerticlePathWithIK(JointModelGroup* arm_jmg, const double& desired_lift_distance,
+                                                  bool up, bool ignore_collision)
 {
   Eigen::Vector3d approach_direction;
   approach_direction << 0, 0, (up ? 1 : -1);  // 1 is up, -1 is down
   bool reverse_path = false;
 
-  if (!executeCartesianPath(arm_jmg, approach_direction, desired_lift_distance,
-                            config_->lift_velocity_scaling_factor_, reverse_path, ignore_collision))
+  if (!executeCartesianPath(arm_jmg, approach_direction, desired_lift_distance, config_->lift_velocity_scaling_factor_,
+                            reverse_path, ignore_collision))
   {
     ROS_ERROR_STREAM_NAMED("planning_interface", "Failed to execute horizontal path");
     return false;
@@ -606,16 +584,15 @@ bool PlanningInterface::executeVerticlePathWithIK(JointModelGroup* arm_jmg,
   return true;
 }
 
-bool PlanningInterface::executeHorizontalPath(JointModelGroup* arm_jmg,
-                                              const double& desired_lift_distance, bool left,
+bool PlanningInterface::executeHorizontalPath(JointModelGroup* arm_jmg, const double& desired_lift_distance, bool left,
                                               bool ignore_collision)
 {
   Eigen::Vector3d approach_direction;
   approach_direction << 0, (left ? 1 : -1), 0;  // 1 is left, -1 is right
   bool reverse_path = false;
 
-  if (!executeCartesianPath(arm_jmg, approach_direction, desired_lift_distance,
-                            config_->lift_velocity_scaling_factor_, reverse_path, ignore_collision))
+  if (!executeCartesianPath(arm_jmg, approach_direction, desired_lift_distance, config_->lift_velocity_scaling_factor_,
+                            reverse_path, ignore_collision))
   {
     ROS_ERROR_STREAM_NAMED("planning_interface", "Failed to execute horizontal path");
     return false;
@@ -623,8 +600,8 @@ bool PlanningInterface::executeHorizontalPath(JointModelGroup* arm_jmg,
   return true;
 }
 
-bool PlanningInterface::executeRetreatPath(JointModelGroup* arm_jmg, double desired_retreat_distance,
-                                           bool retreat, bool ignore_collision)
+bool PlanningInterface::executeRetreatPath(JointModelGroup* arm_jmg, double desired_retreat_distance, bool retreat,
+                                           bool ignore_collision)
 {
   // Compute straight line in reverse from grasp
   Eigen::Vector3d approach_direction;
@@ -640,10 +617,9 @@ bool PlanningInterface::executeRetreatPath(JointModelGroup* arm_jmg, double desi
   return true;
 }
 
-bool PlanningInterface::executeCartesianPath(JointModelGroup* arm_jmg,
-                                             const Eigen::Vector3d& direction,
-                                             double desired_distance, double velocity_scaling_factor,
-                                             bool reverse_path, bool ignore_collision)
+bool PlanningInterface::executeCartesianPath(JointModelGroup* arm_jmg, const Eigen::Vector3d& direction,
+                                             double desired_distance, double velocity_scaling_factor, bool reverse_path,
+                                             bool ignore_collision)
 {
   getCurrentState();
 
@@ -654,8 +630,8 @@ bool PlanningInterface::executeCartesianPath(JointModelGroup* arm_jmg,
 
   double path_length;
   std::vector<moveit::core::RobotStatePtr> robot_state_trajectory;
-  if (!computeStraightLinePath(direction, desired_distance, robot_state_trajectory, current_state_,
-                               arm_jmg, reverse_path, path_length, ignore_collision))
+  if (!computeStraightLinePath(direction, desired_distance, robot_state_trajectory, current_state_, arm_jmg,
+                               reverse_path, path_length, ignore_collision))
 
   {
     ROS_ERROR_STREAM_NAMED("planning_interface", "Error occured while computing straight line path");
@@ -681,11 +657,11 @@ bool PlanningInterface::executeCartesianPath(JointModelGroup* arm_jmg,
   return true;
 }
 
-bool PlanningInterface::computeStraightLinePath(
-    Eigen::Vector3d direction, double desired_distance,
-    std::vector<moveit::core::RobotStatePtr>& robot_state_trajectory,
-    moveit::core::RobotStatePtr robot_state, JointModelGroup* arm_jmg, bool reverse_trajectory,
-    double& last_valid_percentage, bool ignore_collision)
+bool PlanningInterface::computeStraightLinePath(Eigen::Vector3d direction, double desired_distance,
+                                                std::vector<moveit::core::RobotStatePtr>& robot_state_trajectory,
+                                                moveit::core::RobotStatePtr robot_state, JointModelGroup* arm_jmg,
+                                                bool reverse_trajectory, double& last_valid_percentage,
+                                                bool ignore_collision)
 {
   // End effector parent link (arm tip for ik solving)
   const moveit::core::LinkModel* ik_tip_link = grasp_datas_[arm_jmg]->parent_link_;
@@ -697,9 +673,9 @@ bool PlanningInterface::computeStraightLinePath(
   // Debug
   if (false)
   {
-    std::cout << "Tip Pose Start \n" << tip_pose_start.translation().x() << "\t"
-              << tip_pose_start.translation().y() << "\t" << tip_pose_start.translation().z()
-              << std::end;l
+    std::cout << "Tip Pose Start \n" << tip_pose_start.translation().x() << "\t" << tip_pose_start.translation().y()
+              << "\t" << tip_pose_start.translation().z() << std::end;
+    l
   }
 
   // Visualize start and goal state
@@ -740,8 +716,7 @@ bool PlanningInterface::computeStraightLinePath(
   if (desired_distance < max_step)
   {
     ROS_ERROR_STREAM_NAMED("planning_interface", "Not enough: desired_distance ("
-                                               << desired_distance << ")  < max_step (" << max_step
-                                               << ")");
+                                                     << desired_distance << ")  < max_step (" << max_step << ")");
     return false;
   }
 
@@ -757,8 +732,8 @@ bool PlanningInterface::computeStraightLinePath(
   // Check for kinematic solver
   if (!arm_jmg->canSetStateFromIK(ik_tip_link->getName()))
     ROS_ERROR_STREAM_NAMED("planning_interface", "No IK Solver loaded - make sure "
-                                           "moveit_config/kinamatics.yaml is loaded in this "
-                                           "namespace");
+                                                 "moveit_config/kinamatics.yaml is loaded in this "
+                                                 "namespace");
 
   std::size_t attempts = 0;
   static const std::size_t MAX_IK_ATTEMPTS = 4;
@@ -781,23 +756,22 @@ bool PlanningInterface::computeStraightLinePath(
     {
       only_check_self_collision = true;
       ROS_INFO_STREAM_NAMED("planning_interface", "computeStraightLinePath() is ignoring collisions with "
-                                            "world objects (but not robot links)");
+                                                  "world objects (but not robot links)");
     }
 
     // Collision check
     boost::scoped_ptr<psm::LockedPlanningSceneRO> ls;
     ls.reset(new psm::LockedPlanningSceneRO(planning_scene_monitor_));
-    moveit::core::GroupStateValidityCallbackFn constraint_fn = boost::bind(
-        &isStateValid, static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get(),
-        collision_checking_verbose, only_check_self_collision, visual_tools_, _1, _2, _3);
+    moveit::core::GroupStateValidityCallbackFn constraint_fn =
+        boost::bind(&isStateValid, static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get(),
+                    collision_checking_verbose, only_check_self_collision, visual_tools_, _1, _2, _3);
 
     // Compute Cartesian Path
     // this is the Cartesian pose we start from, and have to move in the direction indicated
     const Eigen::Affine3d& start_pose = robot_state->getGlobalLinkTransform(ik_tip_link);
 
     // the direction can be in the local reference frame (in which case we rotate it)
-    const Eigen::Vector3d rotated_direction =
-        global_reference_frame ? direction : start_pose.rotation() * direction;
+    const Eigen::Vector3d rotated_direction = global_reference_frame ? direction : start_pose.rotation() * direction;
 
     // The target pose is built by applying a translation to the start pose for the desired
     // direction and distance
@@ -805,27 +779,25 @@ bool PlanningInterface::computeStraightLinePath(
     target_pose.translation() += rotated_direction * desired_distance;
 
     robot_state_trajectory.clear();
-    last_valid_percentage =
-        robot_state->computeCartesianPath(arm_jmg, robot_state_trajectory, ik_tip_link, target_pose,
-                                          true, max_step, jump_threshold, constraint_fn);
+    last_valid_percentage = robot_state->computeCartesianPath(arm_jmg, robot_state_trajectory, ik_tip_link, target_pose,
+                                                              true, max_step, jump_threshold, constraint_fn);
 
     ROS_DEBUG_STREAM_NAMED("planning_interface", "Cartesian last_valid_percentage: "
-                                               << last_valid_percentage
-                                               << ", number of states in trajectory: "
-                                               << robot_state_trajectory.size());
+                                                     << last_valid_percentage << ", number of states in trajectory: "
+                                                     << robot_state_trajectory.size());
 
     double min_allowed_valid_percentage = 0.9;
     if (last_valid_percentage == 0)
     {
       ROS_WARN_STREAM_NAMED("planning_interface", "Failed to computer cartesian path: "
-                                            "last_valid_percentage is 0");
+                                                  "last_valid_percentage is 0");
     }
     else if (last_valid_percentage < min_allowed_valid_percentage)
     {
       ROS_DEBUG_STREAM_NAMED("planning_interface.waypoints", "Resulting cartesian path is less than "
-                                                           << min_allowed_valid_percentage
-                                                           << " % of the desired distance, % "
-                                                              "valid: " << last_valid_percentage);
+                                                                 << min_allowed_valid_percentage
+                                                                 << " % of the desired distance, % "
+                                                                    "valid: " << last_valid_percentage);
     }
     else
     {
@@ -859,17 +831,15 @@ bool PlanningInterface::computeStraightLinePath(
       std::cout << "Tip Pose Result: \n";
       for (std::size_t i = 0; i < robot_state_trajectory.size(); ++i)
       {
-        const Eigen::Affine3d tip_pose_start =
-            robot_state_trajectory[i]->getGlobalLinkTransform(ik_tip_link);
-        std::cout << tip_pose_start.translation().x() << "\t" << tip_pose_start.translation().y()
-                  << "\t" << tip_pose_start.translation().z() << std::endl;
+        const Eigen::Affine3d tip_pose_start = robot_state_trajectory[i]->getGlobalLinkTransform(ik_tip_link);
+        std::cout << tip_pose_start.translation().x() << "\t" << tip_pose_start.translation().y() << "\t"
+                  << tip_pose_start.translation().z() << std::endl;
       }
     }
 
     // Show actual trajectory in GREEN
     ROS_INFO_STREAM_NAMED("planning_interface", "Displaying cartesian trajectory in green");
-    const Eigen::Affine3d& tip_pose_end =
-        robot_state_trajectory.back()->getGlobalLinkTransform(ik_tip_link);
+    const Eigen::Affine3d& tip_pose_end = robot_state_trajectory.back()->getGlobalLinkTransform(ik_tip_link);
     visual_tools_->publishLine(tip_pose_start, tip_pose_end, rvt::LIME_GREEN, rvt::LARGE);
     visual_tools_->publishSphere(tip_pose_end, rvt::ORANGE, rvt::LARGE);
 
@@ -913,8 +883,7 @@ JointModelGroup* PlanningInterface::chooseArm(const Eigen::Affine3d& ee_pose)
   }
 }
 
-bool PlanningInterface::getRobotStateFromPose(const Eigen::Affine3d& ee_pose,
-                                              moveit::core::RobotStatePtr& robot_state,
+bool PlanningInterface::getRobotStateFromPose(const Eigen::Affine3d& ee_pose, moveit::core::RobotStatePtr& robot_state,
                                               JointModelGroup* arm_jmg, double consistency_limit)
 {
   // Setup collision checking with a locked planning scene
@@ -923,14 +892,14 @@ bool PlanningInterface::getRobotStateFromPose(const Eigen::Affine3d& ee_pose,
         config_->isEnabled("get_robot_state_from_pose__collision_checking_verbose");
     if (collision_checking_verbose)
       ROS_WARN_STREAM_NAMED("planning_interface.getRobotStateFromPose", "collision_checking_verbose "
-                                                                  "turned on");
+                                                                        "turned on");
 
     boost::scoped_ptr<psm::LockedPlanningSceneRO> ls;
     ls.reset(new psm::LockedPlanningSceneRO(planning_scene_monitor_));
     bool only_check_self_collision = true;
-    moveit::core::GroupStateValidityCallbackFn constraint_fn = boost::bind(
-        &isStateValid, static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get(),
-        collision_checking_verbose, only_check_self_collision, visual_tools_, _1, _2, _3);
+    moveit::core::GroupStateValidityCallbackFn constraint_fn =
+        boost::bind(&isStateValid, static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get(),
+                    collision_checking_verbose, only_check_self_collision, visual_tools_, _1, _2, _3);
 
     // Solve IK problem for arm
     std::size_t attempts = 0;  // use default
@@ -945,13 +914,12 @@ bool PlanningInterface::getRobotStateFromPose(const Eigen::Affine3d& ee_pose,
         consistency_limits_vector.push_back(consistency_limit);
 
     const moveit::core::LinkModel* ik_tip_link = grasp_datas_[arm_jmg]->parent_link_;
-    if (!robot_state->setFromIK(arm_jmg, ee_pose, ik_tip_link->getName(), consistency_limits_vector,
-                                attempts, timeout, constraint_fn))
+    if (!robot_state->setFromIK(arm_jmg, ee_pose, ik_tip_link->getName(), consistency_limits_vector, attempts, timeout,
+                                constraint_fn))
     {
       // visual_tools_->publishZArrow(ee_pose, rvt::RED);
       static std::size_t warning_counter = 0;
-      ROS_WARN_STREAM_NAMED("planning_interface", "Unable to find arm solution for desired pose "
-                                                << warning_counter++);
+      ROS_WARN_STREAM_NAMED("planning_interface", "Unable to find arm solution for desired pose " << warning_counter++);
       return false;
     }
   }  // end scoped pointer of locked planning scene
@@ -960,8 +928,7 @@ bool PlanningInterface::getRobotStateFromPose(const Eigen::Affine3d& ee_pose,
   return true;
 }
 
-bool PlanningInterface::straightProjectPose(const Eigen::Affine3d& original_pose,
-                                            Eigen::Affine3d& new_pose,
+bool PlanningInterface::straightProjectPose(const Eigen::Affine3d& original_pose, Eigen::Affine3d& new_pose,
                                             const Eigen::Vector3d direction, double distance)
 {
   ROS_DEBUG_STREAM_NAMED("planning_interface.superdebug", "straightProjectPose()");
@@ -974,16 +941,15 @@ bool PlanningInterface::straightProjectPose(const Eigen::Affine3d& original_pose
   return true;
 }
 
-bool PlanningInterface::convertRobotStatesToTrajectory(
-    const std::vector<moveit::core::RobotStatePtr>& robot_state_traj,
-    moveit_msgs::RobotTrajectory& trajectory_msg, JointModelGroup* jmg,
-    const double& velocity_scaling_factor, bool use_interpolation)
+bool PlanningInterface::convertRobotStatesToTrajectory(const std::vector<moveit::core::RobotStatePtr>& robot_state_traj,
+                                                       moveit_msgs::RobotTrajectory& trajectory_msg,
+                                                       JointModelGroup* jmg, const double& velocity_scaling_factor,
+                                                       bool use_interpolation)
 {
   ROS_DEBUG_STREAM_NAMED("planning_interface.superdebug", "convertRobotStatesToTrajectory()");
 
   // Copy the vector of RobotStates to a RobotTrajectory
-  robot_trajectory::RobotTrajectoryPtr robot_traj(
-      new robot_trajectory::RobotTrajectory(robot_model_, jmg));
+  robot_trajectory::RobotTrajectoryPtr robot_traj(new robot_trajectory::RobotTrajectory(robot_model_, jmg));
 
   // -----------------------------------------------------------------------------------------------
   // Convert to RobotTrajectory datatype
@@ -1003,7 +969,7 @@ bool PlanningInterface::convertRobotStatesToTrajectory(
     if (robot_traj->getWayPointCount() < MIN_TRAJECTORY_POINTS)
     {
       ROS_INFO_STREAM_NAMED("planning_interface", "Interpolating trajectory because two few points ("
-                                                << robot_traj->getWayPointCount() << ")");
+                                                      << robot_traj->getWayPointCount() << ")");
 
       // Interpolate between each point
       double discretization = 0.25;
@@ -1073,8 +1039,7 @@ bool PlanningInterface::setEEJointPosition(double joint_position, JointModelGrou
   return setEEGraspPosture(grasp_posture, arm_jmg);
 }
 
-bool PlanningInterface::setEEGraspPosture(trajectory_msgs::JointTrajectory grasp_posture,
-                                          JointModelGroup* arm_jmg)
+bool PlanningInterface::setEEGraspPosture(trajectory_msgs::JointTrajectory grasp_posture, JointModelGroup* arm_jmg)
 {
   ROS_DEBUG_STREAM_NAMED("planning_interface.end_effector", "Moving to grasp posture:\n" << grasp_posture);
 
@@ -1090,7 +1055,7 @@ bool PlanningInterface::setEEGraspPosture(trajectory_msgs::JointTrajectory grasp
       new robot_trajectory::RobotTrajectory(robot_model_, grasp_datas_[arm_jmg]->ee_jmg_));
 
   ROS_INFO_STREAM_NAMED("planning_interface", "Sending command to end effector "
-                                            << grasp_datas_[arm_jmg]->ee_jmg_->getName());
+                                                  << grasp_datas_[arm_jmg]->ee_jmg_->getName());
 
   // Add goal state
   ee_trajectory->setRobotTrajectoryMsg(*current_state_, grasp_posture);
@@ -1100,13 +1065,11 @@ bool PlanningInterface::setEEGraspPosture(trajectory_msgs::JointTrajectory grasp
   ee_trajectory->addPrefixWayPoint(current_state_, dummy_dt);
 
   // Check if already in new position
-  if (statesEqual(ee_trajectory->getFirstWayPoint(), ee_trajectory->getLastWayPoint(),
-                  grasp_datas_[arm_jmg]->ee_jmg_))
+  if (statesEqual(ee_trajectory->getFirstWayPoint(), ee_trajectory->getLastWayPoint(), grasp_datas_[arm_jmg]->ee_jmg_))
   {
-    ROS_INFO_STREAM_NAMED(
-        "planning_interface",
-        "Not executing motion because current state and goal state are close enough for group "
-            << grasp_datas_[arm_jmg]->ee_jmg_->getName());
+    ROS_INFO_STREAM_NAMED("planning_interface",
+                          "Not executing motion because current state and goal state are close enough for group "
+                              << grasp_datas_[arm_jmg]->ee_jmg_->getName());
 
     return true;
   }
@@ -1141,7 +1104,10 @@ bool PlanningInterface::setEEGraspPosture(trajectory_msgs::JointTrajectory grasp
   return true;
 }
 
-ExecutionInterfacePtr PlanningInterface::getExecutionInterface() { return execution_interface_; }
+ExecutionInterfacePtr PlanningInterface::getExecutionInterface()
+{
+  return execution_interface_;
+}
 
 bool PlanningInterface::fixCollidingState(planning_scene::PlanningScenePtr cloned_scene)
 {
@@ -1197,13 +1163,13 @@ bool PlanningInterface::fixCollidingState(planning_scene::PlanningScenePtr clone
   if (colliding_world_object.empty())
   {
     ROS_WARN_STREAM_NAMED("planning_interface", "Did not find any world objects in collision. Attempting "
-                                          "to move home");
+                                                "to move home");
     bool check_validity = false;
     return moveToStartPosition(NULL, check_validity);
   }
 
   ROS_INFO_STREAM_NAMED("planning_interface", "World object " << colliding_world_object << " in "
-                                                                                     "collision");
+                                                                                           "collision");
 
   // Categorize this world object
   bool reverse_out = false;
@@ -1243,9 +1209,8 @@ bool PlanningInterface::fixCollidingState(planning_scene::PlanningScenePtr clone
   else
   {
     int mode = visual_tools_->iRand(0, 3);
-    ROS_WARN_STREAM_NAMED(
-        "planning_interface",
-        "Unknown object, not sure how to handle. Performing random action using mode " << mode);
+    ROS_WARN_STREAM_NAMED("planning_interface",
+                          "Unknown object, not sure how to handle. Performing random action using mode " << mode);
 
     if (mode == 0)
       reverse_out = true;
@@ -1310,8 +1275,7 @@ bool PlanningInterface::moveToStartPosition(JointModelGroup* arm_jmg, bool check
   // Choose which planning group to use
   if (arm_jmg == NULL)
     arm_jmg = config_->dual_arm_ ? config_->both_arms_ : config_->right_arm_;
-  return moveToSRDFPose(arm_jmg, config_->start_pose_, config_->main_velocity_scaling_factor_,
-                        check_validity);
+  return moveToSRDFPose(arm_jmg, config_->start_pose_, config_->main_velocity_scaling_factor_, check_validity);
 }
 
 void PlanningInterface::loadPlanningPipeline()
@@ -1321,13 +1285,13 @@ void PlanningInterface::loadPlanningPipeline()
   if (!planning_pipeline_)
   {
     // Setup planning pipeline
-    planning_pipeline_.reset(new planning_pipeline::PlanningPipeline(
-        robot_model_, nh_, "planning_plugin", "request_adapters"));
+    planning_pipeline_.reset(new planning_pipeline::PlanningPipeline(robot_model_, nh_, "planning_plugin", "request_"
+                                                                                                           "adapters"));
   }
 }
 
-bool PlanningInterface::statesEqual(const moveit::core::RobotState& s1,
-                                    const moveit::core::RobotState& s2, JointModelGroup* jmg)
+bool PlanningInterface::statesEqual(const moveit::core::RobotState& s1, const moveit::core::RobotState& s2,
+                                    JointModelGroup* jmg)
 {
   static const double STATES_EQUAL_THRESHOLD = 0.001;
 
@@ -1341,8 +1305,7 @@ bool PlanningInterface::statesEqual(const moveit::core::RobotState& s1,
     const moveit::core::JointModel* this_joint = jmg->getJointModel(jmg->getVariableNames()[i]);
 
     std::vector<const moveit::core::JointModel*>::const_iterator joint_it;
-    joint_it = std::find(jmg->getActiveJointModels().begin(), jmg->getActiveJointModels().end(),
-                         this_joint);
+    joint_it = std::find(jmg->getActiveJointModels().begin(), jmg->getActiveJointModels().end(), this_joint);
 
     // Make sure joint is active
     if (joint_it != jmg->getActiveJointModels().end())
@@ -1394,13 +1357,12 @@ bool PlanningInterface::waitForRobotToStop(const double& timeout)
     bool stopped = true;
     for (std::size_t i = 0; i < current_position.getVariableCount(); ++i)
     {
-      error = fabs(previous_position.getVariablePositions()[i] -
-                   current_position.getVariablePositions()[i]);
+      error = fabs(previous_position.getVariablePositions()[i] - current_position.getVariablePositions()[i]);
 
       if (error > POSITION_ERROR_THRESHOLD)
       {
-        ROS_DEBUG_STREAM_NAMED("planning_interface", "Robot is still moving with error "
-                                                   << error << " on variable " << i);
+        ROS_DEBUG_STREAM_NAMED("planning_interface", "Robot is still moving with error " << error << " on variable "
+                                                                                         << i);
         stopped = false;
       }
     }
@@ -1506,8 +1468,7 @@ bool PlanningInterface::fixCurrentCollisionAndBounds(JointModelGroup* arm_jmg)
 }
 
 bool PlanningInterface::checkCollisionAndBounds(const moveit::core::RobotStatePtr& start_state,
-                                                const moveit::core::RobotStatePtr& goal_state,
-                                                bool verbose)
+                                                const moveit::core::RobotStatePtr& goal_state, bool verbose)
 {
   bool result = true;
 
@@ -1553,8 +1514,7 @@ bool PlanningInterface::checkCollisionAndBounds(const moveit::core::RobotStatePt
       {
         ROS_WARN_STREAM_NAMED("planning_interface.checkCollisionAndBounds", "Start state is colliding");
         // Show collisions
-        visual_tools_->publishContactPoints(*start_state,
-                                            planning_scene_monitor_->getPlanningScene().get());
+        visual_tools_->publishContactPoints(*start_state, planning_scene_monitor_->getPlanningScene().get());
         visual_tools_->publishRobotState(*start_state, rvt::RED);
       }
       result = false;
@@ -1571,8 +1531,7 @@ bool PlanningInterface::checkCollisionAndBounds(const moveit::core::RobotStatePt
         {
           ROS_WARN_STREAM_NAMED("planning_interface.checkCollisionAndBounds", "Goal state is colliding");
           // Show collisions
-          visual_tools_->publishContactPoints(*goal_state,
-                                              planning_scene_monitor_->getPlanningScene().get());
+          visual_tools_->publishContactPoints(*goal_state, planning_scene_monitor_->getPlanningScene().get());
           visual_tools_->publishRobotState(*goal_state, rvt::RED);
         }
         result = false;
@@ -1655,9 +1614,8 @@ bool PlanningInterface::showJointLimits(JointModelGroup* jmg)
         std::cout << "-";
     }
     // show max position
-    std::cout << " \t" << std::fixed << std::setprecision(5) << bound.max_position_ << "  \t"
-              << joints[i]->getName() << " current: " << std::fixed << std::setprecision(5)
-              << current_value << std::endl;
+    std::cout << " \t" << std::fixed << std::setprecision(5) << bound.max_position_ << "  \t" << joints[i]->getName()
+              << " current: " << std::fixed << std::setprecision(5) << current_value << std::endl;
 
     if (out_of_bounds)
       std::cout << MOVEIT_CONSOLE_COLOR_RESET;
@@ -1668,15 +1626,14 @@ bool PlanningInterface::showJointLimits(JointModelGroup* jmg)
 
 void PlanningInterface::transformWorldToBase(Eigen::Affine3d& pose_world, Eigen::Affine3d& pose_base)
 {
-  const Eigen::Affine3d& base_to_world =
-      getCurrentState()->getGlobalLinkTransform("base_link").inverse();
+  const Eigen::Affine3d& base_to_world = getCurrentState()->getGlobalLinkTransform("base_link").inverse();
   pose_base = base_to_world * pose_world;
 }
 
 void PlanningInterface::loadVisualTools()
 {
-  visual_tools_.reset(new mvt::MoveItVisualTools(
-      robot_model_->getModelFrame(), "/moveit_boilerplate/markers", planning_scene_monitor_));
+  visual_tools_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(), "/moveit_boilerplate/markers",
+                                                 planning_scene_monitor_));
   visual_tools_->loadTrajectoryPub("/moveit_boilerplate/display_trajectory");
   visual_tools_->loadMarkerPub();
   visual_tools_->setAlpha(0.8);
@@ -1684,14 +1641,14 @@ void PlanningInterface::loadVisualTools()
   visual_tools_->setManualSceneUpdating(true);
 
   // Robot Start State
-  visual_start_state_.reset(new mvt::MoveItVisualTools(
-      robot_model_->getModelFrame(), "/moveit_boilerplate/markers2", planning_scene_monitor_));
+  visual_start_state_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(), "/moveit_boilerplate/markers2",
+                                                       planning_scene_monitor_));
   visual_start_state_->loadRobotStatePub("/moveit_boilerplate/robot_start_state");
   visual_start_state_->hideRobot();
 
   // Robot Goal State
-  visual_goal_state_.reset(new mvt::MoveItVisualTools(
-      robot_model_->getModelFrame(), "/moveit_boilerplate/markers3", planning_scene_monitor_));
+  visual_goal_state_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(), "/moveit_boilerplate/markers3",
+                                                      planning_scene_monitor_));
   visual_goal_state_->loadRobotStatePub("/moveit_boilerplate/robot_goal_state");
   visual_goal_state_->hideRobot();
 }
@@ -1700,9 +1657,8 @@ void PlanningInterface::loadVisualTools()
 
 namespace
 {
-bool isStateValid(const planning_scene::PlanningScene* planning_scene, bool verbose,
-                  bool only_check_self_collision, mvt::MoveItVisualToolsPtr visual_tools,
-                  moveit::core::RobotState* robot_state, JointModelGroup* group,
+bool isStateValid(const planning_scene::PlanningScene* planning_scene, bool verbose, bool only_check_self_collision,
+                  mvt::MoveItVisualToolsPtr visual_tools, moveit::core::RobotState* robot_state, JointModelGroup* group,
                   const double* ik_solution)
 {
   robot_state->setJointGroupPositions(group, ik_solution);

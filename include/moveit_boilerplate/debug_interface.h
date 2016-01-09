@@ -96,10 +96,12 @@ public:
   bool waitForNextFullStep(const std::string& caption = "go to next full step");
 
   /** \brief Return true if debug interface is waiting for user input */
-  bool isWaiting() { return is_waiting_; }
+  bool isWaiting()
+  {
+    return is_waiting_;
+  }
 
 private:
-
   // A shared node handle
   ros::NodeHandle nh_;
 

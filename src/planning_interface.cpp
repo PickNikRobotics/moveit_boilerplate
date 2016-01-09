@@ -33,7 +33,7 @@ PlanningInterface::PlanningInterface(moveit_boilerplate::ExecutionInterfacePtr e
   // Check for kinematic solver
   if (!arm_jmg_->canSetStateFromIK(ik_tip_link_->getName()))
     ROS_ERROR_STREAM_NAMED(name_, "No IK Solver loaded - make sure "
-                                                 "moveit_config/kinamatics.yaml is loaded in this namespace");
+                                  "moveit_config/kinamatics.yaml is loaded in this namespace");
 
   // Create initial robot state
   {
@@ -47,7 +47,9 @@ PlanningInterface::PlanningInterface(moveit_boilerplate::ExecutionInterfacePtr e
   ROS_INFO_STREAM_NAMED(name_, "PlanningInterface Ready.");
 }
 
-PlanningInterface::~PlanningInterface() {}
+PlanningInterface::~PlanningInterface()
+{
+}
 
 bool PlanningInterface::moveToSRDFPoseNoPlan(JointModelGroup* jmg, const std::string& pose_name,
                                              double velocity_scaling_factor, const bool wait_for_execution)
@@ -56,8 +58,8 @@ bool PlanningInterface::moveToSRDFPoseNoPlan(JointModelGroup* jmg, const std::st
   moveit::core::RobotStatePtr goal_state(new moveit::core::RobotState(*current_state_));
   if (!goal_state->setToDefaultValues(jmg, pose_name))
   {
-    ROS_ERROR_STREAM_NAMED(name_, "Failed to set pose '" << pose_name << "' for planning group '"
-                                                                        << jmg->getName() << "'");
+    ROS_ERROR_STREAM_NAMED(name_, "Failed to set pose '" << pose_name << "' for planning group '" << jmg->getName()
+                                                         << "'");
     return false;
   }
 
@@ -84,7 +86,7 @@ bool PlanningInterface::executeState(JointModelGroup* jmg, const moveit::core::R
   if (statesEqual(*current_state_, *goal_state, jmg))
   {
     ROS_INFO_STREAM_NAMED(name_, "Not executing because current state and goal state are "
-                                                "close enough.");
+                                 "close enough.");
     return true;
   }
 
@@ -143,8 +145,8 @@ bool PlanningInterface::convertRobotStatesToTraj(robot_trajectory::RobotTrajecto
     static const std::size_t MIN_TRAJECTORY_POINTS = 20;
     if (robot_traj->getWayPointCount() < MIN_TRAJECTORY_POINTS)
     {
-      ROS_INFO_STREAM_NAMED(name_, "Interpolating trajectory because two few points ("
-                                                      << robot_traj->getWayPointCount() << ")");
+      ROS_INFO_STREAM_NAMED(name_, "Interpolating trajectory because two few points (" << robot_traj->getWayPointCount()
+                                                                                       << ")");
 
       // Interpolate between each point
       double discretization = 0.25;

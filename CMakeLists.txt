@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   controller_manager_msgs
   rosparam_shortcuts
   dashboard_msgs
+  roslint
 )
 
 find_package(Eigen REQUIRED)
@@ -37,7 +38,8 @@ catkin_package(
     ${PROJECT_NAME}_planning_interface
     ${PROJECT_NAME}_trajectory_io
     ${PROJECT_NAME}_moveit_base
-    boilerplate
+    ${PROJECT_NAME}_get_planning_scene_service
+    ${PROJECT_NAME}
 )
 
 ###########
@@ -73,7 +75,16 @@ target_link_libraries(${PROJECT_NAME}_fix_state_bounds
   ${Boost_LIBRARIES}
 )
 
-# execution interfaceX library
+# get planning scene library
+add_library(${PROJECT_NAME}_get_planning_scene_service
+  src/get_planning_scene_service.cpp
+)
+target_link_libraries(${PROJECT_NAME}_get_planning_scene_service
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+# execution interface library
 add_library(${PROJECT_NAME}_execution_interface
   src/execution_interface.cpp
 )
@@ -114,13 +125,14 @@ target_link_libraries(${PROJECT_NAME}_moveit_base
 
 # Reusable class for MoveIt!
 # TODO(davetcoleman) depend on ${PROJECT_NAME}_moveit_base
-add_library(boilerplate
+add_library(${PROJECT_NAME}
   src/boilerplate.cpp
 )
-target_link_libraries(boilerplate
+target_link_libraries(${PROJECT_NAME}
   ${PROJECT_NAME}_debug_interface
   ${PROJECT_NAME}_execution_interface
   ${PROJECT_NAME}_planning_interface
+  ${PROJECT_NAME}_get_planning_scene_service
   ${Gflags_LIBRARIES}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -132,3 +144,50 @@ target_link_libraries(${PROJECT_NAME}_example
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+
+#############
+## Testing ##
+#############
+
+## Test for correct C++ source code
+roslint_cpp()
+
+#############
+## Install ##
+#############
+
+## Mark executables and/or libraries for installation
+install(TARGETS
+    ${PROJECT_NAME}_debug_interface
+    ${PROJECT_NAME}_fix_state_bounds
+    ${PROJECT_NAME}_execution_interface
+    ${PROJECT_NAME}_planning_interface
+    ${PROJECT_NAME}_trajectory_io
+    ${PROJECT_NAME}_moveit_base
+    ${PROJECT_NAME}_get_planning_scene_service
+    ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+# Mark cpp header files for installation
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
+)
+
+# Mark roslaunch files for installation
+install(FILES launch
+  FILES_MATCHING PATTERN "*.launch"
+  PATTERN ".svn" EXCLUDE
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+# Mark config files for installation
+# install(FILES config
+#   FILES_MATCHING PATTERN "*.yaml"
+#   PATTERN ".svn" EXCLUDE
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )

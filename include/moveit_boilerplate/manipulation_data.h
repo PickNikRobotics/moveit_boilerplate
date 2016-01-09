@@ -65,8 +65,7 @@ public:
    * faster)
    * \return true on success
    */
-  bool load(robot_model::RobotModelPtr robot_model, bool fake_execution,
-            const std::string& package_path);
+  bool load(robot_model::RobotModelPtr robot_model, bool fake_execution, const std::string& package_path);
 
   /**
    * \brief A tool to quickly tweak location of pose in planning world. Shows warning since this is
@@ -88,8 +87,8 @@ public:
   double calibration_velocity_scaling_factor_;
 
   // Wait variables
-  //double wait_before_grasp_;
-  //double wait_after_grasp_;
+  // double wait_before_grasp_;
+  // double wait_after_grasp_;
 
   // Distance variables
   double place_goal_down_distance_desired_;
@@ -136,7 +135,7 @@ public:
   std::string package_path_;
 
   // Location to grasp
-  //Eigen::Affine3d grasp_location_transform_;
+  // Eigen::Affine3d grasp_location_transform_;
 
   std::string joint_state_topic_;
 

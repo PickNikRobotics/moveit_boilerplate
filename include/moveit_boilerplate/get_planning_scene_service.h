@@ -33,41 +33,46 @@
  *********************************************************************/
 
 /* Author: Dave Coleman
-   Desc:
+   Desc:   Provide a service that allows nodes to request an entire planning
+           scene, useful for when they are launched after the initial
+           scene is created
 */
 
-/** TEMPLATE NOTES
-    SHORT_NAME - verticle_test
-    CLASS_NAME - VerticleApproachTest
-    PACKAGE_NAME - baxter_experimental
-    THEN make ifndef all caps with Alt-U  (and Alt-F to skip the #define)
- */
-
-#ifndef PACKAGE_NAME_SHORT_NAME_H
-#define PACKAGE_NAME_SHORT_NAME_H
+#ifndef MOVEIT_BOILERPLATE_GET_PLANNING_SCENE_SERVICE_H
+#define MOVEIT_BOILERPLATE_GET_PLANNING_SCENE_SERVICE_H
 
 // ROS
 #include <ros/ros.h>
 
-#include <moveit_boilerplate/moveit_base.h>
+// MoveIt
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
+#include <moveit_msgs/GetPlanningScene.h>
 
-int main(int argc, char** argv)
+// moveit_boilerplate
+#include <moveit_boilerplate/namespaces.h>
+
+namespace moveit_boilerplate
 {
-  ros::init(argc, argv, "SHORT_NAME");
-  ROS_INFO_STREAM_NAMED("main", "Starting CLASS_NAME...");
+class GetPlanningSceneService
+{
+public:
+  GetPlanningSceneService();
 
-  // Allow the action server to recieve and send ros messages
-  ros::AsyncSpinner spinner(2);
-  spinner.start();
+  void initialize(ros::NodeHandle nh, const std::string &planning_scene_topic,
+                  psm::PlanningSceneMonitorPtr planning_scene_monitor);
 
-  moveit_boilerplate::MoveItBase base;
-  ros::NodeHandle nh;
-  base.init(nh);
+private:
+  bool getPlanningSceneService(moveit_msgs::GetPlanningScene::Request &req,
+                               moveit_msgs::GetPlanningScene::Response &res);
 
-  ROS_INFO_STREAM_NAMED("main", "Shutting down.");
-  ros::shutdown();
+  // The short name of this class
+  std::string name_;
 
-  return 0;
-}
+  ros::ServiceServer get_scene_service_;
 
-#endif
+  psm::PlanningSceneMonitorPtr planning_scene_monitor_;
+};
+
+}  // namespace moveit_boilerplate
+
+#endif  // MOVEIT_BOILERPLATE_GET_PLANNING_SCENE_SERVICE_H

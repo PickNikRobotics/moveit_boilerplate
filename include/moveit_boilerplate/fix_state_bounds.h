@@ -58,11 +58,18 @@ public:
   /**
    * \brief Getter for MaxBoundsError
    */
-  double getMaxBoundsError() const { return bounds_dist_; }
+  double getMaxBoundsError() const
+  {
+    return bounds_dist_;
+  }
   /**
    * \brief Setter for MaxBoundsError
    */
-  void setMaxBoundsError(const double& bounds_dist) { bounds_dist_ = bounds_dist; }
+  void setMaxBoundsError(const double& bounds_dist)
+  {
+    bounds_dist_ = bounds_dist;
+  }
+
 private:
   ros::NodeHandle nh_;
   double bounds_dist_;

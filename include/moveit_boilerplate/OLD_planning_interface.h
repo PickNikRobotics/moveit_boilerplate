@@ -72,10 +72,8 @@ public:
   /**
    * \brief Constructor
    */
-  PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor,
-                    ManipulationDataPtr config,
-                    ExecutionInterface execution_interface,
-                    DebugInterfacePtr debug_interface, bool fake_execution);
+  PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor, ManipulationDataPtr config,
+                    ExecutionInterface execution_interface, DebugInterfacePtr debug_interface, bool fake_execution);
 
   /**
    * \brief Move to any pose as defined in the SRDF
@@ -84,12 +82,11 @@ public:
    * utilize
    * \return true on success
    */
-  bool moveToSRDFPose(JointModelGroup* arm_jmg, const std::string& pose_name,
-                      double velocity_scaling_factor, bool check_validity = true);
+  bool moveToSRDFPose(JointModelGroup* arm_jmg, const std::string& pose_name, double velocity_scaling_factor,
+                      bool check_validity = true);
 
   /** \brief No planning dude */
-  bool moveToSRDFPoseNoPlan(JointModelGroup* arm_jmg, const std::string& pose_name,
-                            double duration);
+  bool moveToSRDFPoseNoPlan(JointModelGroup* arm_jmg, const std::string& pose_name, double duration);
 
   /**
    * \brief Move EE to a particular pose by solving with IK
@@ -98,8 +95,7 @@ public:
    * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
    * \return true on success
    */
-  bool moveToEEPose(const Eigen::Affine3d& ee_pose, double velocity_scaling_factor,
-                    JointModelGroup* arm_jmg);
+  bool moveToEEPose(const Eigen::Affine3d& ee_pose, double velocity_scaling_factor, JointModelGroup* arm_jmg);
 
   /**
    * \brief Send a planning request to moveit and execute
@@ -108,16 +104,14 @@ public:
    * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
    * \return true on success
    */
-  bool move(const moveit::core::RobotStatePtr& start, const moveit::core::RobotStatePtr& goal,
-            JointModelGroup* arm_jmg, double velocity_scaling_factor, bool verbose,
-            bool execute_trajectory = true, bool check_validity = true);
+  bool move(const moveit::core::RobotStatePtr& start, const moveit::core::RobotStatePtr& goal, JointModelGroup* arm_jmg,
+            double velocity_scaling_factor, bool verbose, bool execute_trajectory = true, bool check_validity = true);
 
   /**
    * \brief Helper for planning
    * \return true on success
    */
-  bool createPlanningRequest(planning_interface::MotionPlanRequest& request,
-                             const moveit::core::RobotStatePtr& start,
+  bool createPlanningRequest(planning_interface::MotionPlanRequest& request, const moveit::core::RobotStatePtr& start,
                              const moveit::core::RobotStatePtr& goal, JointModelGroup* arm_jmg,
                              double velocity_scaling_factor);
 
@@ -125,9 +119,8 @@ public:
    * \brief Helper for move() command to allow easy re-planning
    * \return true on success
    */
-  bool plan(const moveit::core::RobotStatePtr& start, const moveit::core::RobotStatePtr& goal,
-            JointModelGroup* arm_jmg, double velocity_scaling_factor, bool verbose,
-            moveit_msgs::RobotTrajectory& trajectory_msg);
+  bool plan(const moveit::core::RobotStatePtr& start, const moveit::core::RobotStatePtr& goal, JointModelGroup* arm_jmg,
+            double velocity_scaling_factor, bool verbose, moveit_msgs::RobotTrajectory& trajectory_msg);
 
   /**
    * \brief Allow accumlated experiences to be processed by OMPL
@@ -145,15 +138,13 @@ public:
    * \brief Interpolate
    * \return true on success
    */
-  bool interpolate(robot_trajectory::RobotTrajectoryPtr robot_trajectory,
-                   const double& discretization);
+  bool interpolate(robot_trajectory::RobotTrajectoryPtr robot_trajectory, const double& discretization);
 
   /**
    * \brief Get planning debug info
    * \return string describing result
    */
-  std::string getActionResultString(const moveit_msgs::MoveItErrorCodes& error_code,
-                                    bool planned_trajectory_empty);
+  std::string getActionResultString(const moveit_msgs::MoveItErrorCodes& error_code, bool planned_trajectory_empty);
 
   /**
    * \brief Send a single state to the controllers for execution
@@ -161,8 +152,8 @@ public:
    * utilize
    * \return true on success
    */
-  bool executeState(const moveit::core::RobotStatePtr goal_state,
-                    const moveit::core::JointModelGroup* jmg, double velocity_scaling_factor);
+  bool executeState(const moveit::core::RobotStatePtr goal_state, const moveit::core::JointModelGroup* jmg,
+                    double velocity_scaling_factor);
 
   /** \brief Move real fast */
   bool moveDirectToState(const moveit::core::RobotStatePtr goal_state, JointModelGroup* jmg,
@@ -177,26 +168,23 @@ public:
    * \param ignore_collision
    * \return true on success
    */
-  bool executeVerticlePathWithIK(const moveit::core::JointModelGroup* arm_jmg,
-                                 const double& desired_lift_distance, bool up,
-                                 bool ignore_collision = false);
+  bool executeVerticlePathWithIK(const moveit::core::JointModelGroup* arm_jmg, const double& desired_lift_distance,
+                                 bool up, bool ignore_collision = false);
 
   /**
    * \brief Translate arm left and right
    * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
    * \return true on success
    */
-  bool executeHorizontalPath(const moveit::core::JointModelGroup* arm_jmg,
-                             const double& desired_left_distance, bool left,
-                             bool ignore_collision = false);
+  bool executeHorizontalPath(const moveit::core::JointModelGroup* arm_jmg, const double& desired_left_distance,
+                             bool left, bool ignore_collision = false);
 
   /**
    * \brief After grasping an object, pull object out of shelf in reverse
    * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
    * \return true on success
    */
-  bool executeRetreatPath(const moveit::core::JointModelGroup* arm_jmg,
-                          double desired_retreat_distance, bool retreat,
+  bool executeRetreatPath(const moveit::core::JointModelGroup* arm_jmg, double desired_retreat_distance, bool retreat,
                           bool ignore_collision = false);
 
   /** \brief Detect when an object has been hit, and retract */
@@ -207,9 +195,8 @@ public:
    * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
    * \return true on success
    */
-  bool executeCartesianPath(const moveit::core::JointModelGroup* arm_jmg,
-                            const Eigen::Vector3d& direction, double desired_distance,
-                            double velocity_scaling_factor, bool reverse_path,
+  bool executeCartesianPath(const moveit::core::JointModelGroup* arm_jmg, const Eigen::Vector3d& direction,
+                            double desired_distance, double velocity_scaling_factor, bool reverse_path,
                             bool ignore_collision = false);
 
   /**
@@ -227,10 +214,8 @@ public:
    */
   bool computeStraightLinePath(Eigen::Vector3d approach_direction, double desired_approach_distance,
                                std::vector<robot_state::RobotStatePtr>& robot_state_trajectory,
-                               robot_state::RobotStatePtr robot_state,
-                               const moveit::core::JointModelGroup* arm_jmg,
-                               bool reverse_trajectory, double& path_length,
-                               bool ignore_collision = false);
+                               robot_state::RobotStatePtr robot_state, const moveit::core::JointModelGroup* arm_jmg,
+                               bool reverse_trajectory, double& path_length, bool ignore_collision = false);
 
   /**
    * \brief Choose which arm to use for a particular task
@@ -246,9 +231,8 @@ public:
    * \param consistency_limits - if greater than 0, forces ik solver to only find solutions within that joint distance
    * \return true on success
    */
-  bool getRobotStateFromPose(const Eigen::Affine3d& ee_pose,
-                             moveit::core::RobotStatePtr& robot_state, JointModelGroup* arm_jmg,
-                             double consistency_limit = 0.0);
+  bool getRobotStateFromPose(const Eigen::Affine3d& ee_pose, moveit::core::RobotStatePtr& robot_state,
+                             JointModelGroup* arm_jmg, double consistency_limit = 0.0);
 
   /**
    * \brief Move a pose in a specified direction and specified length, where all poses are in the
@@ -265,10 +249,9 @@ public:
    * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
    * \return true on success
    */
-  bool convertRobotStatesToTrajectory(
-      const std::vector<robot_state::RobotStatePtr>& robot_state_trajectory,
-      moveit_msgs::RobotTrajectory& trajectory_msg, JointModelGroup* arm_jmg,
-      const double& velocity_scaling_factor, bool interpolate = true);
+  bool convertRobotStatesToTrajectory(const std::vector<robot_state::RobotStatePtr>& robot_state_trajectory,
+                                      moveit_msgs::RobotTrajectory& trajectory_msg, JointModelGroup* arm_jmg,
+                                      const double& velocity_scaling_factor, bool interpolate = true);
 
   /**
    * \brief Open both end effectors in hardware
@@ -321,8 +304,7 @@ public:
    * \brief Save a trajectory as CSV to file
    * \return true on success
    */
-  bool saveTrajectory(const moveit_msgs::RobotTrajectory& trajectory_msg,
-                      const std::string& file_name);
+  bool saveTrajectory(const moveit_msgs::RobotTrajectory& trajectory_msg, const std::string& file_name);
 
   /**
    * \brief Move both arms to their start location
@@ -351,8 +333,7 @@ public:
    * \param arm_jmg - only compare joints in this joint model group
    * \return true if states are close enough in similarity
    */
-  bool statesEqual(const moveit::core::RobotState& s1, const moveit::core::RobotState& s2,
-                   JointModelGroup* arm_jmg);
+  bool statesEqual(const moveit::core::RobotState& s1, const moveit::core::RobotState& s2, JointModelGroup* arm_jmg);
 
   /**
    * \brief Show the trajectories saved in the experience database
@@ -386,10 +367,9 @@ public:
    * \param goal_state OPTIONAL to check
    * \return true if not in collision and not out of bounds
    */
-  bool checkCollisionAndBounds(
-      const robot_state::RobotStatePtr& start_state,
-      const robot_state::RobotStatePtr& goal_state = robot_state::RobotStatePtr(),
-      bool verbose = true);
+  bool checkCollisionAndBounds(const robot_state::RobotStatePtr& start_state,
+                               const robot_state::RobotStatePtr& goal_state = robot_state::RobotStatePtr(),
+                               bool verbose = true);
 
   /**
    * \brief Setup products randomly
@@ -441,8 +421,14 @@ public:
   /**
    * \brief Allow other classes to publish to the start/goal robot visualizers
    */
-  mvt::MoveItVisualToolsPtr getVisualStartState() { return visual_start_state_; }
-  mvt::MoveItVisualToolsPtr getVisualGoalState() { return visual_goal_state_; }
+  mvt::MoveItVisualToolsPtr getVisualStartState()
+  {
+    return visual_start_state_;
+  }
+  mvt::MoveItVisualToolsPtr getVisualGoalState()
+  {
+    return visual_goal_state_;
+  }
 
 protected:
   // A shared node handle
@@ -487,10 +473,9 @@ protected:
 
 namespace
 {
-bool isStateValid(const planning_scene::PlanningScene* planning_scene, bool verbose,
-                  bool only_check_self_collision, mvt::MoveItVisualToolsPtr visual_tools_,
-                  robot_state::RobotState* state, const robot_state::JointModelGroup* group,
-                  const double* ik_solution);
+bool isStateValid(const planning_scene::PlanningScene* planning_scene, bool verbose, bool only_check_self_collision,
+                  mvt::MoveItVisualToolsPtr visual_tools_, robot_state::RobotState* state,
+                  const robot_state::JointModelGroup* group, const double* ik_solution);
 }
 
 #endif

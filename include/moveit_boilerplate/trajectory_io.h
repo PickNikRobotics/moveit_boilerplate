@@ -50,14 +50,12 @@
 
 namespace moveit_boilerplate
 {
-
 /** \brief Struct for storing the pose of an end effector with a time */
 struct TimePose
 {
-  TimePose(double time, Eigen::Affine3d pose)
-    : time_(time)
-    , pose_(pose)
-  {}
+  TimePose(double time, Eigen::Affine3d pose) : time_(time), pose_(pose)
+  {
+  }
 
   double time_;
   Eigen::Affine3d pose_;
@@ -69,8 +67,7 @@ public:
   /**
    * \brief Constructor
    */
-  TrajectoryIO(psm::PlanningSceneMonitorPtr planning_scene_monitor,
-               mvt::MoveItVisualToolsPtr visual_tools);
+  TrajectoryIO(psm::PlanningSceneMonitorPtr planning_scene_monitor, mvt::MoveItVisualToolsPtr visual_tools);
 
   // JOINT TRAJECTORY ------------------------------------------------------------------
 
@@ -112,7 +109,7 @@ public:
   bool loadCartTrajectoryFromFile(const std::string& file_name);
 
   /** \brief Add current robot pose to trajectory */
-  void addCartWaypoint(const Eigen::Affine3d& pose, const double &sec = 2.0);
+  void addCartWaypoint(const Eigen::Affine3d& pose, const double& sec = 2.0);
 
   /** \brief Delete all recorded waypoints */
   void clearCartWaypoints();
@@ -135,7 +132,7 @@ public:
    * \param sec - seconds to execute this waypoint before executing next
    * \param line - single record from file
    */
-  bool streamToAffine3d(Eigen::Affine3d& pose, double &sec, const std::string& line);
+  bool streamToAffine3d(Eigen::Affine3d& pose, double& sec, const std::string& line);
 
   // GENERIC UTILS ------------------------------------------------------------------
 
@@ -148,7 +145,6 @@ public:
   bool getFilePath(std::string& file_path, const std::string& file_name);
 
 private:
-
   /** \brief Use the planning scene to get the robot's current state */
   moveit::core::RobotStatePtr getCurrentState();
 

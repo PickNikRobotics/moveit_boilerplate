@@ -38,6 +38,11 @@
            or saving ee poses.
 */
 
+// C++
+#include <string>
+#include <algorithm>
+#include <vector>
+
 // MoveItManipuation
 #include <moveit_boilerplate/trajectory_io.h>
 
@@ -53,10 +58,8 @@
 
 namespace moveit_boilerplate
 {
-TrajectoryIO::TrajectoryIO(psm::PlanningSceneMonitorPtr planning_scene_monitor,
-                           mvt::MoveItVisualToolsPtr visual_tools)
-  : planning_scene_monitor_(planning_scene_monitor)
-  , visual_tools_(visual_tools)
+TrajectoryIO::TrajectoryIO(psm::PlanningSceneMonitorPtr planning_scene_monitor, mvt::MoveItVisualToolsPtr visual_tools)
+  : planning_scene_monitor_(planning_scene_monitor), visual_tools_(visual_tools)
 {
   // Create initial robot state
   {
@@ -65,8 +68,7 @@ TrajectoryIO::TrajectoryIO(psm::PlanningSceneMonitorPtr planning_scene_monitor,
   }  // end scoped pointer of locked planning scene
 }
 
-bool TrajectoryIO::loadJointTrajectoryFromFile(const std::string& file_name,
-                                               JointModelGroup* arm_jmg)
+bool TrajectoryIO::loadJointTrajectoryFromFile(const std::string& file_name, JointModelGroup* arm_jmg)
 {
   std::ifstream input_file;
   input_file.open(file_name.c_str());
@@ -110,12 +112,13 @@ bool TrajectoryIO::loadJointTrajectoryFromStream(std::istringstream& input_strea
   double dummy_dt = 1;  // temp value
 
   std::cout << "var names: " << std::endl;
-  std::copy(current_state_->getVariableNames().begin(), current_state_->getVariableNames().end(), std::ostream_iterator<std::string>(std::cout, "\n"));
+  std::copy(current_state_->getVariableNames().begin(), current_state_->getVariableNames().end(),
+            std::ostream_iterator<std::string>(std::cout, "\n"));
 
   // Read each line
   while (std::getline(input_stream, line))
   {
-    ROS_WARN_STREAM_NAMED("trajectory_io","temp hack");
+    ROS_WARN_STREAM_NAMED("trajectory_io", "temp hack");
     // Add virtual joint at front and end effect at back TODO remove hack
     line = "0.0,0.0,0.0,0.0,0.0,0.0,1.0," + line + ",0.0";
 
@@ -150,8 +153,7 @@ bool TrajectoryIO::saveJointTrajectoryToFile(const std::string& file_path)
   {
     ROS_INFO_STREAM_THROTTLE_NAMED(1, "trajectory_io", "Saving waypoint #" << i);
 
-    moveit::core::robotStateToStream(joint_trajectory_->getWayPoint(i), output_file,
-                                     include_header);
+    moveit::core::robotStateToStream(joint_trajectory_->getWayPoint(i), output_file, include_header);
   }
 
   output_file.close();
@@ -180,7 +182,7 @@ bool TrajectoryIO::loadCartTrajectoryFromFile(const std::string& file_name)
     // Debug
     visual_tools_->publishZArrow(pose, rvt::RED);
 
-    cartesian_trajectory_.push_back(TimePose(sec,pose));
+    cartesian_trajectory_.push_back(TimePose(sec, pose));
   }
 
   // Close file
@@ -193,14 +195,14 @@ bool TrajectoryIO::loadCartTrajectoryFromFile(const std::string& file_name)
     return false;
   }
 
-  ROS_INFO_STREAM_NAMED("trajectory_io","Loaded " << cartesian_trajectory_.size() << " waypoints from file");
+  ROS_INFO_STREAM_NAMED("trajectory_io", "Loaded " << cartesian_trajectory_.size() << " waypoints from file");
 
   return true;
 }
 
-void TrajectoryIO::addCartWaypoint(const Eigen::Affine3d& pose, const double &sec)
+void TrajectoryIO::addCartWaypoint(const Eigen::Affine3d& pose, const double& sec)
 {
-  cartesian_trajectory_.push_back(TimePose(sec,pose));
+  cartesian_trajectory_.push_back(TimePose(sec, pose));
 }
 
 void TrajectoryIO::clearCartWaypoints()
@@ -211,7 +213,7 @@ void TrajectoryIO::clearCartWaypoints()
 bool TrajectoryIO::saveCartTrajectoryToFile(const std::string& file_path)
 {
   if (cartesian_trajectory_.empty())
-    ROS_WARN_STREAM_NAMED("trajectory_io","Saving empty waypoint trajectory");
+    ROS_WARN_STREAM_NAMED("trajectory_io", "Saving empty waypoint trajectory");
 
   std::ofstream output_file;
   output_file.open(file_path.c_str());
@@ -221,14 +223,8 @@ bool TrajectoryIO::saveCartTrajectoryToFile(const std::string& file_path)
   for (std::size_t i = 0; i < cartesian_trajectory_.size(); ++i)
   {
     visual_tools_->convertToXYZRPY(cartesian_trajectory_[i].pose_, xyzrpy);
-    output_file << xyzrpy[0] << ", "
-                << xyzrpy[1] << ", "
-                << xyzrpy[2] << ", "
-                << xyzrpy[3] << ", "
-                << xyzrpy[4] << ", "
-                << xyzrpy[5] << ", "
-                << cartesian_trajectory_[i].time_
-                << std::endl;
+    output_file << xyzrpy[0] << ", " << xyzrpy[1] << ", " << xyzrpy[2] << ", " << xyzrpy[3] << ", " << xyzrpy[4] << ", "
+                << xyzrpy[5] << ", " << cartesian_trajectory_[i].time_ << std::endl;
   }
 
   output_file.close();
@@ -270,7 +266,7 @@ bool TrajectoryIO::getFilePath(std::string& file_path, const std::string& file_n
   return true;
 }
 
-bool TrajectoryIO::streamToAffine3d(Eigen::Affine3d& pose, double &sec, const std::string& line)
+bool TrajectoryIO::streamToAffine3d(Eigen::Affine3d& pose, double& sec, const std::string& line)
 {
   std::stringstream line_stream(line);
   std::string cell;
@@ -283,22 +279,22 @@ bool TrajectoryIO::streamToAffine3d(Eigen::Affine3d& pose, double &sec, const st
     // Get a variable
     if (!std::getline(line_stream, cell, ','))
     {
-      ROS_ERROR_STREAM_NAMED("trajectory_io", "Missing variable " << i << " on cell '" << cell
-                                                                  << "' line '" << line << "'");
+      ROS_ERROR_STREAM_NAMED("trajectory_io", "Missing variable " << i << " on cell '" << cell << "' line '" << line
+                                                                  << "'");
       return false;
     }
 
-    transform6[i] = atof(cell.c_str()); // TODO improve with boost cast
+    transform6[i] = atof(cell.c_str());  // TODO(davetcoleman) improve with boost cast
   }
 
   // Get time
   if (!std::getline(line_stream, cell, ','))
   {
-    ROS_WARN_STREAM_NAMED("trajectory_io","No time available");
+    ROS_WARN_STREAM_NAMED("trajectory_io", "No time available");
     return false;
   }
 
-  sec = atof(cell.c_str()); // TODO improve with boost cast
+  sec = atof(cell.c_str());  // TODO(davetcoleman) improve with boost cast
 
   // Convert to eigen
   pose = visual_tools_->convertFromXYZRPY(transform6);
@@ -308,11 +304,10 @@ bool TrajectoryIO::streamToAffine3d(Eigen::Affine3d& pose, double &sec, const st
 
 moveit::core::RobotStatePtr TrajectoryIO::getCurrentState()
 {
-
   // Get the real current state
   psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
   (*current_state_) = scene->getCurrentState();
   return current_state_;
 }
 
-}  // end namespace
+}  // namespace moveit_boilerplate

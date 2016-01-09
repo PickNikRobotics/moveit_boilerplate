@@ -46,8 +46,7 @@
 
 namespace moveit_boilerplate
 {
-ManipulationData::ManipulationData()
-  : nh_("~")
+ManipulationData::ManipulationData() : nh_("~")
 {
 }
 
@@ -59,16 +58,14 @@ bool ManipulationData::load(robot_model::RobotModelPtr robot_model, bool fake_ex
   const std::string parent_name = "manipulation_data";  // for namespacing logging messages
 
   // Load performance variables
-  rosparam_shortcuts::getDoubleParam(parent_name, nh_, "main_velocity_scaling_factor",
-                                          main_velocity_scaling_factor_);
+  rosparam_shortcuts::getDoubleParam(parent_name, nh_, "main_velocity_scaling_factor", main_velocity_scaling_factor_);
   rosparam_shortcuts::getDoubleParam(parent_name, nh_, "approach_velocity_scaling_factor",
-                                          approach_velocity_scaling_factor_);
-  rosparam_shortcuts::getDoubleParam(parent_name, nh_, "lift_velocity_scaling_factor",
-                                          lift_velocity_scaling_factor_);
+                                     approach_velocity_scaling_factor_);
+  rosparam_shortcuts::getDoubleParam(parent_name, nh_, "lift_velocity_scaling_factor", lift_velocity_scaling_factor_);
   rosparam_shortcuts::getDoubleParam(parent_name, nh_, "retreat_velocity_scaling_factor",
-                                          retreat_velocity_scaling_factor_);
+                                     retreat_velocity_scaling_factor_);
   rosparam_shortcuts::getDoubleParam(parent_name, nh_, "calibration_velocity_scaling_factor",
-                                          calibration_velocity_scaling_factor_);
+                                     calibration_velocity_scaling_factor_);
 
   if (fake_execution_)
   {
@@ -94,18 +91,14 @@ bool ManipulationData::load(robot_model::RobotModelPtr robot_model, bool fake_ex
   rosparam_shortcuts::getStringParam(parent_name, nh_, "right_hand_name", right_hand_name_);
   rosparam_shortcuts::getStringParam(parent_name, nh_, "left_hand_name", left_hand_name_);
   rosparam_shortcuts::getStringParam(parent_name, nh_, "right_arm_name", right_arm_name_);
-  rosparam_shortcuts::getStringParam(parent_name, nh_, "right_arm_only_name",
-                                          right_arm_only_name_);
+  rosparam_shortcuts::getStringParam(parent_name, nh_, "right_arm_only_name", right_arm_only_name_);
   rosparam_shortcuts::getStringParam(parent_name, nh_, "left_arm_name", left_arm_name_);
   rosparam_shortcuts::getStringParam(parent_name, nh_, "both_arms_name", both_arms_name_);
 
   // Load planning configs
-  rosparam_shortcuts::getBoolParam(parent_name, nh_, "moveit_ompl/use_experience_setup",
-                                        use_experience_setup_);
-  rosparam_shortcuts::getStringParam(parent_name, nh_, "moveit_ompl/experience_type",
-                                          experience_type_);
-  rosparam_shortcuts::getDoubleParam(parent_name, nh_, "moveit_ompl/planning_time",
-                                          planning_time_);
+  rosparam_shortcuts::getBoolParam(parent_name, nh_, "moveit_ompl/use_experience_setup", use_experience_setup_);
+  rosparam_shortcuts::getStringParam(parent_name, nh_, "moveit_ompl/experience_type", experience_type_);
+  rosparam_shortcuts::getDoubleParam(parent_name, nh_, "moveit_ompl/planning_time", planning_time_);
 
   // Behavior configs
   rosparam_shortcuts::getBoolMap(parent_name, nh_, "behavior", enabled_);
@@ -130,8 +123,7 @@ bool ManipulationData::load(robot_model::RobotModelPtr robot_model, bool fake_ex
   //                                            grasp_location_transform_);
 
   // Pick Manager settings
-  rosparam_shortcuts::getStringParam(parent_name, nh_, "joint_state_topic",
-                                          joint_state_topic_);
+  rosparam_shortcuts::getStringParam(parent_name, nh_, "joint_state_topic", joint_state_topic_);
 
   // Load proper groups
   // TODO - check if joint model group exists
@@ -159,8 +151,7 @@ bool ManipulationData::load(robot_model::RobotModelPtr robot_model, bool fake_ex
 Eigen::Affine3d ManipulationData::getTestPose()
 {
   using namespace std;
-  ROS_WARN_STREAM_NAMED("manipulation_data",
-                        "Using test pose, which should only be used during early development");
+  ROS_WARN_STREAM_NAMED("manipulation_data", "Using test pose, which should only be used during early development");
   // ROS_WARN_STREAM_NAMED("manipulation_data", "Use instead:");
 
   // std::cout << "  Eigen::Affine3d transform = rvt::RvizVisualTools::convertFromXYZRPY("
@@ -180,9 +171,8 @@ bool ManipulationData::isEnabled(const std::string& setting_name)
     // Element found;
     return it->second;
   }
-  ROS_ERROR_STREAM_NAMED("manipulation_data",
-                         "isEnabled() key '" << setting_name
-                                             << "' does not exist in the available configuration");
+  ROS_ERROR_STREAM_NAMED("manipulation_data", "isEnabled() key '" << setting_name << "' does not exist in the "
+                                                                                     "available configuration");
   return false;
 }
 

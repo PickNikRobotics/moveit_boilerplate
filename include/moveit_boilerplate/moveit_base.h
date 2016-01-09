@@ -71,7 +71,9 @@ public:
   /**
    * \brief Desctructor
    */
-  virtual ~MoveItBase() {}
+  virtual ~MoveItBase()
+  {
+  }
 
   /**
    * \brief Initialize all of the MoveIt! functionality
@@ -81,8 +83,7 @@ public:
   /**
    * \brief Connect to the MoveIt! planning scene messages
    */
-  bool loadPlanningSceneMonitor(const std::string &joint_state_topic,
-                                const std::string &planning_scene_topic);
+  bool loadPlanningSceneMonitor(const std::string &joint_state_topic);
 
   /**
    * \brief Load visual tools
@@ -90,7 +91,7 @@ public:
   void loadVisualTools();
 
   /** \brief Output to console the current state of the robot's joint limits */
-  bool showJointLimits(JointModelGroup* jmg);
+  bool showJointLimits(JointModelGroup *jmg);
 
   /**
    * \brief Use the planning scene to get the robot's current state
@@ -98,12 +99,14 @@ public:
   moveit::core::RobotStatePtr getCurrentState();
 
 protected:
-
   // A shared node handle
   ros::NodeHandle nh_;
 
-  // Name of this class
-  std::string name1_;
+  // Short name of this class
+  std::string name_;
+
+  // Settings
+  std::string planning_scene_topic_;
 
   // Transform
   boost::shared_ptr<tf::TransformListener> tf_;
@@ -126,4 +129,4 @@ protected:
 
 }  // end namespace
 
-#endif // MOVEIT_BOILERPLATE_MOVEIT_BASE_H
+#endif  // MOVEIT_BOILERPLATE_MOVEIT_BASE_H

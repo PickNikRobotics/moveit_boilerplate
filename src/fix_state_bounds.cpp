@@ -48,8 +48,7 @@
 
 namespace moveit_boilerplate
 {
-FixStateBounds::FixStateBounds()
-  : nh_("~")
+FixStateBounds::FixStateBounds() : nh_("~")
 {
   const std::string name_ = "fix_state_bounds";  // for namespacing logging messages
 
@@ -59,8 +58,7 @@ FixStateBounds::FixStateBounds()
   rosparam_shortcuts::shutdownIfError(name_, error);
 }
 
-bool FixStateBounds::fixBounds(robot_state::RobotState &robot_state,
-                               const moveit::core::JointModelGroup *jmg)
+bool FixStateBounds::fixBounds(robot_state::RobotState &robot_state, const moveit::core::JointModelGroup *jmg)
 {
   ROS_INFO_STREAM_NAMED("fix_state_bounds", "Fixing bounds");
 
@@ -132,11 +130,10 @@ bool FixStateBounds::fixBounds(robot_state::RobotState &robot_state,
         joint_bounds_low << b[k].min_position_ << " ";
         joint_bounds_hi << b[k].max_position_ << " ";
       }
-      ROS_WARN_STREAM_NAMED(
-          "fix_state_bounds",
-          "Joint '" << joint_models[i]->getName() << "' is outside bounds by: [ "
-                    << joint_values.str() << "]. Joint value hould be in the range [ "
-                    << joint_bounds_low.str() << "], [ " << joint_bounds_hi.str() << "])");
+      ROS_WARN_STREAM_NAMED("fix_state_bounds", "Joint '" << joint_models[i]->getName() << "' is outside bounds by: [ "
+                                                          << joint_values.str() << "]. Joint value hould be in the "
+                                                                                   "range [ " << joint_bounds_low.str()
+                                                          << "], [ " << joint_bounds_hi.str() << "])");
 
       /*
         if (robot_state.satisfiesBounds(joint_models[i], bounds_dist_))

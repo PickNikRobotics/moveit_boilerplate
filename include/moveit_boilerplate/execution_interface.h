@@ -62,9 +62,10 @@ namespace moveit_boilerplate
 {
 MOVEIT_CLASS_FORWARD(ExecutionInterface);
 
-enum JointCommandMode {
-  JOINT_EXECUTION_MANAGER, // use the default MoveIt! method for sending trajectories using actionlib
-  JOINT_PUBLISHER,         // send trajectories direct to ros_control using ROS messages
+enum JointCommandMode
+{
+  JOINT_EXECUTION_MANAGER,  // use the default MoveIt! method for sending trajectories using actionlib
+  JOINT_PUBLISHER,          // send trajectories direct to ros_control using ROS messages
 };
 
 class ExecutionInterface
@@ -80,8 +81,7 @@ public:
    * \param pose
    * \return true on success
    */
-  bool executePose(const Eigen::Affine3d &pose, JointModelGroup *arm_jmg,
-                   const double &duration = 0.1);
+  bool executePose(const Eigen::Affine3d &pose, JointModelGroup *arm_jmg, const double &duration = 0.1);
 
   /**
    * \brief Do a bunch of checks and send to low level controllers
@@ -106,12 +106,10 @@ public:
   }
 
   /** \brief Save a trajectory that is about to be executed to file, for later debugging */
-  static bool saveTrajectory(const moveit_msgs::RobotTrajectory &trajectory_msg,
-                             const std::string &file_name,
+  static bool saveTrajectory(const moveit_msgs::RobotTrajectory &trajectory_msg, const std::string &file_name,
                              const std::string &save_traj_to_file_path);
 
 private:
-
   /**
    * \brief Ensure that execution manager has been loaded
    * \return true on success
@@ -130,20 +128,20 @@ private:
   void checkForWaypointJumps(const trajectory_msgs::JointTrajectory &trajectory);
 
   /** \brief Check if correct controllers are loaded */
-  bool checkTrajectoryController(ros::ServiceClient &service_client,
-                                 const std::string &hardware_name, bool has_ee = false);
+  bool checkTrajectoryController(ros::ServiceClient &service_client, const std::string &hardware_name,
+                                 bool has_ee = false);
 
   /** \brief Convert to type of command interface */
-  JointCommandMode stringToJointCommandMode(const std::string& command_mode)
+  JointCommandMode stringToJointCommandMode(const std::string &command_mode)
   {
     if (command_mode == "joint_publisher")
       return JOINT_PUBLISHER;
     else if (command_mode == "joint_execution_manager")
-      return JOINT_EXECUTION_MANAGER; // use actionlib
+      return JOINT_EXECUTION_MANAGER;  // use actionlib
     else
     {
-      ROS_WARN_STREAM_NAMED("execution_interface","No command mode specified, using execution manager as default");
-      return JOINT_EXECUTION_MANAGER; // use actionlib
+      ROS_WARN_STREAM_NAMED("execution_interface", "No command mode specified, using execution manager as default");
+      return JOINT_EXECUTION_MANAGER;  // use actionlib
     }
   }
 
@@ -154,14 +152,14 @@ private:
   const std::string name_ = "execution_interface";
 
   // Configuration settings
-  JointCommandMode joint_command_mode_; // how to publish
+  JointCommandMode joint_command_mode_;  // how to publish
   bool save_traj_to_file_ = false;
   std::string save_traj_to_file_path_;
   bool visualize_trajectory_line_ = false;
   bool visualize_trajectory_path_ = false;
   bool check_for_waypoint_jumps_ = false;
 
-  std::size_t trajectory_filename_count_ = 0; // iterate file names
+  std::size_t trajectory_filename_count_ = 0;  // iterate file names
 
   DebugInterfacePtr debug_interface_;
   mvt::MoveItVisualToolsPtr visual_tools_;

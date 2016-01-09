@@ -44,9 +44,7 @@
 
 namespace moveit_teleop
 {
-
-ArmTesting::ArmTesting()
-  : ArmTesting()
+ArmTesting::ArmTesting() : ArmTesting()
 {
   // Load trajectory IO class
   trajectory_io_.reset(new moveit_boilerplate::TrajectoryIO(planning_scene_monitor_, visual_tools_));
@@ -63,7 +61,8 @@ bool ArmTesting::testEndEffectors()
   moveit::core::RobotStatePtr current_state = getCurrentState();
   while (ros::ok())
   {
-    std::cout << std::endl << std::endl;
+    std::cout << std::endl
+              << std::endl;
     if (i % 2 == 0)
     {
       std::cout << "Showing closed EE of state " << std::endl;
@@ -106,7 +105,8 @@ bool ArmTesting::testUpAndDown()
   std::size_t i = 0;
   while (ros::ok())
   {
-    std::cout << std::endl << std::endl;
+    std::cout << std::endl
+              << std::endl;
     if (i % 2 == 0)
     {
       std::cout << "Moving up --------------------------------------" << std::endl;
@@ -120,7 +120,7 @@ bool ArmTesting::testUpAndDown()
     else
     {
       std::cout << "Moving down ------------------------------------" << std::endl;
-      planning_interface_->executeVerticlePathWithIK(config_->right_arm_, lift_distance_desired,false);
+      planning_interface_->executeVerticlePathWithIK(config_->right_arm_, lift_distance_desired, false);
 
       if (config_->dual_arm_)
         planning_interface_->executeVerticlePathWithIK(config_->left_arm_, lift_distance_desired, false);
@@ -145,15 +145,15 @@ bool ArmTesting::testInAndOut()
   {
     visual_tools_->deleteAllMarkers();
 
-    std::cout << std::endl << std::endl;
+    std::cout << std::endl
+              << std::endl;
     if (i % 2 == 0)
     {
       std::cout << "Moving in --------------------------------------" << std::endl;
       if (!planning_interface_->executeRetreatPath(config_->right_arm_, approach_distance_desired, false))
         return false;
       if (config_->dual_arm_)
-        if (!planning_interface_->executeRetreatPath(config_->left_arm_, approach_distance_desired,
-                                               false))
+        if (!planning_interface_->executeRetreatPath(config_->left_arm_, approach_distance_desired, false))
           return false;
       ros::Duration(1.0).sleep();
     }
@@ -258,9 +258,8 @@ bool ArmTesting::testRandomValidMotions()
         // Plan to this position
         bool verbose = true;
         bool execute_trajectory = true;
-        if (planning_interface_->move(current_state, goal_state, arm_jmg,
-                                config_->main_velocity_scaling_factor_, verbose,
-                                execute_trajectory))
+        if (planning_interface_->move(current_state, goal_state, arm_jmg, config_->main_velocity_scaling_factor_,
+                                      verbose, execute_trajectory))
         {
           ROS_INFO_STREAM_NAMED("arm_testing", "Planned to random valid state successfullly");
         }
@@ -271,8 +270,7 @@ bool ArmTesting::testRandomValidMotions()
         }
       }
     }
-    ROS_ERROR_STREAM_NAMED("arm_testing", "Unable to find random valid state after "
-                                               << MAX_ATTEMPTS << " attempts");
+    ROS_ERROR_STREAM_NAMED("arm_testing", "Unable to find random valid state after " << MAX_ATTEMPTS << " attempts");
 
     ros::Duration(1).sleep();
   }  // while
@@ -306,8 +304,7 @@ bool ArmTesting::testJointLimits()
   // Setup data
   std::vector<double> joint_position;
   joint_position.resize(1);
-  const std::vector<const moveit::core::JointModel*>& joints =
-      config_->right_arm_->getActiveJointModels();
+  const std::vector<const moveit::core::JointModel*>& joints = config_->right_arm_->getActiveJointModels();
 
   // Decide if we are testing 1 joint or all
   int test_joint_limit_joint = 0;
@@ -340,17 +337,14 @@ bool ArmTesting::testJointLimits()
       std::cout << std::endl;
       std::cout << "-------------------------------------------------------" << std::endl;
       joint_position[0] = bound.min_position_ + reduce_bound;
-      ROS_INFO_STREAM_NAMED("arm_testing", "Sending joint " << joints[i]->getName()
-                                                             << " to min position of "
-                                                             << joint_position[0]);
+      ROS_INFO_STREAM_NAMED("arm_testing", "Sending joint " << joints[i]->getName() << " to min position of "
+                                                            << joint_position[0]);
       goal_state->setJointPositions(joints[i], joint_position);
 
-      if (!planning_interface_->executeState(goal_state, config_->right_arm_,
-                                       config_->main_velocity_scaling_factor_))
+      if (!planning_interface_->executeState(goal_state, config_->right_arm_, config_->main_velocity_scaling_factor_))
       {
-        ROS_ERROR_STREAM_NAMED("arm_testing", "Unable to move to min bound of "
-                                                   << joint_position[0] << " on joint "
-                                                   << joints[i]->getName());
+        ROS_ERROR_STREAM_NAMED("arm_testing", "Unable to move to min bound of " << joint_position[0] << " on joint "
+                                                                                << joints[i]->getName());
       }
       ros::Duration(1.0).sleep();
 
@@ -358,17 +352,14 @@ bool ArmTesting::testJointLimits()
       std::cout << std::endl;
       std::cout << "-------------------------------------------------------" << std::endl;
       joint_position[0] = bound.max_position_ - reduce_bound;
-      ROS_INFO_STREAM_NAMED("arm_testing", "Sending joint " << joints[i]->getName()
-                                                             << " to max position of "
-                                                             << joint_position[0]);
+      ROS_INFO_STREAM_NAMED("arm_testing", "Sending joint " << joints[i]->getName() << " to max position of "
+                                                            << joint_position[0]);
       goal_state->setJointPositions(joints[i], joint_position);
 
-      if (!planning_interface_->executeState(goal_state, config_->right_arm_,
-                                       config_->main_velocity_scaling_factor_))
+      if (!planning_interface_->executeState(goal_state, config_->right_arm_, config_->main_velocity_scaling_factor_))
       {
-        ROS_ERROR_STREAM_NAMED("arm_testing", "Unable to move to max bound of "
-                                                   << joint_position[0] << " on joint "
-                                                   << joints[i]->getName());
+        ROS_ERROR_STREAM_NAMED("arm_testing", "Unable to move to max bound of " << joint_position[0] << " on joint "
+                                                                                << joints[i]->getName());
       }
       ros::Duration(1.0).sleep();
     }
@@ -399,8 +390,7 @@ bool ArmTesting::moveToStartPosition(JointModelGroup* arm_jmg, bool check_validi
 
 void ArmTesting::publishCurrentState()
 {
-  psm::LockedPlanningSceneRO scene(
-      planning_scene_monitor_);  // Lock planning scene
+  psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
   visual_tools_->publishRobotState(scene->getCurrentState(), rvt::PURPLE);
 }
 
@@ -414,8 +404,7 @@ bool ArmTesting::gotoPose(const std::string& pose_name)
   JointModelGroup* arm_jmg = config_->dual_arm_ ? config_->both_arms_ : config_->right_arm_;
   bool check_validity = true;
 
-  if (!planning_interface_->moveToSRDFPose(arm_jmg, pose_name, config_->main_velocity_scaling_factor_,
-                                     check_validity))
+  if (!planning_interface_->moveToSRDFPose(arm_jmg, pose_name, config_->main_velocity_scaling_factor_, check_validity))
   {
     ROS_ERROR_STREAM_NAMED("arm_testing", "Unable to move to pose");
     return false;
@@ -484,7 +473,7 @@ bool ArmTesting::calibrateInCircle()
   }
   visual_tools_->triggerBatchPublishAndDisable();
 
-  ROS_WARN_STREAM_NAMED("temp","Currently function for execution has been removed!");
+  ROS_WARN_STREAM_NAMED("temp", "Currently function for execution has been removed!");
   return false;
   /*
   if (!planning_interface_->moveCartesianWaypointPath(arm_jmg, waypoints))

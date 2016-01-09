@@ -45,6 +45,11 @@
    Direct publishing on ROS topic:    average: 0.00184441  (59% faster)
 */
 
+// C++
+// #include <string>
+// #include <algorithm>
+// #include <vector>
+
 // MoveItManipulation
 #include <moveit_boilerplate/execution_interface.h>
 
@@ -136,7 +141,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
 
   // Debug
   ROS_DEBUG_STREAM_NAMED("execution_interface.summary", "Executing trajectory with " << trajectory.points.size()
-                         << " waypoints");
+                                                                                     << " waypoints");
   ROS_DEBUG_STREAM_NAMED("execution_interface.trajectory", "Publishing:\n" << trajectory_msg);
 
   // Error check
@@ -161,7 +166,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
   // Optionally save to file
   if (save_traj_to_file_)
     saveTrajectory(trajectory_msg, jmg->getName() + "_moveit_trajectory_" +
-                   boost::lexical_cast<std::string>(trajectory_filename_count_++) + ".csv",
+                                       boost::lexical_cast<std::string>(trajectory_filename_count_++) + ".csv",
                    save_traj_to_file_path_);
 
   // Optionally visualize the hand/wrist path in Rviz
@@ -178,7 +183,7 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
     }
     else
       ROS_WARN_STREAM_NAMED(name_, "Not visualizing path because trajectory only has "
-                            << trajectory.points.size() << " points or because is end effector");
+                                       << trajectory.points.size() << " points or because is end effector");
   }
 
   // Optionally visualize trajectory in Rviz
@@ -263,7 +268,7 @@ bool ExecutionInterface::waitForExecution()
   if (joint_command_mode_ != JOINT_EXECUTION_MANAGER)
   {
     ROS_WARN_STREAM_NAMED(name_, "Not waiting for execution because not in execution_manager "
-                          "mode");
+                                 "mode");
     return true;
   }
 
@@ -301,7 +306,7 @@ void ExecutionInterface::checkForWaypointJumps(const trajectory_msgs::JointTraje
     if (diff > max_time_step)
     {
       ROS_ERROR_STREAM_NAMED(
-                             name_, "Max time step between points exceeded, likely because of wrap around/IK bug. Point " << i);
+          name_, "Max time step between points exceeded, likely because of wrap around/IK bug. Point " << i);
       std::cout << "First time: " << trajectory.points[i].time_from_start.toSec() << std::endl;
       std::cout << "Next time: " << trajectory.points[i + 1].time_from_start.toSec() << std::endl;
       std::cout << "Diff time: " << diff.toSec() << std::endl;
@@ -316,7 +321,7 @@ void ExecutionInterface::checkForWaypointJumps(const trajectory_msgs::JointTraje
     else if (diff > warn_time_step)
     {
       ROS_WARN_STREAM_NAMED(
-                            name_, "Warn time step between points exceeded, likely because of wrap around/IK bug. Point " << i);
+          name_, "Warn time step between points exceeded, likely because of wrap around/IK bug. Point " << i);
       std::cout << "First time: " << trajectory.points[i].time_from_start.toSec() << std::endl;
       std::cout << "Next time: " << trajectory.points[i + 1].time_from_start.toSec() << std::endl;
       std::cout << "Diff time: " << diff.toSec() << std::endl;
@@ -369,9 +374,9 @@ bool ExecutionInterface::checkTrajectoryController(ros::ServiceClient &service_c
   if (!service_client.call(service))
   {
     ROS_ERROR_STREAM_THROTTLE_NAMED(2, name_, "Unable to check if controllers for "
-                                    << hardware_name << " are loaded, failing. Using nh "
-                                    "namespace " << nh_.getNamespace()
-                                    << ". Service response: " << service.response);
+                                                  << hardware_name << " are loaded, failing. Using nh "
+                                                                      "namespace " << nh_.getNamespace()
+                                                  << ". Service response: " << service.response);
     return false;
   }
 
@@ -406,13 +411,13 @@ bool ExecutionInterface::checkTrajectoryController(ros::ServiceClient &service_c
   if (has_ee && !found_ee_controller)
   {
     ROS_ERROR_STREAM_THROTTLE_NAMED(2, name_, "No end effector controller found for "
-                                    << hardware_name << ". Controllers are: " << service.response);
+                                                  << hardware_name << ". Controllers are: " << service.response);
     return false;
   }
   if (!found_main_controller)
   {
     ROS_ERROR_STREAM_THROTTLE_NAMED(2, name_, "No main controller found for "
-                                    << hardware_name << ". Controllers are: " << service.response);
+                                                  << hardware_name << ". Controllers are: " << service.response);
     return false;
   }
 
@@ -420,8 +425,7 @@ bool ExecutionInterface::checkTrajectoryController(ros::ServiceClient &service_c
 }
 
 bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &trajectory_msg,
-                                        const std::string &file_name,
-                                        const std::string &save_traj_to_file_path)
+                                        const std::string &file_name, const std::string &save_traj_to_file_path)
 {
   const std::string name = "execution_interface";
   const trajectory_msgs::JointTrajectory &joint_trajectory = trajectory_msg.joint_trajectory;

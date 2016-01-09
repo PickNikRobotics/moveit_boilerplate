@@ -49,9 +49,7 @@ namespace moveit_boilerplate
 {
 DEFINE_int32(id, 0, "Identification number for various component modes");
 
-Boilerplate::Boilerplate()
-  : nh_("~")
-  , name_("boilerplate")
+Boilerplate::Boilerplate() : nh_("~"), name_("boilerplate")
 {
   std::string joint_state_topic;
   std::string arm_joint_model_group;
@@ -89,6 +87,9 @@ Boilerplate::Boilerplate()
     ROS_ERROR_STREAM_NAMED("boilerplate", "Unable to load planning scene monitor");
   }
 
+  // Service for sharing the planning scene
+  get_planning_scene_service_.initialize(nh_, "/get_planning_scene", planning_scene_monitor_);
+
   // Create initial robot state
   {
     psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
@@ -111,22 +112,22 @@ Boilerplate::Boilerplate()
   ROS_INFO_STREAM_NAMED("boilerplate", "Boilerplate Ready.");
 }
 
-bool Boilerplate::loadPlanningSceneMonitor(const std::string &joint_state_topic,
-                                           const std::string &planning_scene_topic)
+bool Boilerplate::loadPlanningSceneMonitor(const std::string& joint_state_topic,
+                                           const std::string& planning_scene_topic)
 {
   // Allows us to sycronize to Rviz and also publish collision objects to ourselves
   ROS_DEBUG_STREAM_NAMED("boilerplate", "Loading Planning Scene Monitor");
   static const std::string PLANNING_SCENE_MONITOR_NAME = "BoilerplatePlanningScene";
-  planning_scene_monitor_.reset(new psm::PlanningSceneMonitor(
-      planning_scene_, robot_model_loader_, tf_, PLANNING_SCENE_MONITOR_NAME));
+  planning_scene_monitor_.reset(
+      new psm::PlanningSceneMonitor(planning_scene_, robot_model_loader_, tf_, PLANNING_SCENE_MONITOR_NAME));
   ros::spinOnce();
 
   if (planning_scene_monitor_->getPlanningScene())
   {
     // Optional monitors to start:
     planning_scene_monitor_->startStateMonitor(joint_state_topic, "");
-    planning_scene_monitor_->startPublishingPlanningScene(
-        psm::PlanningSceneMonitor::UPDATE_SCENE, planning_scene_topic);
+    planning_scene_monitor_->startPublishingPlanningScene(psm::PlanningSceneMonitor::UPDATE_SCENE,
+                                                          planning_scene_topic);
     planning_scene_monitor_->getPlanningScene()->setName("planning_scene");
   }
   else
@@ -147,8 +148,7 @@ bool Boilerplate::loadPlanningSceneMonitor(const std::string &joint_state_topic,
   std::size_t counter = 0;
   while (!planning_scene_monitor_->getStateMonitor()->haveCompleteState() && ros::ok())
   {
-    ROS_INFO_STREAM_THROTTLE_NAMED(1, "", "Waiting for complete state from topic "
-                                                          << joint_state_topic);
+    ROS_INFO_STREAM_THROTTLE_NAMED(1, "", "Waiting for complete state from topic " << joint_state_topic);
     ros::Duration(0.1).sleep();
     ros::spinOnce();
 
@@ -168,8 +168,8 @@ bool Boilerplate::loadPlanningSceneMonitor(const std::string &joint_state_topic,
 
 void Boilerplate::loadVisualTools()
 {
-  visual_tools_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(),
-                                                 "/moveit_boilerplate/markers", planning_scene_monitor_));
+  visual_tools_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(), "/moveit_boilerplate/markers",
+                                                 planning_scene_monitor_));
 
   visual_tools_->loadRobotStatePub("/moveit_boilerplate/robot_state");
   visual_tools_->loadTrajectoryPub("/moveit_boilerplate/display_trajectory");
@@ -224,9 +224,8 @@ bool Boilerplate::showJointLimits(JointModelGroup* jmg)
         std::cout << "-";
     }
     // show max position
-    std::cout << " \t" << std::fixed << std::setprecision(5) << bound.max_position_ << "  \t"
-              << joints[i]->getName() << " current: " << std::fixed << std::setprecision(5)
-              << current_value << std::endl;
+    std::cout << " \t" << std::fixed << std::setprecision(5) << bound.max_position_ << "  \t" << joints[i]->getName()
+              << " current: " << std::fixed << std::setprecision(5) << current_value << std::endl;
 
     if (out_of_bounds)
       std::cout << MOVEIT_CONSOLE_COLOR_RESET;

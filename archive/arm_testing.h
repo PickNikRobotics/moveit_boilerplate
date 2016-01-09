@@ -36,7 +36,6 @@
    Desc:   Tools for testing an arm
 */
 
-
 #ifndef MOVEIT_TELEOP__ARM_TESTING_
 #define MOVEIT_TELEOP__ARM_TESTING_
 
@@ -46,7 +45,6 @@
 
 namespace moveit_teleop
 {
-
 class ArmTesting : public moveit_boilerplate::Boilerplate
 {
 public:
@@ -163,7 +161,6 @@ public:
   void enableTeleoperation();
 
 private:
-
   // Allow loading and saving trajectories to file
   moveit_boilerplate::TrajectoryIOPtr trajectory_io_;
 

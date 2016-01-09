@@ -36,6 +36,11 @@
    Desc:   Contains all hooks for debug interface
 */
 
+// C++
+// #include <string>
+// #include <algorithm>
+// #include <vector>
+
 #include <moveit_boilerplate/debug_interface.h>
 #include <moveit/macros/console_colors.h>
 
@@ -103,9 +108,18 @@ void DebugInterface::setStop(bool stop)
   }
 }
 
-bool DebugInterface::getStop() { return stop_; }
-bool DebugInterface::getAutonomous() { return autonomous_; }
-bool DebugInterface::getFullAutonomous() { return full_autonomous_; }
+bool DebugInterface::getStop()
+{
+  return stop_;
+}
+bool DebugInterface::getAutonomous()
+{
+  return autonomous_;
+}
+bool DebugInterface::getFullAutonomous()
+{
+  return full_autonomous_;
+}
 bool DebugInterface::waitForNextStep(const std::string& caption)
 {
   // Check if we really need to wait
@@ -115,8 +129,7 @@ bool DebugInterface::waitForNextStep(const std::string& caption)
   // Show message
   std::cout << std::endl
             << std::endl;
-  std::cout << MOVEIT_CONSOLE_COLOR_CYAN << "Waiting to " << caption << MOVEIT_CONSOLE_COLOR_RESET
-            << std::endl;
+  std::cout << MOVEIT_CONSOLE_COLOR_CYAN << "Waiting to " << caption << MOVEIT_CONSOLE_COLOR_RESET << std::endl;
 
   is_waiting_ = true;
   // Wait until next step is ready
@@ -139,8 +152,7 @@ bool DebugInterface::waitForNextFullStep(const std::string& caption)
     return true;
 
   // Show message
-  std::cout << MOVEIT_CONSOLE_COLOR_CYAN << "Waiting to " << caption << MOVEIT_CONSOLE_COLOR_RESET
-            << std::endl;
+  std::cout << MOVEIT_CONSOLE_COLOR_CYAN << "Waiting to " << caption << MOVEIT_CONSOLE_COLOR_RESET << std::endl;
 
   is_waiting_ = true;
   // Wait until next step is ready

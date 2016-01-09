@@ -41,27 +41,24 @@
 
 namespace moveit_boilerplate
 {
-
-MoveItBase::MoveItBase()
-  : name1_("moveit_base")
+MoveItBase::MoveItBase() : name_("moveit_base")
 {
 }
 
-bool MoveItBase::init(ros::NodeHandle &nh)
+bool MoveItBase::init(ros::NodeHandle& nh)
 {
   nh_ = nh;
   std::string joint_state_topic;
   std::string joint_model_group;
   std::string execution_command_mode;
-  std::string planning_scene_topic;
 
   // Load rosparams
-  ros::NodeHandle rpnh(nh_, name1_);
+  ros::NodeHandle rpnh(nh_, name_);
   int error = 0;
-  error += !rosparam_shortcuts::get(name1_, rpnh, "joint_state_topic", joint_state_topic);
-  error += !rosparam_shortcuts::get(name1_, rpnh, "joint_model_group", joint_model_group);
-  error += !rosparam_shortcuts::get(name1_, rpnh, "planning_scene_topic", planning_scene_topic);
-  rosparam_shortcuts::shutdownIfError(name1_, error);
+  error += !rosparam_shortcuts::get(name_, rpnh, "joint_state_topic", joint_state_topic);
+  error += !rosparam_shortcuts::get(name_, rpnh, "joint_model_group", joint_model_group);
+  error += !rosparam_shortcuts::get(name_, rpnh, "planning_scene_topic", planning_scene_topic_);
+  rosparam_shortcuts::shutdownIfError(name_, error);
 
   // Load the loader
   robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(ROBOT_DESCRIPTION));
@@ -76,9 +73,9 @@ bool MoveItBase::init(ros::NodeHandle &nh)
   planning_scene_.reset(new planning_scene::PlanningScene(robot_model_));
 
   // Load planning scene monitor
-  if (!loadPlanningSceneMonitor(joint_state_topic, planning_scene_topic))
+  if (!loadPlanningSceneMonitor(joint_state_topic))
   {
-    ROS_ERROR_STREAM_NAMED(name1_, "Unable to load planning scene monitor");
+    ROS_ERROR_STREAM_NAMED(name_, "Unable to load planning scene monitor");
   }
 
   // Create initial robot state
@@ -90,13 +87,12 @@ bool MoveItBase::init(ros::NodeHandle &nh)
   // Load the Robot Viz Tools for publishing to Rviz
   loadVisualTools();
 
-  ROS_INFO_STREAM_NAMED(name1_, "MoveItBase Ready.");
+  ROS_INFO_STREAM_NAMED(name_, "MoveItBase Ready.");
 
   return true;
 }
 
-bool MoveItBase::loadPlanningSceneMonitor(const std::string &joint_state_topic,
-                                          const std::string &planning_scene_topic)
+bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
 {
   // Create tf transformer
   tf_.reset(new tf::TransformListener(nh_));
@@ -104,25 +100,25 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string &joint_state_topic,
   ros::spinOnce();
 
   // Allows us to sycronize to Rviz and also publish collision objects to ourselves
-  ROS_DEBUG_STREAM_NAMED(name1_, "Loading Planning Scene Monitor");
+  ROS_DEBUG_STREAM_NAMED(name_, "Loading Planning Scene Monitor");
   static const std::string PLANNING_SCENE_MONITOR_NAME = "MoveItBasePlanningScene";
-  planning_scene_monitor_.reset(new psm::PlanningSceneMonitor(
-      planning_scene_, robot_model_loader_, tf_, PLANNING_SCENE_MONITOR_NAME));
+  planning_scene_monitor_.reset(
+      new psm::PlanningSceneMonitor(planning_scene_, robot_model_loader_, tf_, PLANNING_SCENE_MONITOR_NAME));
   ros::spinOnce();
 
   if (planning_scene_monitor_->getPlanningScene())
   {
     // Optional monitors to start:
-    //planning_scene_monitor_->startStateMonitor(joint_state_topic, "");
-    //planning_scene_monitor_->startPublishingPlanningScene(
-    //psm::PlanningSceneMonitor::UPDATE_SCENE, "planning_scene");
-    //planning_scene_monitor_->getPlanningScene()->setName("planning_scene");
-    planning_scene_monitor_->startSceneMonitor(planning_scene_topic);
-    //psm::PlanningSceneMonitor::UPDATE_SCENE, "planning_scene");
+    // planning_scene_monitor_->startStateMonitor(joint_state_topic, "");
+    // planning_scene_monitor_->startPublishingPlanningScene(
+    // psm::PlanningSceneMonitor::UPDATE_SCENE, "planning_scene");
+    // planning_scene_monitor_->getPlanningScene()->setName("planning_scene");
+    planning_scene_monitor_->startSceneMonitor(planning_scene_topic_);
+    // psm::PlanningSceneMonitor::UPDATE_SCENE, "planning_scene");
   }
   else
   {
-    ROS_ERROR_STREAM_NAMED(name1_, "Planning scene not configured");
+    ROS_ERROR_STREAM_NAMED(name_, "Planning scene not configured");
     return false;
   }
   ros::spinOnce();
@@ -138,8 +134,7 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string &joint_state_topic,
   std::size_t counter = 0;
   while (!planning_scene_monitor_->getStateMonitor()->haveCompleteState() && ros::ok())
   {
-    ROS_INFO_STREAM_THROTTLE_NAMED(1, name1_, "Waiting for complete state from topic "
-                                                          << joint_state_topic);
+    ROS_INFO_STREAM_THROTTLE_NAMED(1, name_, "Waiting for complete state from topic " << joint_state_topic);
     ros::Duration(0.1).sleep();
     ros::spinOnce();
 
@@ -148,7 +143,7 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string &joint_state_topic,
     {
       planning_scene_monitor_->getStateMonitor()->haveCompleteState(missing_joints);
       for (std::size_t i = 0; i < missing_joints.size(); ++i)
-        ROS_WARN_STREAM_NAMED(name1_, "Unpublished joints: " << missing_joints[i]);
+        ROS_WARN_STREAM_NAMED(name_, "Unpublished joints: " << missing_joints[i]);
     }
     counter++;
   }
@@ -159,8 +154,8 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string &joint_state_topic,
 
 void MoveItBase::loadVisualTools()
 {
-  visual_tools_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(),
-                                                 "/moveit_boilerplate/markers", planning_scene_monitor_));
+  visual_tools_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(), "/moveit_boilerplate/markers",
+                                                 planning_scene_monitor_));
 
   visual_tools_->loadRobotStatePub("/moveit_boilerplate/robot_state");
   visual_tools_->loadTrajectoryPub("/moveit_boilerplate/display_trajectory");
@@ -183,7 +178,7 @@ bool MoveItBase::showJointLimits(JointModelGroup* jmg)
     // Assume all joints have only one variable
     if (joints[i]->getVariableCount() > 1)
     {
-      ROS_ERROR_STREAM_NAMED(name1_, "Unable to handle joints with more than one var");
+      ROS_ERROR_STREAM_NAMED(name_, "Unable to handle joints with more than one var");
       return false;
     }
     getCurrentState();
@@ -215,9 +210,8 @@ bool MoveItBase::showJointLimits(JointModelGroup* jmg)
         std::cout << "-";
     }
     // show max position
-    std::cout << " \t" << std::fixed << std::setprecision(5) << bound.max_position_ << "  \t"
-              << joints[i]->getName() << " current: " << std::fixed << std::setprecision(5)
-              << current_value << std::endl;
+    std::cout << " \t" << std::fixed << std::setprecision(5) << bound.max_position_ << "  \t" << joints[i]->getName()
+              << " current: " << std::fixed << std::setprecision(5) << current_value << std::endl;
 
     if (out_of_bounds)
       std::cout << MOVEIT_CONSOLE_COLOR_RESET;

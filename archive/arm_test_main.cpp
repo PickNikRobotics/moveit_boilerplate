@@ -57,7 +57,9 @@ int main(int argc, char** argv)
 
   ros::init(argc, argv, "moveit_boilerplate");
 
-  std::cout << std::endl << std::endl << std::endl;
+  std::cout << std::endl
+            << std::endl
+            << std::endl;
   ROS_INFO_STREAM_NAMED("main", "Starting Pick Manager");
 
   // Allow the action server to recieve and send ros messages
@@ -93,11 +95,11 @@ int main(int argc, char** argv)
       break;
     case 3:
       ROS_INFO_STREAM_NAMED("main", "Insertion");
-      //manager.insertion();
+      // manager.insertion();
       break;
     case 4:
       ROS_INFO_STREAM_NAMED("main", "Touch control");
-      //manager.touchControl();
+      // manager.touchControl();
       break;
     case 5:
       ROS_INFO_STREAM_NAMED("main", "Raise the roof (go up and down)");
@@ -109,7 +111,7 @@ int main(int argc, char** argv)
       break;
     case 7:
       ROS_INFO_STREAM_NAMED("main", "Draw spiral");
-      //manager.drawSpiral();
+      // manager.drawSpiral();
       break;
     case 8:
       ROS_INFO_STREAM_NAMED("main", "Test end effectors mode");
@@ -121,7 +123,7 @@ int main(int argc, char** argv)
       break;
     case 10:
       ROS_INFO_STREAM_NAMED("main", "Automated insertion test");
-      //manager.automatedInsertionTest();
+      // manager.automatedInsertionTest();
       break;
     case 11:
       ROS_INFO_STREAM_NAMED("main", "Going in circle for calibration");
@@ -146,19 +148,22 @@ int main(int argc, char** argv)
   }
 
   // Shutdown
-  std::cout << std::endl << std::endl << std::endl;
+  std::cout << std::endl
+            << std::endl
+            << std::endl;
   std::cout << "-------------------------------------------------------" << std::endl;
   ROS_INFO_STREAM_NAMED("main", "Shutting down.");
-  std::cout << std::endl << std::endl << std::endl;
+  std::cout << std::endl
+            << std::endl
+            << std::endl;
 
   ros::Time end_time = ros::Time::now();
 
   ros::Duration duration = (end_time - begin_time);
 
-  ROS_INFO_STREAM_NAMED("main", "Test duration = " << duration << " seconds ("
-                                                   << (duration.toSec() / 60.0) << " minutes). "
-                                                   << "Max time allowed = " << (15.0 * 60.0)
-                                                   << " seconds (15 minutes).");
+  ROS_INFO_STREAM_NAMED("main",
+                        "Test duration = " << duration << " seconds (" << (duration.toSec() / 60.0) << " minutes). "
+                                           << "Max time allowed = " << (15.0 * 60.0) << " seconds (15 minutes).");
 
   ros::shutdown();
 
