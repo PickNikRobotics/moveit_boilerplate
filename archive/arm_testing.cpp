@@ -42,7 +42,7 @@
 // MoveItManipulation
 #include <moveit_teleop/arm_testing.h>
 
-namespace moveit_teleop
+namespace moveit_boilerplate
 {
 ArmTesting::ArmTesting() : ArmTesting()
 {
@@ -427,11 +427,11 @@ bool ArmTesting::calibrateInCircle()
 
   // Get location of camera
   Eigen::Affine3d camera_pose;
-  // TODO  planning_interface_->getPose(camera_pose, config_->right_camera_frame_);
+  // TODO(davetcoleman)  planning_interface_->getPose(camera_pose, config_->right_camera_frame_);
 
   // Move camera pose forward away from camera
   Eigen::Affine3d translate_forward = Eigen::Affine3d::Identity();
-  translate_forward.translation().x() += 1.0;  // TODO config_->camera_x_translation_from_bin_;
+  translate_forward.translation().x() += 1.0;  // TODO(davetcoleman) config_->camera_x_translation_from_bin_;
   translate_forward.translation().z() -= 0.15;
   camera_pose = translate_forward * camera_pose;
 
@@ -485,4 +485,4 @@ bool ArmTesting::calibrateInCircle()
   return true;
 }
 
-}  // end namespace
+}  // namespace moveit_boilerplate

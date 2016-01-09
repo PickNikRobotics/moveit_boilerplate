@@ -36,8 +36,12 @@
    Desc:   Loads from and saves to file trajectories in joint states and EE poses
 */
 
-#ifndef MOVEIT_BOILERPLATE__TRAJECTORY_IO
-#define MOVEIT_BOILERPLATE__TRAJECTORY_IO
+#ifndef MOVEIT_BOILERPLATE_TRAJECTORY_IO_H
+#define MOVEIT_BOILERPLATE_TRAJECTORY_IO_H
+
+// C++
+#include <string>
+#include <vector>
 
 // PickNik
 #include <moveit_boilerplate/namespaces.h>
@@ -170,13 +174,12 @@ private:
 
   // Waypoint trajectory to load/save to/from file
   std::vector<TimePose> cartesian_trajectory_;
-
 };  // end class
 
 // Create boost pointers for this class
 typedef boost::shared_ptr<TrajectoryIO> TrajectoryIOPtr;
 typedef boost::shared_ptr<const TrajectoryIO> TrajectoryIOConstPtr;
 
-}  // end namespace
+}  // namespace moveit_boilerplate
 
-#endif
+#endif  // MOVEIT_BOILERPLATE_TRAJECTORY_IO_H

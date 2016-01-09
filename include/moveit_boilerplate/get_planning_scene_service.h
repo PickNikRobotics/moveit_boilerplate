@@ -41,6 +41,9 @@
 #ifndef MOVEIT_BOILERPLATE_GET_PLANNING_SCENE_SERVICE_H
 #define MOVEIT_BOILERPLATE_GET_PLANNING_SCENE_SERVICE_H
 
+// C++
+#include <string>
+
 // ROS
 #include <ros/ros.h>
 

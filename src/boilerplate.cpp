@@ -36,6 +36,10 @@
    Desc:   Base class for using MoveIt! in C++
 */
 
+// C++
+#include <string>
+#include <vector>
+
 // Command line arguments
 #include <gflags/gflags.h>
 
@@ -78,7 +82,7 @@ Boilerplate::Boilerplate() : nh_("~"), name_("boilerplate")
 
   // Create tf transformer
   tf_.reset(new tf::TransformListener(nh_));
-  // TODO: remove these lines, only an attempt to fix loadPlanningSceneMonitor bug
+  // TODO(davetcoleman): remove these lines, only an attempt to fix loadPlanningSceneMonitor bug
   ros::spinOnce();
 
   // Load planning scene monitor
@@ -247,4 +251,4 @@ const Eigen::Affine3d& Boilerplate::getCurrentPose()
   return getCurrentState()->getGlobalLinkTransform(arm_jmg_->getOnlyOneEndEffectorTip());
 }
 
-}  // end namespace
+}  // namespace moveit_boilerplate

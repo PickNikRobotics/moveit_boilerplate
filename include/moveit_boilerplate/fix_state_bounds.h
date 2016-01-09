@@ -34,6 +34,12 @@
 
 /* Author: Ioan Sucan, Dave Coleman */
 
+#ifndef MOVEIT_BOILERPLATE_FIX_STATE_BOUNDS_H
+#define MOVEIT_BOILERPLATE_FIX_STATE_BOUNDS_H
+
+// C++
+#include <string>
+
 #include <ros/ros.h>
 #include <moveit/planning_scene/planning_scene.h>
 
@@ -75,4 +81,7 @@ private:
   double bounds_dist_;
   double max_dt_offset_;
 };
-}
+
+}  // namespace moveit_boilerplate
+
+#endif  // MOVEIT_BOILERPLATE_FIX_STATE_BOUNDS_H

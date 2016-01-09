@@ -177,17 +177,3 @@ install(DIRECTORY include/${PROJECT_NAME}/
   FILES_MATCHING PATTERN "*.h"
   PATTERN ".svn" EXCLUDE
 )
-
-# Mark roslaunch files for installation
-install(FILES launch
-  FILES_MATCHING PATTERN "*.launch"
-  PATTERN ".svn" EXCLUDE
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
-
-# Mark config files for installation
-# install(FILES config
-#   FILES_MATCHING PATTERN "*.yaml"
-#   PATTERN ".svn" EXCLUDE
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )

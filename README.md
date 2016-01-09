@@ -79,7 +79,7 @@ To run [roslint](http://wiki.ros.org/roslint), use the following command with [c
 
 To run [catkin lint](https://pypi.python.org/pypi/catkin_lint), use the following command with [catkin-tools](https://catkin-tools.readthedocs.org/):
 
-    catkin lint
+    catkin lint -W2
 
 There are currently no unit or integration tests for this package.
 

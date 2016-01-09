@@ -36,8 +36,11 @@
    Desc:   Interface between MoveIt! execution tools and MoveItManipulation
 */
 
-#ifndef MOVEIT_BOILERPLATE__EXECUTION_INTERFACE_
-#define MOVEIT_BOILERPLATE__EXECUTION_INTERFACE_
+#ifndef MOVEIT_BOILERPLATE_EXECUTION_INTERFACE_H
+#define MOVEIT_BOILERPLATE_EXECUTION_INTERFACE_H
+
+// C++
+#include <string>
 
 // ROS
 #include <ros/ros.h>
@@ -179,9 +182,8 @@ private:
   // Cartesian execution
   geometry_msgs::PoseStamped cartesian_command_msg_;
   ros::Publisher cartesian_command_pub_;
-
 };  // end class
 
-}  // end namespace
+}  // namespace moveit_boilerplate
 
-#endif
+#endif // MOVEIT_BOILERPLATE_EXECUTION_INTERFACE_H

@@ -38,8 +38,8 @@
            tools
 */
 
-#ifndef MOVEIT_BOILERPLATE__PLANNING_INTERFACE_
-#define MOVEIT_BOILERPLATE__PLANNING_INTERFACE_
+#ifndef MOVEIT_BOILERPLATE_PLANNING_INTERFACE_H
+#define MOVEIT_BOILERPLATE_PLANNING_INTERFACE_H
 
 // MoveItManipulation
 #include <moveit_boilerplate/namespaces.h>
@@ -466,10 +466,9 @@ protected:
   // State modification helper
   FixStateBounds fix_state_bounds_;
   trajectory_processing::IterativeParabolicTimeParameterization iterative_smoother_;
-
 };  // end class
 
-}  // end namespace
+}  // namespace moveit_boilerplate
 
 namespace
 {
@@ -478,4 +477,4 @@ bool isStateValid(const planning_scene::PlanningScene* planning_scene, bool verb
                   const robot_state::JointModelGroup* group, const double* ik_solution);
 }
 
-#endif
+#endif // MOVEIT_BOILERPLATE_PLANNING_INTERFACE_H

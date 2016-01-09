@@ -39,6 +39,9 @@
 #ifndef MOVEIT_BOILERPLATE_MOVEIT_BASE_H
 #define MOVEIT_BOILERPLATE_MOVEIT_BASE_H
 
+// C++
+#include <string>
+
 // ROS
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
@@ -127,6 +130,6 @@ protected:
   JointModelGroup *jmg_;
 };  // end class
 
-}  // end namespace
+}  // namespace moveit_boilerplate
 
 #endif  // MOVEIT_BOILERPLATE_MOVEIT_BASE_H

@@ -37,9 +37,7 @@
 */
 
 // C++
-// #include <string>
-// #include <algorithm>
-// #include <vector>
+#include <string>
 
 #include <moveit_boilerplate/debug_interface.h>
 #include <moveit/macros/console_colors.h>
@@ -85,14 +83,12 @@ bool DebugInterface::setReadyForNextStep()
 
 void DebugInterface::setAutonomous(bool autonomous)
 {
-  // TODO: disable this feature for final competition
   autonomous_ = autonomous;
   stop_ = false;
 }
 
 void DebugInterface::setFullAutonomous(bool autonomous)
 {
-  // TODO: disable this feature for final competition
   full_autonomous_ = autonomous;
   autonomous_ = autonomous;
   stop_ = false;
@@ -168,4 +164,4 @@ bool DebugInterface::waitForNextFullStep(const std::string& caption)
   return true;
 }
 
-}  // end namespace
+}  // namespace moveit_boilerplate

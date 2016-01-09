@@ -34,6 +34,12 @@
 
 /* Author: Ioan Sucan, Dave Coleman */
 
+// C++
+#include <string>
+#include <limits>
+#include <vector>
+
+// Boost
 #include <boost/math/constants/constants.hpp>
 
 // MoveIt
@@ -172,4 +178,4 @@ bool FixStateBounds::fixBounds(robot_state::RobotState &robot_state, const movei
 
   return change_req;
 }
-}
+}  // namespace moveit_boilerplate
