@@ -46,7 +46,7 @@
 */
 
 // C++
-// #include <string>
+#include <string>
 // #include <algorithm>
 // #include <vector>
 
@@ -105,8 +105,8 @@ ExecutionInterface::ExecutionInterface(DebugInterfacePtr debug_interface,
       ROS_DEBUG_STREAM_NAMED(name_, "Connecting to trajectory execution manager");
       if (!trajectory_execution_manager_)
       {
-        using namespace trajectory_execution_manager;
-        trajectory_execution_manager_.reset(new TrajectoryExecutionManager(planning_scene_monitor_->getRobotModel()));
+        trajectory_execution_manager_.reset(
+            new trajectory_execution_manager::TrajectoryExecutionManager(planning_scene_monitor_->getRobotModel()));
       }
       break;
     case JOINT_PUBLISHER:
@@ -175,9 +175,9 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
     if (trajectory.points.size() > 1 && !jmg->isEndEffector())
     {
       visual_tools_->deleteAllMarkers();
-      ros::spinOnce();  // TODO remove?
+      ros::spinOnce();  // TODO(davetcoleman) remove?
 
-      // TODO get parent_link using native moveit tools
+      // TODO(davetcoleman) get parent_link using native moveit tools
       // visual_tools_->publishTrajectoryLine(
       // trajectory_msg, grasp_datas_[jmg]->parent_link_, config_->right_arm_, rvt::LIME_GREEN);
     }
@@ -249,7 +249,7 @@ bool ExecutionInterface::stopExecution()
   {
     case JOINT_EXECUTION_MANAGER:
       ROS_ERROR_STREAM_NAMED(name_, "Joint execution manager stopping not implemented");
-      // TODO Just send a blank trajectory
+      // TODO(davetcoleman) Just send a blank trajectory
       break;
     case JOINT_PUBLISHER:
       // Just send a blank trajectory
@@ -503,4 +503,4 @@ void ExecutionInterface::loadVisualTools()
   visual_tools_->hideRobot();  // show that things have been reset
 }
 
-}  // end namespace
+}  // namespace moveit_boilerplate

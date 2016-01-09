@@ -36,6 +36,10 @@
    Desc:   Base class for using MoveIt! in C++
 */
 
+// C++
+#include <string>
+#include <vector>
+
 // MoveItManipulation
 #include <moveit_boilerplate/moveit_base.h>
 
@@ -96,7 +100,7 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
 {
   // Create tf transformer
   tf_.reset(new tf::TransformListener(nh_));
-  // TODO: remove these lines, only an attempt to fix loadPlanningSceneMonitor bug
+  // TODO(davetcoleman): remove these lines, only an attempt to fix loadPlanningSceneMonitor bug
   ros::spinOnce();
 
   // Allows us to sycronize to Rviz and also publish collision objects to ourselves
@@ -228,4 +232,4 @@ moveit::core::RobotStatePtr MoveItBase::getCurrentState()
   return current_state_;
 }
 
-}  // end namespace
+}  // namespace moveit_boilerplate

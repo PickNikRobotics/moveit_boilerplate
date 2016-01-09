@@ -36,8 +36,11 @@
    Desc:   Base class for using MoveIt! in C++
 */
 
-#ifndef MOVEIT_BOILERPLATE__MOVEIT_BOILERPLATE
-#define MOVEIT_BOILERPLATE__MOVEIT_BOILERPLATE
+#ifndef MOVEIT_BOILERPLATE_BOILERPLATE_H
+#define MOVEIT_BOILERPLATE_BOILERPLATE_H
+
+// C++
+#include <string>
 
 // ROS
 #include <ros/ros.h>
@@ -128,9 +131,8 @@ protected:
 
   // Desired planning group to work with
   JointModelGroup *arm_jmg_;
-
 };  // end class
 
-}  // end namespace
+}  // namespace moveit_boilerplate
 
-#endif
+#endif // MOVEIT_BOILERPLATE_BOILERPLATE_H

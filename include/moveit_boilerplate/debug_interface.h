@@ -38,8 +38,11 @@
            Think GDB for robots, or like, a state machine.
 */
 
-#ifndef MOVEIT_BOILERPLATE__DEBUG_INTERFACE
-#define MOVEIT_BOILERPLATE__DEBUG_INTERFACE
+#ifndef MOVEIT_BOILERPLATE_DEBUG_INTERFACE_H
+#define MOVEIT_BOILERPLATE_DEBUG_INTERFACE_H
+
+// C++
+#include <string>
 
 // ROS
 #include <ros/ros.h>
@@ -57,7 +60,7 @@ public:
   /**
    * \brief Constructor
    */
-  DebugInterface(ros::NodeHandle nh);
+  explicit DebugInterface(ros::NodeHandle nh);
 
   /**
    * \brief Step to next step
@@ -111,9 +114,8 @@ private:
   bool autonomous_;
   bool full_autonomous_;
   bool stop_;
-
 };  // end class
 
-}  // end namespace
+}  // namespace moveit_boilerplate
 
-#endif
+#endif  // MOVEIT_BOILERPLATE_DEBUG_INTERFACE_H

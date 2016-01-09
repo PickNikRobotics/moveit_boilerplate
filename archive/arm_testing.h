@@ -36,8 +36,8 @@
    Desc:   Tools for testing an arm
 */
 
-#ifndef MOVEIT_TELEOP__ARM_TESTING_
-#define MOVEIT_TELEOP__ARM_TESTING_
+#ifndef MOVEIT_TELEOP_ARM_TESTING_H
+#define MOVEIT_TELEOP_ARM_TESTING_H
 
 // MoveItManipulation
 #include <moveit_boilerplate/boilerplate.h>
@@ -168,4 +168,4 @@ private:
 
 }  // end namespace
 
-#endif
+#endif // MOVEIT_TELEOP_ARM_TESTING_H

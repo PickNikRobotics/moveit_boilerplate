@@ -38,33 +38,39 @@
            scene is created
 */
 
+// C++
+#include <string>
+// #include <algorithm>
+// #include <vector>
+
 #include <moveit_boilerplate/get_planning_scene_service.h>
 
 namespace moveit_boilerplate
 {
 
-  GetPlanningSceneService::GetPlanningSceneService()
-    : name_("get_planning_scene_service")
-  {}
+GetPlanningSceneService::GetPlanningSceneService() : name_("get_planning_scene_service")
+{
+}
 
-  void GetPlanningSceneService::initialize(ros::NodeHandle nh, const std::string &planning_scene_topic,
-                  psm::PlanningSceneMonitorPtr planning_scene_monitor)
-  {
-    planning_scene_monitor_ = planning_scene_monitor;
+void GetPlanningSceneService::initialize(ros::NodeHandle nh, const std::string &planning_scene_topic,
+                                         psm::PlanningSceneMonitorPtr planning_scene_monitor)
+{
+  planning_scene_monitor_ = planning_scene_monitor;
 
-    const std::string GET_PLANNING_SCENE_SERVICE_NAME = "/get_planning_scene";
-    get_scene_service_ = nh.advertiseService(GET_PLANNING_SCENE_SERVICE_NAME, &GetPlanningSceneService::getPlanningSceneService, this);
-  }
+  const std::string GET_PLANNING_SCENE_SERVICE_NAME = "/get_planning_scene";
+  get_scene_service_ =
+      nh.advertiseService(GET_PLANNING_SCENE_SERVICE_NAME, &GetPlanningSceneService::getPlanningSceneService, this);
+}
 
-  bool GetPlanningSceneService::getPlanningSceneService(moveit_msgs::GetPlanningScene::Request &req,
-                               moveit_msgs::GetPlanningScene::Response &res)
-  {
-    ROS_DEBUG_STREAM_NAMED(name_, "getPlanningSceneService called");
-    if (req.components.components & moveit_msgs::PlanningSceneComponents::TRANSFORMS)
-      planning_scene_monitor_->updateFrameTransforms();
-    planning_scene_monitor::LockedPlanningSceneRO ps(planning_scene_monitor_);
-    ps->getPlanningSceneMsg(res.scene, req.components);
-    return true;
-  }
+bool GetPlanningSceneService::getPlanningSceneService(moveit_msgs::GetPlanningScene::Request &req,
+                                                      moveit_msgs::GetPlanningScene::Response &res)
+{
+  ROS_DEBUG_STREAM_NAMED(name_, "getPlanningSceneService called");
+  if (req.components.components & moveit_msgs::PlanningSceneComponents::TRANSFORMS)
+    planning_scene_monitor_->updateFrameTransforms();
+  planning_scene_monitor::LockedPlanningSceneRO ps(planning_scene_monitor_);
+  ps->getPlanningSceneMsg(res.scene, req.components);
+  return true;
+}
 
 }  // namespace moveit_boilerplate

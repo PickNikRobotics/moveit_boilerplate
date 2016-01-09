@@ -37,8 +37,8 @@
    Desc:   Shortcuts for namespaces
 */
 
-#ifndef MOVEIT_BOILERPLATE__NAMESPACES
-#define MOVEIT_BOILERPLATE__NAMESPACES
+#ifndef MOVEIT_BOILERPLATE_NAMESPACES_H
+#define MOVEIT_BOILERPLATE_NAMESPACES_H
 
 // Temporarily define namespaces
 namespace moveit_visual_tools
@@ -69,4 +69,4 @@ namespace mbp = moveit_boilerplate;
 
 typedef const moveit::core::JointModelGroup JointModelGroup;
 
-#endif
+#endif  // MOVEIT_BOILERPLATE_NAMESPACES_H
