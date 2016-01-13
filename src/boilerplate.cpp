@@ -78,6 +78,11 @@ Boilerplate::Boilerplate() : nh_("~"), name_("boilerplate")
 
   // Load the robot model
   robot_model_ = robot_model_loader_->getModel();  // Get a shared pointer to the robot
+  if (!robot_model_)
+  {
+    ROS_ERROR_STREAM_NAMED(name_, "Unable to load robot model from '" << robot_description << "'");
+    exit(-1);
+  }
 
   // Choose planning group
   arm_jmg_ = robot_model_->getJointModelGroup(arm_joint_model_group);
