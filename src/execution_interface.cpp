@@ -47,8 +47,6 @@
 
 // C++
 #include <string>
-// #include <algorithm>
-// #include <vector>
 
 // MoveItManipulation
 #include <moveit_boilerplate/execution_interface.h>

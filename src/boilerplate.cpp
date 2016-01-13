@@ -40,9 +40,6 @@
 #include <string>
 #include <vector>
 
-// Command line arguments
-#include <gflags/gflags.h>
-
 // MoveItManipulation
 #include <moveit_boilerplate/boilerplate.h>
 
@@ -51,7 +48,6 @@
 
 namespace moveit_boilerplate
 {
-DEFINE_int32(id, 0, "Identification number for various component modes");
 
 Boilerplate::Boilerplate() : nh_("~"), name_("boilerplate")
 {

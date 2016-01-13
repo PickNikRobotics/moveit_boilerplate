@@ -108,6 +108,9 @@ private:
   // A shared node handle
   ros::NodeHandle nh_;
 
+  // Short name for this class
+  std::string name_;
+
   // Debug interface
   bool is_waiting_;
   bool next_step_ready_;

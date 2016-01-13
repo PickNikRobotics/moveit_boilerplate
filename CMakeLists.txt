@@ -16,9 +16,6 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen REQUIRED)
 find_package(Boost REQUIRED)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-find_package(Gflags REQUIRED)
-
 catkin_package(
   CATKIN_DEPENDS
     moveit_core
@@ -46,7 +43,6 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${Gflags_INCLUDE_DIRS}
 )
 
 include_directories(SYSTEM
@@ -59,7 +55,6 @@ add_library(${PROJECT_NAME}_debug_interface
   src/debug_interface.cpp
 )
 target_link_libraries(${PROJECT_NAME}_debug_interface
-  ${Gflags_LIBRARIES}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
@@ -131,7 +126,6 @@ target_link_libraries(${PROJECT_NAME}
   ${PROJECT_NAME}_execution_interface
   ${PROJECT_NAME}_planning_interface
   ${PROJECT_NAME}_get_planning_scene_service
-  ${Gflags_LIBRARIES}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
