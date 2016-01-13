@@ -21,6 +21,12 @@ script:
   - source /opt/ros/$CI_ROS_DISTRO/setup.bash
   - mkdir -p $CATKIN_WS_SRC
   - ln -s $TRAVIS_BUILD_DIR $CATKIN_WS_SRC
+  # build packages that often cause this package to break because of unreleased changes
+  - cd $CATKIN_WS_SRC
+  - git clone git@github.com:ros-planning/moveit_core.git -b indigo-devel
+  - git clone git@github.com:ros-planning/moveit_ros.git -b indigo-devel
+  - rosdep install --from-paths ./ -y --ignore-src --rosdistro $CI_ROS_DISTRO
+  # Create Catkin WS
   - cd $CATKIN_WS
   - catkin init
   # Enable install space
