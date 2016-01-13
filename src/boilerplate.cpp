@@ -58,18 +58,23 @@ Boilerplate::Boilerplate() : nh_("~"), name_("boilerplate")
   std::string joint_state_topic;
   std::string arm_joint_model_group;
   std::string execution_command_mode;
-  std::string planning_scene_topic;
+  std::string robot_description = "robot_description";
 
   // Load rosparams
   ros::NodeHandle rpnh(nh_, name_);
   int error = 0;
+  if (!rosparam_shortcuts::get(name_, rpnh, "robot_description", robot_description))
+  {
+    ROS_WARN_STREAM_NAMED(name_, "Please specify robot_description in your config file");
+  }
   error += !rosparam_shortcuts::get(name_, rpnh, "joint_state_topic", joint_state_topic);
   error += !rosparam_shortcuts::get(name_, rpnh, "arm_joint_model_group", arm_joint_model_group);
-  error += !rosparam_shortcuts::get(name_, rpnh, "planning_scene_topic", planning_scene_topic);
+  error += !rosparam_shortcuts::get(name_, rpnh, "planning_scene_topic", planning_scene_topic_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "planning_scene_name", planning_scene_name_);
   rosparam_shortcuts::shutdownIfError(name_, error);
 
   // Load the loader
-  robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(ROBOT_DESCRIPTION));
+  robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(robot_description));
 
   // Load the robot model
   robot_model_ = robot_model_loader_->getModel();  // Get a shared pointer to the robot
@@ -86,7 +91,7 @@ Boilerplate::Boilerplate() : nh_("~"), name_("boilerplate")
   ros::spinOnce();
 
   // Load planning scene monitor
-  if (!loadPlanningSceneMonitor(joint_state_topic, planning_scene_topic))
+  if (!loadPlanningSceneMonitor(joint_state_topic))
   {
     ROS_ERROR_STREAM_NAMED("boilerplate", "Unable to load planning scene monitor");
   }
@@ -116,14 +121,12 @@ Boilerplate::Boilerplate() : nh_("~"), name_("boilerplate")
   ROS_INFO_STREAM_NAMED("boilerplate", "Boilerplate Ready.");
 }
 
-bool Boilerplate::loadPlanningSceneMonitor(const std::string& joint_state_topic,
-                                           const std::string& planning_scene_topic)
+bool Boilerplate::loadPlanningSceneMonitor(const std::string& joint_state_topic)
 {
   // Allows us to sycronize to Rviz and also publish collision objects to ourselves
   ROS_DEBUG_STREAM_NAMED("boilerplate", "Loading Planning Scene Monitor");
-  static const std::string PLANNING_SCENE_MONITOR_NAME = "BoilerplatePlanningScene";
   planning_scene_monitor_.reset(
-      new psm::PlanningSceneMonitor(planning_scene_, robot_model_loader_, tf_, PLANNING_SCENE_MONITOR_NAME));
+      new psm::PlanningSceneMonitor(planning_scene_, robot_model_loader_, tf_, planning_scene_name_));
   ros::spinOnce();
 
   if (planning_scene_monitor_->getPlanningScene())
@@ -131,7 +134,7 @@ bool Boilerplate::loadPlanningSceneMonitor(const std::string& joint_state_topic,
     // Optional monitors to start:
     planning_scene_monitor_->startStateMonitor(joint_state_topic, "");
     planning_scene_monitor_->startPublishingPlanningScene(psm::PlanningSceneMonitor::UPDATE_SCENE,
-                                                          planning_scene_topic);
+                                                          planning_scene_topic_);
     planning_scene_monitor_->getPlanningScene()->setName("planning_scene");
   }
   else
@@ -172,11 +175,11 @@ bool Boilerplate::loadPlanningSceneMonitor(const std::string& joint_state_topic,
 
 void Boilerplate::loadVisualTools()
 {
-  visual_tools_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(), "/moveit_boilerplate/markers",
+  visual_tools_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(),
+                                                 nh_.getNamespace() + "/markers",
                                                  planning_scene_monitor_));
-
-  visual_tools_->loadRobotStatePub("/moveit_boilerplate/robot_state");
-  visual_tools_->loadTrajectoryPub("/moveit_boilerplate/display_trajectory");
+  visual_tools_->loadRobotStatePub(nh_.getNamespace() + "/robot_state");
+  visual_tools_->loadTrajectoryPub(nh_.getNamespace() + "/display_trajectory");
   visual_tools_->loadMarkerPub();
   visual_tools_->setAlpha(0.8);
   visual_tools_->deleteAllMarkers();  // clear all old markers

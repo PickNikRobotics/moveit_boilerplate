@@ -91,7 +91,8 @@ public:
   /**
    * \brief Load visual tools
    */
-  void loadVisualTools();
+  void loadVisualTools(const std::string &rviz_markers_topic, const std::string &rviz_robot_state_topic,
+                       const std::string &rviz_trajectory_topic);
 
   /** \brief Output to console the current state of the robot's joint limits */
   bool showJointLimits(JointModelGroup *jmg);

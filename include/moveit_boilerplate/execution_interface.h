@@ -49,9 +49,10 @@
 // Visual tools
 #include <moveit_visual_tools/moveit_visual_tools.h>
 
-// MoveItManipulation
+// this package
 #include <moveit_boilerplate/namespaces.h>
 #include <moveit_boilerplate/debug_interface.h>
+#include <moveit_boilerplate/deprecated.h>
 
 // MoveIt
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
@@ -84,7 +85,12 @@ public:
    * \param pose
    * \return true on success
    */
-  bool executePose(const Eigen::Affine3d &pose, JointModelGroup *arm_jmg, const double &duration = 0.1);
+  bool executePose(const Eigen::Affine3d &pose);
+  MOVEIT_BOILERPLATE_DEPRECATED
+  bool executePose(const Eigen::Affine3d &pose, JointModelGroup *arm_jmg, const double &duration = 0.1)
+  {
+    return executePose(pose);
+  }
 
   /**
    * \brief Do a bunch of checks and send to low level controllers
@@ -180,7 +186,7 @@ private:
   ros::Publisher joint_trajectory_pub_;
 
   // Cartesian execution
-  geometry_msgs::PoseStamped cartesian_command_msg_;
+  geometry_msgs::PoseStamped pose_stamped_msg_;
   ros::Publisher cartesian_command_pub_;
 };  // end class
 

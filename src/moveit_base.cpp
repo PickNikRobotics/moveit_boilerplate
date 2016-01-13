@@ -55,6 +55,7 @@ bool MoveItBase::init(ros::NodeHandle& nh)
   std::string joint_state_topic;
   std::string joint_model_group;
   std::string execution_command_mode;
+  std::string rviz_markers_topic, rviz_robot_state_topic, rviz_trajectory_topic;
 
   // Load rosparams
   ros::NodeHandle rpnh(nh_, name_);
@@ -62,6 +63,9 @@ bool MoveItBase::init(ros::NodeHandle& nh)
   error += !rosparam_shortcuts::get(name_, rpnh, "joint_state_topic", joint_state_topic);
   error += !rosparam_shortcuts::get(name_, rpnh, "joint_model_group", joint_model_group);
   error += !rosparam_shortcuts::get(name_, rpnh, "planning_scene_topic", planning_scene_topic_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "rviz/markers_topic", rviz_markers_topic);
+  error += !rosparam_shortcuts::get(name_, rpnh, "rviz/robot_state_topic", rviz_robot_state_topic);
+  error += !rosparam_shortcuts::get(name_, rpnh, "rviz/trajectory_topic", rviz_trajectory_topic);
   rosparam_shortcuts::shutdownIfError(name_, error);
 
   // Load the loader
@@ -89,7 +93,7 @@ bool MoveItBase::init(ros::NodeHandle& nh)
   }  // end scoped pointer of locked planning scene
 
   // Load the Robot Viz Tools for publishing to Rviz
-  loadVisualTools();
+  loadVisualTools(rviz_markers_topic, rviz_robot_state_topic, rviz_trajectory_topic);
 
   ROS_INFO_STREAM_NAMED(name_, "MoveItBase Ready.");
 
@@ -156,13 +160,14 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
   return true;
 }
 
-void MoveItBase::loadVisualTools()
+void MoveItBase::loadVisualTools(const std::string &rviz_markers_topic, const std::string &rviz_robot_state_topic,
+                                 const std::string &rviz_trajectory_topic)
 {
-  visual_tools_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(), "/moveit_boilerplate/markers",
+  visual_tools_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(), rviz_markers_topic,
                                                  planning_scene_monitor_));
 
-  visual_tools_->loadRobotStatePub("/moveit_boilerplate/robot_state");
-  visual_tools_->loadTrajectoryPub("/moveit_boilerplate/display_trajectory");
+  visual_tools_->loadRobotStatePub(rviz_robot_state_topic);
+  visual_tools_->loadTrajectoryPub(rviz_trajectory_topic);
   visual_tools_->loadMarkerPub();
   visual_tools_->setAlpha(0.8);
   visual_tools_->deleteAllMarkers();  // clear all old markers

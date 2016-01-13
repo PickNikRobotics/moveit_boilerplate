@@ -1643,13 +1643,13 @@ void PlanningInterface::loadVisualTools()
   // Robot Start State
   visual_start_state_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(), "/moveit_boilerplate/markers2",
                                                        planning_scene_monitor_));
-  visual_start_state_->loadRobotStatePub("/moveit_boilerplate/robot_start_state");
+  visual_start_state_->loadRobotStatePub("/moveit_teleop/robot_start_state");
   visual_start_state_->hideRobot();
 
   // Robot Goal State
   visual_goal_state_.reset(new mvt::MoveItVisualTools(robot_model_->getModelFrame(), "/moveit_boilerplate/markers3",
                                                       planning_scene_monitor_));
-  visual_goal_state_->loadRobotStatePub("/moveit_boilerplate/robot_goal_state");
+  visual_goal_state_->loadRobotStatePub("/moveit_teleop/robot_goal_state");
   visual_goal_state_->hideRobot();
 }
 

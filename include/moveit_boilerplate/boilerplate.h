@@ -62,7 +62,6 @@
 
 namespace moveit_boilerplate
 {
-static const std::string ROBOT_DESCRIPTION = "robot_description";
 
 class Boilerplate
 {
@@ -75,7 +74,7 @@ public:
   /**
    * \brief Connect to the MoveIt! planning scene messages
    */
-  bool loadPlanningSceneMonitor(const std::string &joint_state_topic, const std::string &planning_scene_topic);
+  bool loadPlanningSceneMonitor(const std::string &joint_state_topic);
 
   /**
    * \brief Load visual tools
@@ -111,6 +110,10 @@ protected:
   // Core MoveIt components
   robot_model_loader::RobotModelLoaderPtr robot_model_loader_;
   robot_model::RobotModelPtr robot_model_;
+
+  // Planning scene
+  std::string planning_scene_name_;
+  std::string planning_scene_topic_;
   planning_scene::PlanningScenePtr planning_scene_;
   psm::PlanningSceneMonitorPtr planning_scene_monitor_;
 

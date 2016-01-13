@@ -124,13 +124,17 @@ ExecutionInterface::ExecutionInterface(DebugInterfacePtr debug_interface,
   ROS_DEBUG_STREAM_NAMED(name_, "Connecting to cartesian publisher on topic " << cartesian_command_topic);
   cartesian_command_pub_ = nh_.advertise<geometry_msgs::PoseStamped>(cartesian_command_topic, queue_size);
 
+  // Set the world frame for cartesian control
+  pose_stamped_msg_.header.frame_id = "world";
+
   ROS_INFO_STREAM_NAMED(name_, "ExecutionInterface Ready.");
 }
 
-bool ExecutionInterface::executePose(const Eigen::Affine3d &pose, JointModelGroup *arm_jmg, const double &duration)
+bool ExecutionInterface::executePose(const Eigen::Affine3d &pose)
 {
-  visual_tools_->convertPoseSafe(pose, cartesian_command_msg_.pose);
-  cartesian_command_pub_.publish(cartesian_command_msg_);
+  pose_stamped_msg_.header.stamp = ros::Time::now();
+  visual_tools_->convertPoseSafe(pose, pose_stamped_msg_.pose);
+  cartesian_command_pub_.publish(pose_stamped_msg_);
   return true;
 }
 
@@ -491,11 +495,12 @@ moveit::core::RobotStatePtr ExecutionInterface::getCurrentState()
 
 void ExecutionInterface::loadVisualTools()
 {
+  // TODO(davetcoleman): should this be a duplicate execution interface?
   visual_tools_.reset(new mvt::MoveItVisualTools(planning_scene_monitor_->getRobotModel()->getModelFrame(),
-                                                 "/moveit_boilerplate/markers", planning_scene_monitor_));
+                                                 nh_.getNamespace() + "/markers", planning_scene_monitor_));
 
-  visual_tools_->loadRobotStatePub("/moveit_boilerplate/robot_state");
-  visual_tools_->loadTrajectoryPub("/moveit_boilerplate/display_trajectory");
+  visual_tools_->loadRobotStatePub(nh_.getNamespace() + "/robot_state");
+  visual_tools_->loadTrajectoryPub(nh_.getNamespace() + "/display_trajectory");
   visual_tools_->loadMarkerPub();
   visual_tools_->setAlpha(0.8);
   visual_tools_->deleteAllMarkers();  // clear all old markers
