@@ -10,7 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   controller_manager_msgs
   rosparam_shortcuts
-  dashboard_msgs
   roslint
 )
 
@@ -26,7 +25,6 @@ catkin_package(
     moveit_visual_tools
     controller_manager_msgs
     rosparam_shortcuts
-    dashboard_msgs
   DEPENDS
     Eigen
   INCLUDE_DIRS
