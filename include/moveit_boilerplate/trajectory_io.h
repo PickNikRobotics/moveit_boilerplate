@@ -79,9 +79,10 @@ public:
    * \brief Read a joint trajectory from CSV
    * \param file_name - location of file
    * \param arm_jmg - the kinematic chain of joints that should be controlled (a planning group)
+   * \param header - if true, skips first line of CSV to avoid reading the title of each column
    * \return true on success
    */
-  bool loadJointTrajectoryFromFile(const std::string& file_name, JointModelGroup* arm_jmg);
+  bool loadJointTrajectoryFromFile(const std::string& file_name, JointModelGroup* arm_jmg, bool header = false);
 
   /**
    * \brief Read a joint trajectory from string
@@ -151,6 +152,9 @@ public:
 private:
   /** \brief Use the planning scene to get the robot's current state */
   moveit::core::RobotStatePtr getCurrentState();
+
+  // Short class name
+  std::string name_;
 
   // A shared node handle
   ros::NodeHandle nh_;

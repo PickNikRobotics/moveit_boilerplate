@@ -59,7 +59,9 @@
 namespace moveit_boilerplate
 {
 TrajectoryIO::TrajectoryIO(psm::PlanningSceneMonitorPtr planning_scene_monitor, mvt::MoveItVisualToolsPtr visual_tools)
-  : planning_scene_monitor_(planning_scene_monitor), visual_tools_(visual_tools)
+  : name_("trajectory_io")
+  , planning_scene_monitor_(planning_scene_monitor)
+  , visual_tools_(visual_tools)
 {
   // Create initial robot state
   {
@@ -68,11 +70,11 @@ TrajectoryIO::TrajectoryIO(psm::PlanningSceneMonitorPtr planning_scene_monitor, 
   }  // end scoped pointer of locked planning scene
 }
 
-bool TrajectoryIO::loadJointTrajectoryFromFile(const std::string& file_name, JointModelGroup* arm_jmg)
+bool TrajectoryIO::loadJointTrajectoryFromFile(const std::string& file_name, JointModelGroup* arm_jmg, bool header)
 {
   std::ifstream input_file;
   input_file.open(file_name.c_str());
-  ROS_DEBUG_STREAM_NAMED("trajectory_io", "Loading trajectory from file " << file_name);
+  ROS_DEBUG_STREAM_NAMED(name_, "Loading trajectory from file " << file_name);
 
   std::string line;
   getCurrentState();
@@ -83,19 +85,27 @@ bool TrajectoryIO::loadJointTrajectoryFromFile(const std::string& file_name, Joi
   // Read each line
   while (std::getline(input_file, line))
   {
+    // Check if the first line of the CSV should be skipped
+    if (header)
+    {
+      header = false;
+      continue;
+    }
+
     // Convert line to a robot state
     moveit::core::RobotStatePtr new_state(new moveit::core::RobotState(*current_state_));
     moveit::core::streamToRobotState(*new_state, line, ",");
     joint_trajectory_->addSuffixWayPoint(new_state, dummy_dt);
   }
 
+  ROS_DEBUG_STREAM_NAMED(name_, "Closing file");
   // Close file
   input_file.close();
 
   // Error check
   if (joint_trajectory_->getWayPointCount() == 0)
   {
-    ROS_ERROR_STREAM_NAMED("trajectory_io", "No states loaded from CSV file " << file_name);
+    ROS_ERROR_STREAM_NAMED(name_, "No states loaded from CSV file " << file_name);
     return false;
   }
 
@@ -104,7 +114,7 @@ bool TrajectoryIO::loadJointTrajectoryFromFile(const std::string& file_name, Joi
 
 bool TrajectoryIO::loadJointTrajectoryFromStream(std::istringstream& input_stream, JointModelGroup* arm_jmg)
 {
-  ROS_DEBUG_STREAM_NAMED("trajectory_io", "Loading trajectory from string.");
+  ROS_DEBUG_STREAM_NAMED(name_, "Loading trajectory from string.");
 
   std::string line;
   getCurrentState();
@@ -118,7 +128,7 @@ bool TrajectoryIO::loadJointTrajectoryFromStream(std::istringstream& input_strea
   // Read each line
   while (std::getline(input_stream, line))
   {
-    ROS_WARN_STREAM_NAMED("trajectory_io", "temp hack");
+    ROS_WARN_STREAM_NAMED(name_, "temp hack");
     // Add virtual joint at front and end effect at back TODO remove hack
     line = "0.0,0.0,0.0,0.0,0.0,0.0,1.0," + line + ",0.0";
 
@@ -133,7 +143,7 @@ bool TrajectoryIO::loadJointTrajectoryFromStream(std::istringstream& input_strea
   // Error check
   if (joint_trajectory_->getWayPointCount() == 0)
   {
-    ROS_ERROR_STREAM_NAMED("trajectory_io", "No states loaded from string");
+    ROS_ERROR_STREAM_NAMED(name_, "No states loaded from string");
     return false;
   }
 
@@ -147,11 +157,11 @@ bool TrajectoryIO::saveJointTrajectoryToFile(const std::string& file_path)
 
   std::ofstream output_file;
   output_file.open(file_path.c_str());
-  ROS_DEBUG_STREAM_NAMED("trajectory_io", "Saving joint trajectory to file " << file_path);
+  ROS_DEBUG_STREAM_NAMED(name_, "Saving joint trajectory to file " << file_path);
 
   for (std::size_t i = 0; i < joint_trajectory_->getWayPointCount(); ++i)
   {
-    ROS_INFO_STREAM_THROTTLE_NAMED(1, "trajectory_io", "Saving waypoint #" << i);
+    ROS_INFO_STREAM_THROTTLE_NAMED(1, name_, "Saving waypoint #" << i);
 
     moveit::core::robotStateToStream(joint_trajectory_->getWayPoint(i), output_file, include_header);
   }
@@ -165,7 +175,7 @@ bool TrajectoryIO::loadCartTrajectoryFromFile(const std::string& file_name)
   std::ifstream input_file;
   std::string line;
   input_file.open(file_name.c_str());
-  ROS_DEBUG_STREAM_NAMED("trajectory_io", "Loading waypoints from file " << file_name);
+  ROS_DEBUG_STREAM_NAMED(name_, "Loading waypoints from file " << file_name);
 
   // Read each line
   while (std::getline(input_file, line))
@@ -191,11 +201,11 @@ bool TrajectoryIO::loadCartTrajectoryFromFile(const std::string& file_name)
   // Error check
   if (cartesian_trajectory_.empty())
   {
-    ROS_ERROR_STREAM_NAMED("trajectory_io", "No waypoints loaded from CSV file " << file_name);
+    ROS_ERROR_STREAM_NAMED(name_, "No waypoints loaded from CSV file " << file_name);
     return false;
   }
 
-  ROS_INFO_STREAM_NAMED("trajectory_io", "Loaded " << cartesian_trajectory_.size() << " waypoints from file");
+  ROS_INFO_STREAM_NAMED(name_, "Loaded " << cartesian_trajectory_.size() << " waypoints from file");
 
   return true;
 }
@@ -213,11 +223,11 @@ void TrajectoryIO::clearCartWaypoints()
 bool TrajectoryIO::saveCartTrajectoryToFile(const std::string& file_path)
 {
   if (cartesian_trajectory_.empty())
-    ROS_WARN_STREAM_NAMED("trajectory_io", "Saving empty waypoint trajectory");
+    ROS_WARN_STREAM_NAMED(name_, "Saving empty waypoint trajectory");
 
   std::ofstream output_file;
   output_file.open(file_path.c_str());
-  ROS_DEBUG_STREAM_NAMED("trajectory_io", "Saving waypoints trajectory to file " << file_path);
+  ROS_DEBUG_STREAM_NAMED(name_, "Saving waypoints trajectory to file " << file_path);
 
   std::vector<double> xyzrpy;
   for (std::size_t i = 0; i < cartesian_trajectory_.size(); ++i)
@@ -254,7 +264,7 @@ bool TrajectoryIO::getFilePath(std::string& file_path, const std::string& file_n
   // Error check
   if (returnedError)
   {
-    ROS_ERROR_STREAM_NAMED("trajectory_io", "Unable to create directory " << path.string());
+    ROS_ERROR_STREAM_NAMED(name_, "Unable to create directory " << path.string());
     return false;
   }
 
@@ -279,7 +289,7 @@ bool TrajectoryIO::streamToAffine3d(Eigen::Affine3d& pose, double& sec, const st
     // Get a variable
     if (!std::getline(line_stream, cell, ','))
     {
-      ROS_ERROR_STREAM_NAMED("trajectory_io", "Missing variable " << i << " on cell '" << cell << "' line '" << line
+      ROS_ERROR_STREAM_NAMED(name_, "Missing variable " << i << " on cell '" << cell << "' line '" << line
                                                                   << "'");
       return false;
     }
@@ -290,7 +300,7 @@ bool TrajectoryIO::streamToAffine3d(Eigen::Affine3d& pose, double& sec, const st
   // Get time
   if (!std::getline(line_stream, cell, ','))
   {
-    ROS_WARN_STREAM_NAMED("trajectory_io", "No time available");
+    ROS_WARN_STREAM_NAMED(name_, "No time available");
     return false;
   }
 
