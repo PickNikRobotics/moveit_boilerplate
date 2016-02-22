@@ -40,7 +40,7 @@
 #include <string>
 #include <vector>
 
-// MoveItManipulation
+// this package
 #include <moveit_boilerplate/moveit_base.h>
 
 namespace moveit_boilerplate
@@ -129,8 +129,8 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
     ROS_ERROR_STREAM_NAMED(name_, "Planning scene not configured");
     return false;
   }
-  ros::spinOnce();
-  ros::Duration(0.5).sleep();  // when at 0.1, i believe sometimes vjoint not properly loaded
+  //ros::spinOnce();
+  //ros::Duration(0.5).sleep();  // when at 0.1, i believe sometimes vjoint not properly loaded
 
   // Wait for complete state to be recieved
   bool wait_for_complete_state = false;

@@ -85,11 +85,13 @@ public:
 
   /**
    * \brief Connect to the MoveIt! planning scene messages
+   *        Note: this is called within the init() function
    */
   bool loadPlanningSceneMonitor(const std::string &joint_state_topic);
 
   /**
    * \brief Load visual tools
+   *        Note: this is called within the init() function
    */
   void loadVisualTools(const std::string &rviz_markers_topic, const std::string &rviz_robot_state_topic,
                        const std::string &rviz_trajectory_topic);
@@ -103,6 +105,7 @@ public:
   moveit::core::RobotStatePtr getCurrentState();
 
 protected:
+
   // A shared node handle
   ros::NodeHandle nh_;
 
