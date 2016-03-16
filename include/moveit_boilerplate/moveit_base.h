@@ -104,6 +104,15 @@ public:
    */
   moveit::core::RobotStatePtr getCurrentState();
 
+  /**
+   * \brief Get the published tf pose from two frames
+   * \param from_frame e.g. 'world'
+   * \param to_frame e.g. 'thing'
+   * \param pose - the returned valie
+   * \return false on missing transform, may just need to wait a little longer and retry
+   */
+  bool getTFTransform(const std::string& from_frame, const std::string& to_frame, Eigen::Affine3d &pose);
+
 protected:
 
   // A shared node handle

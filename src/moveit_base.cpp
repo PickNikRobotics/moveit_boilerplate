@@ -43,6 +43,10 @@
 // this package
 #include <moveit_boilerplate/moveit_base.h>
 
+// Conversions
+#include <tf_conversions/tf_eigen.h>
+#include <eigen_conversions/eigen_msg.h>
+
 namespace moveit_boilerplate
 {
 MoveItBase::MoveItBase() : name_("moveit_base")
@@ -235,6 +239,24 @@ moveit::core::RobotStatePtr MoveItBase::getCurrentState()
   psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
   (*current_state_) = scene->getCurrentState();
   return current_state_;
+}
+
+bool MoveItBase::getTFTransform(const std::string& from_frame, const std::string& to_frame, Eigen::Affine3d &pose)
+{
+  tf::StampedTransform tf_transform;
+  try
+  {
+    tf_->lookupTransform(from_frame, to_frame, ros::Time(0), tf_transform);
+  }
+  catch (tf::TransformException ex)
+  {
+    ROS_ERROR("%s", ex.what());
+    return false;
+  }
+
+  // Convert to eigen
+  tf::transformTFToEigen(tf_transform, pose);
+  return true;
 }
 
 }  // namespace moveit_boilerplate

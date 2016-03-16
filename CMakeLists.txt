@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   controller_manager_msgs
   rosparam_shortcuts
   roslint
+  tf_conversions
 )
 
 find_package(Eigen REQUIRED)
