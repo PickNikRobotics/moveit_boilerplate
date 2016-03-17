@@ -111,10 +111,27 @@ public:
    * \param pose - the returned valie
    * \return false on missing transform, may just need to wait a little longer and retry
    */
-  bool getTFTransform(const std::string& from_frame, const std::string& to_frame, Eigen::Affine3d &pose);
+  bool getTFTransform(const std::string &from_frame, const std::string &to_frame, Eigen::Affine3d &pose);
+
+  /** \brief Getter for visual tools */
+  mvt::MoveItVisualToolsPtr getVisualTools()
+  {
+    return visual_tools_;
+  }
+
+  /** \brief Getter for robot model */
+  const robot_model::RobotModelPtr getRobotModel() const
+  {
+    return robot_model_;
+  }
+
+  /** \brief Getting for planning scene monitor */
+  psm::PlanningSceneMonitorPtr getPlanningSceneMonitor()
+  {
+    return planning_scene_monitor_;
+  }
 
 protected:
-
   // A shared node handle
   ros::NodeHandle nh_;
 
