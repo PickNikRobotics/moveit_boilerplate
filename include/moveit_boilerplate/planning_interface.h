@@ -146,8 +146,8 @@ private:
 
   // Visualization
   mvt::MoveItVisualToolsPtr visual_tools_;
-  // VisualizeStateCallback visualize_state_callback_;
-  // VisualizeStateCallback visualize_start_state_callback_;
+  // VisualizeState visualize_state_callback_;
+  // VisualizeState visualize_start_state_callback_;
 
   // Desired planning group to work with
   JointModelGroup* arm_jmg_;
