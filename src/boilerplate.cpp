@@ -49,7 +49,7 @@
 namespace moveit_boilerplate
 {
 
-Boilerplate::Boilerplate() : nh_("~"), name_("boilerplate")
+Boilerplate::Boilerplate() : name_("boilerplate"), nh_("~")
 {
   std::string joint_state_topic;
   std::string arm_joint_model_group;
