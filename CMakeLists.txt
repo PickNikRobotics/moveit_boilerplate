@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf_conversions
 )
 
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
 
 catkin_package(
@@ -48,7 +48,7 @@ include_directories(
 
 include_directories(SYSTEM
   ${Boost_INCLUDE_DIR}
-  ${EIGEN_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
 # debug_interface library
