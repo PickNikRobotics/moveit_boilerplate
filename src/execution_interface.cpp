@@ -104,7 +104,8 @@ ExecutionInterface::ExecutionInterface(DebugInterfacePtr debug_interface,
       if (!trajectory_execution_manager_)
       {
         trajectory_execution_manager_.reset(
-            new trajectory_execution_manager::TrajectoryExecutionManager(planning_scene_monitor_->getRobotModel()));
+                                            new trajectory_execution_manager::TrajectoryExecutionManager(planning_scene_monitor_->getRobotModel(),
+                                                                                                         planning_scene_monitor_->getStateMonitor()));
       }
       break;
     case JOINT_PUBLISHER:
