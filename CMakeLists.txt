@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(moveit_boilerplate)
 
 # C++ 11
-add_compile_options(-std=c++11) 
+add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
   moveit_core
@@ -23,8 +23,6 @@ catkin_package(
     moveit_visual_tools
     controller_manager_msgs
     rosparam_shortcuts
-  DEPENDS
-    Eigen
   INCLUDE_DIRS
     include
   LIBRARIES
