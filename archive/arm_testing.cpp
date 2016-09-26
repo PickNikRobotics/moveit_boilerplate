@@ -471,7 +471,7 @@ bool ArmTesting::calibrateInCircle()
     // Add to trajectory
     waypoints.push_back(grasp_pose);
   }
-  visual_tools_->triggerBatchPublishAndDisable();
+  visual_tools_->triggerAndDisable();
 
   ROS_WARN_STREAM_NAMED("temp", "Currently function for execution has been removed!");
   return false;
