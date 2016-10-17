@@ -51,8 +51,10 @@
 
 // this package
 #include <moveit_boilerplate/namespaces.h>
-#include <moveit_boilerplate/debug_interface.h>
 #include <moveit_boilerplate/deprecated.h>
+
+// rviz control
+#include <moveit_dashboard/remote_control.h>
 
 // MoveIt
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
@@ -78,7 +80,7 @@ public:
   /**
    * \brief Constructor
    */
-  ExecutionInterface(DebugInterfacePtr debug_interface, psm::PlanningSceneMonitorPtr planning_scene_monitor);
+  ExecutionInterface(moveit_dashboard::RemoteControlPtr remote_control, psm::PlanningSceneMonitorPtr planning_scene_monitor);
 
   /**
    * \brief Execute a desired cartesian end effector pose
@@ -170,7 +172,7 @@ private:
 
   std::size_t trajectory_filename_count_ = 0;  // iterate file names
 
-  DebugInterfacePtr debug_interface_;
+  moveit_dashboard::RemoteControlPtr remote_control_;
   mvt::MoveItVisualToolsPtr visual_tools_;
 
   // Track collision objects in the environment

@@ -7,6 +7,7 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   moveit_core
   moveit_visual_tools
+  moveit_dashboard
   cmake_modules
   controller_manager_msgs
   rosparam_shortcuts
@@ -21,6 +22,7 @@ catkin_package(
   CATKIN_DEPENDS
     moveit_core
     moveit_visual_tools
+    moveit_dashboard
     controller_manager_msgs
     rosparam_shortcuts
   INCLUDE_DIRS
@@ -47,15 +49,6 @@ include_directories(
 include_directories(SYSTEM
   ${Boost_INCLUDE_DIR}
   ${EIGEN3_INCLUDE_DIRS}
-)
-
-# debug_interface library
-add_library(${PROJECT_NAME}_debug_interface
-  src/debug_interface.cpp
-)
-target_link_libraries(${PROJECT_NAME}_debug_interface
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
 )
 
 # Fix_state_bounds library
@@ -91,7 +84,6 @@ add_library(${PROJECT_NAME}_planning_interface
 )
 target_link_libraries(${PROJECT_NAME}_planning_interface
   ${PROJECT_NAME}_execution_interface
-  ${PROJECT_NAME}_debug_interface
   ${PROJECT_NAME}_fix_state_bounds
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -121,7 +113,6 @@ add_library(${PROJECT_NAME}
   src/boilerplate.cpp
 )
 target_link_libraries(${PROJECT_NAME}
-  ${PROJECT_NAME}_debug_interface
   ${PROJECT_NAME}_execution_interface
   ${PROJECT_NAME}_planning_interface
   ${PROJECT_NAME}_get_planning_scene_service
@@ -149,7 +140,6 @@ roslint_cpp()
 
 ## Mark executables and/or libraries for installation
 install(TARGETS
-    ${PROJECT_NAME}_debug_interface
     ${PROJECT_NAME}_fix_state_bounds
     ${PROJECT_NAME}_execution_interface
     ${PROJECT_NAME}_planning_interface

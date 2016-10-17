@@ -19,6 +19,7 @@
 
   <depend>moveit_core</depend>
   <depend>moveit_visual_tools</depend>
+  <depend>moveit_dashboard</depend>
   <depend>eigen</depend>
   <depend>python-pandas</depend>
   <depend>joy</depend>

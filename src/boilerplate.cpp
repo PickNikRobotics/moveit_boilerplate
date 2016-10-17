@@ -110,10 +110,10 @@ Boilerplate::Boilerplate() : name_("boilerplate"), nh_("~")
   loadVisualTools();
 
   // Load the debug interface for dealing with GUIs
-  debug_interface_.reset(new DebugInterface(nh_));
+  remote_control_.reset(new moveit_dashboard::RemoteControl(nh_));
 
   // Load execution interface
-  execution_interface_.reset(new ExecutionInterface(debug_interface_, planning_scene_monitor_));
+  execution_interface_.reset(new ExecutionInterface(remote_control_, planning_scene_monitor_));
 
   // Load planning interface
   planning_interface_.reset(

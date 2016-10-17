@@ -62,9 +62,9 @@
 
 namespace moveit_boilerplate
 {
-ExecutionInterface::ExecutionInterface(DebugInterfacePtr debug_interface,
+ExecutionInterface::ExecutionInterface(moveit_dashboard::RemoteControlPtr remote_control,
                                        psm::PlanningSceneMonitorPtr planning_scene_monitor)
-  : nh_("~"), debug_interface_(debug_interface), planning_scene_monitor_(planning_scene_monitor)
+  : nh_("~"), remote_control_(remote_control), planning_scene_monitor_(planning_scene_monitor)
 {
   // Create initial robot state
   {
@@ -201,9 +201,9 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
     checkForWaypointJumps(trajectory);
 
   // Confirm trajectory before continuing
-  if (!debug_interface_->getFullAutonomous())
+  if (!remote_control_->getFullAutonomous())
   {
-    debug_interface_->waitForNextFullStep("execute trajectory");
+    remote_control_->waitForNextFullStep("execute trajectory");
     ROS_INFO_STREAM_NAMED(name_, "Remote confirmed trajectory execution.");
   }
 
@@ -316,8 +316,8 @@ void ExecutionInterface::checkForWaypointJumps(const trajectory_msgs::JointTraje
       std::cout << "-------------------------------------------------------" << std::endl;
       std::cout << std::endl;
 
-      debug_interface_->setAutonomous(false);
-      debug_interface_->setFullAutonomous(false);
+      remote_control_->setAutonomous(false);
+      remote_control_->setFullAutonomous(false);
 
       // return false;
     }
