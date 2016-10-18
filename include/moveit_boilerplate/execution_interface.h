@@ -80,7 +80,8 @@ public:
   /**
    * \brief Constructor
    */
-  ExecutionInterface(moveit_dashboard::RemoteControlPtr remote_control, psm::PlanningSceneMonitorPtr planning_scene_monitor);
+  ExecutionInterface(moveit_dashboard::RemoteControlPtr remote_control,
+                     psm::PlanningSceneMonitorPtr planning_scene_monitor, mvt::MoveItVisualToolsPtr visual_tools = mvt::MoveItVisualToolsPtr());
 
   /**
    * \brief Execute a desired cartesian end effector pose
@@ -194,4 +195,4 @@ private:
 
 }  // namespace moveit_boilerplate
 
-#endif // MOVEIT_BOILERPLATE_EXECUTION_INTERFACE_H
+#endif  // MOVEIT_BOILERPLATE_EXECUTION_INTERFACE_H

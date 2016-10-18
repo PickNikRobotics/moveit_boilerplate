@@ -63,8 +63,12 @@
 namespace moveit_boilerplate
 {
 ExecutionInterface::ExecutionInterface(moveit_dashboard::RemoteControlPtr remote_control,
-                                       psm::PlanningSceneMonitorPtr planning_scene_monitor)
-  : nh_("~"), remote_control_(remote_control), planning_scene_monitor_(planning_scene_monitor)
+                                       psm::PlanningSceneMonitorPtr planning_scene_monitor,
+                                       mvt::MoveItVisualToolsPtr visual_tools)
+  : nh_("~")
+  , remote_control_(remote_control)
+  , planning_scene_monitor_(planning_scene_monitor)
+  , visual_tools_(visual_tools)
 {
   // Create initial robot state
   {
@@ -73,7 +77,8 @@ ExecutionInterface::ExecutionInterface(moveit_dashboard::RemoteControlPtr remote
   }  // end scoped pointer of locked planning scene
 
   // Debug tools for visualizing in Rviz
-  loadVisualTools();
+  if (!visual_tools_)
+    loadVisualTools();
 
   std::string joint_trajectory_topic;
   std::string cartesian_command_topic;
@@ -103,9 +108,8 @@ ExecutionInterface::ExecutionInterface(moveit_dashboard::RemoteControlPtr remote
       ROS_DEBUG_STREAM_NAMED(name_, "Connecting to trajectory execution manager");
       if (!trajectory_execution_manager_)
       {
-        trajectory_execution_manager_.reset(
-                                            new trajectory_execution_manager::TrajectoryExecutionManager(planning_scene_monitor_->getRobotModel(),
-                                                                                                         planning_scene_monitor_->getStateMonitor()));
+        trajectory_execution_manager_.reset(new trajectory_execution_manager::TrajectoryExecutionManager(
+            planning_scene_monitor_->getRobotModel(), planning_scene_monitor_->getStateMonitor()));
       }
       break;
     case JOINT_PUBLISHER:
