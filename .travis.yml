@@ -1,39 +1,20 @@
+# This config file for Travis CI utilizes https://github.com/ros-planning/moveit_ci/ package.
 sudo: required
 dist: trusty
-language: generic # Force travis to use its minimal image with default Python settings
+services:
+  - docker
+language: generic
 compiler:
   - gcc
+notifications:
+  email:
+    recipients:
+      - davetcoleman@gmail.com
 env:
-  global:
-    - CATKIN_WS=~/catkin_ws
-    - CATKIN_WS_SRC=${CATKIN_WS}/src
-    - CI_ROS_DISTRO="indigo"
-install:
-  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
-  - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq -y python-rosdep python-catkin-tools
-  - sudo rosdep init
-  - rosdep update
-  # Use rosdep to install all dependencies (including ROS itself)
-  - rosdep install --from-paths ./ -i -y --rosdistro $CI_ROS_DISTRO
+  matrix:
+    - ROS_DISTRO=kinetic ROS_REPO=ros              UPSTREAM_WORKSPACE=moveit.rosinstall
+    - ROS_DISTRO=kinetic ROS_REPO=ros-shadow-fixed UPSTREAM_WORKSPACE=moveit.rosinstall
+before_script:
+  - git clone -q https://github.com/ros-planning/moveit_ci.git .moveit_ci
 script:
-  - source /opt/ros/$CI_ROS_DISTRO/setup.bash
-  - mkdir -p $CATKIN_WS_SRC
-  - ln -s $TRAVIS_BUILD_DIR $CATKIN_WS_SRC
-  # build packages that often cause this package to break because of unreleased changes
-  - cd $CATKIN_WS_SRC
-  - git clone git@github.com:ros-planning/moveit_core.git -b indigo-devel
-  - git clone git@github.com:ros-planning/moveit_ros.git -b indigo-devel
-  - rosdep install --from-paths ./ -y --ignore-src --rosdistro $CI_ROS_DISTRO
-  # Create Catkin WS
-  - cd $CATKIN_WS
-  - catkin init
-  # Enable install space
-  #- catkin config --install
-  # Build [and Install] packages
-  - catkin build --limit-status-rate 0.1 --no-notify -DCMAKE_BUILD_TYPE=Release
-  # Build tests
-  - catkin build --limit-status-rate 0.1 --no-notify --make-args tests
-  # Run tests
-  - catkin run_tests
+  - source .moveit_ci/travis.sh
