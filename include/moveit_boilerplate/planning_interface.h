@@ -101,11 +101,10 @@ public:
    * \param use_interpolation (recommended) whether to add more points to trajectory to make it more smooth
    * \return true on success
    */
-  bool convertRobotStatesToTraj(const std::vector<robot_state::RobotStatePtr>& robot_state_traj,
-                                moveit_msgs::RobotTrajectory& trajectory_msg, JointModelGroup* arm_jmg,
-                                const double& velocity_scaling_factor, bool interpolate = true);
-  bool convertRobotStatesToTraj(robot_trajectory::RobotTrajectoryPtr robot_traj,
-                                moveit_msgs::RobotTrajectory& trajectory_msg, JointModelGroup* jmg,
+  bool convertRobotStatesToTraj(const std::vector<robot_state::RobotStatePtr>& robot_state_traj, robot_trajectory::RobotTrajectoryPtr robot_traj,
+                                JointModelGroup* arm_jmg, const double& velocity_scaling_factor,
+                                bool interpolate = true);
+  bool convertRobotStatesToTraj(robot_trajectory::RobotTrajectoryPtr robot_traj, JointModelGroup* jmg,
                                 const double& velocity_scaling_factor, bool use_interpolation);
 
 private:
@@ -122,7 +121,10 @@ private:
    * \brief Interpolate
    * \return true on success
    */
-  bool interpolate(robot_trajectory::RobotTrajectoryPtr robot_trajectory, const double& discretization);
+  bool interpolate(robot_trajectory::RobotTrajectoryPtr robot_trajectory);
+
+  /** \brief Helper for interpolate() */
+  std::size_t validSegmentCount(const moveit::core::RobotState& state1, const moveit::core::RobotState& state2) const;
 
   /**
    * \brief Use the planning scene to get the robot's current state
@@ -162,6 +164,10 @@ private:
 
   // Allocated memory for robot state
   moveit::core::RobotStatePtr current_state_;
+
+  // TODO: this should be same value found in longest_valid_segment_fraction: 0.05
+  // make this adjustable - this value is probably robot specific
+  double longest_valid_segment_fraction_ = 0.1;
 };  // end class
 
 }  // namespace moveit_boilerplate

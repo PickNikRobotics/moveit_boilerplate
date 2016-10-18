@@ -67,12 +67,22 @@ PlanningInterface::PlanningInterface(moveit_boilerplate::ExecutionInterfacePtr e
   // getDoubleParam(parent_name, rosparam_nh, "vel_scaling_factor", vel_scaling_factor_);
 
   // End effector parent link (arm tip for ik solving)
-  ik_tip_link_ = arm_jmg_->getOnlyOneEndEffectorTip();
+  std::vector<const moveit::core::LinkModel*> tips;
+  arm_jmg_->getEndEffectorTips(tips);
+  if (tips.size() != 1)
+  {
+    ROS_WARN_STREAM_NAMED(name_, "There is not only 1 end effector tip, planning interface does not fully support "
+                                 "this");
+  }
+  else
+  {
+    ik_tip_link_ = arm_jmg_->getOnlyOneEndEffectorTip();
 
-  // Check for kinematic solver
-  if (!arm_jmg_->canSetStateFromIK(ik_tip_link_->getName()))
-    ROS_ERROR_STREAM_NAMED(name_, "No IK Solver loaded - make sure "
-                                  "moveit_config/kinamatics.yaml is loaded in this namespace");
+    // Check for kinematic solver
+    if (!arm_jmg_->canSetStateFromIK(ik_tip_link_->getName()))
+      ROS_ERROR_STREAM_NAMED(name_, "No IK Solver loaded - make sure "
+                                    "moveit_config/kinamatics.yaml is loaded in this namespace");
+  }
 
   // Create initial robot state
   {
@@ -136,19 +146,17 @@ bool PlanningInterface::executeState(JointModelGroup* jmg, const moveit::core::R
   // Add goal state
   robot_state_traj.push_back(goal_state);
 
-  // Get trajectory message
-  moveit_msgs::RobotTrajectory trajectory_msg;
-
   // Convert trajectory to a message
+  robot_trajectory::RobotTrajectoryPtr robot_traj(new robot_trajectory::RobotTrajectory(robot_model_, jmg));
   bool interpolate = true;
-  if (!convertRobotStatesToTraj(robot_state_traj, trajectory_msg, jmg, velocity_scaling_factor, interpolate))
+  if (!convertRobotStatesToTraj(robot_state_traj, robot_traj, jmg, velocity_scaling_factor, interpolate))
   {
     ROS_ERROR_STREAM_NAMED(name_, "Failed to convert to parameterized trajectory");
     return false;
   }
 
   // Execute
-  if (!execution_interface_->executeTrajectory(trajectory_msg, jmg, wait_for_execution))
+  if (!execution_interface_->executeTrajectory(robot_traj, jmg, wait_for_execution))
   {
     ROS_ERROR_STREAM_NAMED(name_, "Failed to execute trajectory");
     return false;
@@ -157,11 +165,11 @@ bool PlanningInterface::executeState(JointModelGroup* jmg, const moveit::core::R
 }
 
 bool PlanningInterface::convertRobotStatesToTraj(const std::vector<moveit::core::RobotStatePtr>& robot_state_traj,
-                                                 moveit_msgs::RobotTrajectory& trajectory_msg, JointModelGroup* jmg,
-                                                 const double& velocity_scaling_factor, bool use_interpolation)
+                                                 robot_trajectory::RobotTrajectoryPtr robot_traj,
+                                                 JointModelGroup* jmg, const double& velocity_scaling_factor,
+                                                 bool use_interpolation)
 {
   // Copy the vector of RobotStates to a RobotTrajectory
-  robot_trajectory::RobotTrajectoryPtr robot_traj(new robot_trajectory::RobotTrajectory(robot_model_, jmg));
 
   // -----------------------------------------------------------------------------------------------
   // Convert to RobotTrajectory datatype
@@ -171,11 +179,10 @@ bool PlanningInterface::convertRobotStatesToTraj(const std::vector<moveit::core:
     robot_traj->addSuffixWayPoint(robot_state_traj[k], duration_from_previous);
   }
 
-  return convertRobotStatesToTraj(robot_traj, trajectory_msg, jmg, velocity_scaling_factor, use_interpolation);
+  return convertRobotStatesToTraj(robot_traj, jmg, velocity_scaling_factor, use_interpolation);
 }
 
-bool PlanningInterface::convertRobotStatesToTraj(robot_trajectory::RobotTrajectoryPtr robot_traj,
-                                                 moveit_msgs::RobotTrajectory& trajectory_msg, JointModelGroup* jmg,
+bool PlanningInterface::convertRobotStatesToTraj(robot_trajectory::RobotTrajectoryPtr robot_traj, JointModelGroup* jmg,
                                                  const double& velocity_scaling_factor, bool use_interpolation)
 {
   // Interpolate any path with two few points
@@ -188,8 +195,7 @@ bool PlanningInterface::convertRobotStatesToTraj(robot_trajectory::RobotTrajecto
                                                                                        << ")");
 
       // Interpolate between each point
-      double discretization = 0.25;
-      interpolate(robot_traj, discretization);
+      interpolate(robot_traj);
     }
   }
 
@@ -197,22 +203,17 @@ bool PlanningInterface::convertRobotStatesToTraj(robot_trajectory::RobotTrajecto
   if (debug)
   {
     // Convert trajectory to a message
-    robot_traj->getRobotTrajectoryMsg(trajectory_msg);
-    std::cout << "Before Iterative smoother: " << trajectory_msg << std::endl;
+    // robot_traj->getRobotTrajectoryMsg(trajectory_msg);
+    // std::cout << "Before Iterative smoother: " << trajectory_msg << std::endl;
   }
 
   // Perform iterative parabolic smoothing
   iterative_smoother_.computeTimeStamps(*robot_traj, velocity_scaling_factor);
 
-  // Convert trajectory to a message
-  robot_traj->getRobotTrajectoryMsg(trajectory_msg);
-
-  // std::cout << "After Iterative smoother: " << trajectory_msg << std::endl;
-
   return true;
 }
 
-bool PlanningInterface::interpolate(robot_trajectory::RobotTrajectoryPtr robot_traj, const double& discretization)
+bool PlanningInterface::interpolate(robot_trajectory::RobotTrajectoryPtr robot_traj)
 {
   double dummy_dt = 1;  // dummy value until parameterization
 
@@ -240,6 +241,9 @@ bool PlanningInterface::interpolate(robot_trajectory::RobotTrajectoryPtr robot_t
     // Add point A to final trajectory
     new_robot_traj->addSuffixWayPoint(robot_traj->getWayPoint(i), dummy_dt);
 
+    std::size_t valid_segment_count = validSegmentCount(robot_traj->getWayPoint(i), robot_traj->getWayPoint(i + 1));
+    double discretization = 1.0 / valid_segment_count;
+
     for (double t = discretization; t < 1; t += discretization)
     {
       // Create new state
@@ -248,8 +252,8 @@ bool PlanningInterface::interpolate(robot_trajectory::RobotTrajectoryPtr robot_t
       robot_traj->getWayPoint(i).interpolate(robot_traj->getWayPoint(i + 1), t, *interpolated_state);
       // Add to trajectory
       new_robot_traj->addSuffixWayPoint(interpolated_state, dummy_dt);
-      // std::cout << "inserting " << t << " at " << new_robot_traj->getWayPointCount() <<
-      // std::endl;
+
+      // std::cout << "inserting " << t << " at " << new_robot_traj->getWayPointCount() << std::endl;
     }
   }
 
@@ -270,6 +274,13 @@ bool PlanningInterface::interpolate(robot_trajectory::RobotTrajectoryPtr robot_t
   *robot_traj = *new_robot_traj;
 
   return true;
+}
+
+std::size_t PlanningInterface::validSegmentCount(const moveit::core::RobotState& state1,
+                                                 const moveit::core::RobotState& state2) const
+{
+  const double dist = state1.distance(state2);
+  return ceil(dist / longest_valid_segment_fraction_);
 }
 
 moveit::core::RobotStatePtr PlanningInterface::getCurrentState()

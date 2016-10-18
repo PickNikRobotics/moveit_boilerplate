@@ -141,15 +141,18 @@ bool ExecutionInterface::executePose(const Eigen::Affine3d &pose)
   return true;
 }
 
-bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &trajectory_msg, JointModelGroup *jmg,
+bool ExecutionInterface::executeTrajectory(const robot_trajectory::RobotTrajectoryPtr robot_trajectory, JointModelGroup *jmg,
                                            bool wait_for_execution)
 {
+  // Convert trajectory to a message
+  moveit_msgs::RobotTrajectory trajectory_msg;
+  robot_trajectory->getRobotTrajectoryMsg(trajectory_msg);
+
   trajectory_msgs::JointTrajectory &trajectory = trajectory_msg.joint_trajectory;
 
   // Debug
-  ROS_DEBUG_STREAM_NAMED("execution_interface.summary", "Executing trajectory with " << trajectory.points.size()
-                                                                                     << " waypoints");
-  ROS_DEBUG_STREAM_NAMED("execution_interface.trajectory", "Publishing:\n" << trajectory_msg);
+  ROS_DEBUG_STREAM_NAMED(name_ + ".summary", "Executing trajectory with " << trajectory.points.size() << " waypoints");
+  ROS_DEBUG_STREAM_NAMED(name_ + ".trajectory", "Publishing:\n" << trajectory_msg);
 
   // Error check
   if (trajectory.points.empty())
@@ -172,9 +175,11 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
 
   // Optionally save to file
   if (save_traj_to_file_)
+  {
     saveTrajectory(trajectory_msg, jmg->getName() + "_moveit_trajectory_" +
                                        boost::lexical_cast<std::string>(trajectory_filename_count_++) + ".csv",
                    save_traj_to_file_path_);
+  }
 
   // Optionally visualize the hand/wrist path in Rviz
   if (visualize_trajectory_line_)
@@ -182,11 +187,8 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
     if (trajectory.points.size() > 1 && !jmg->isEndEffector())
     {
       visual_tools_->deleteAllMarkers();
-      ros::spinOnce();  // TODO(davetcoleman) remove?
-
-      // TODO(davetcoleman) get parent_link using native moveit tools
-      // visual_tools_->publishTrajectoryLine(
-      // trajectory_msg, grasp_datas_[jmg]->parent_link_, config_->right_arm_, rvt::LIME_GREEN);
+      visual_tools_->publishTrajectoryLine(robot_trajectory, jmg, rvt::LIME_GREEN);
+      visual_tools_->trigger();
     }
     else
       ROS_WARN_STREAM_NAMED(name_, "Not visualizing path because trajectory only has "
@@ -215,6 +217,8 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
   switch (joint_command_mode_)
   {
     case JOINT_EXECUTION_MANAGER:
+      ROS_INFO_STREAM_NAMED(name_, "Joint execution manager");
+
       // Reset trajectory manager
       trajectory_execution_manager_->clear();
 
@@ -228,11 +232,13 @@ bool ExecutionInterface::executeTrajectory(moveit_msgs::RobotTrajectory &traject
       }
       else
       {
+        remote_control_->waitForNextFullStep("after execute trajectory 2");
         ROS_ERROR_STREAM_NAMED(name_, "Failed to execute trajectory");
         return false;
       }
       break;
     case JOINT_PUBLISHER:
+      ROS_INFO_STREAM_NAMED(name_, "Joint publisher");
       joint_trajectory_pub_.publish(trajectory);
 
       if (wait_for_execution)
@@ -274,15 +280,18 @@ bool ExecutionInterface::waitForExecution()
 {
   if (joint_command_mode_ != JOINT_EXECUTION_MANAGER)
   {
-    ROS_WARN_STREAM_NAMED(name_, "Not waiting for execution because not in execution_manager "
-                                 "mode");
+    ROS_WARN_STREAM_NAMED(name_, "Not waiting for execution because not in execution_manager mode");
     return true;
   }
 
   ROS_DEBUG_STREAM_NAMED(name_, "Waiting for executing trajectory to finish");
 
+  remote_control_->waitForNextFullStep("after execute trajectory - TODO, fix this bug");
+
   // wait for the trajectory to complete
   moveit_controller_manager::ExecutionStatus execution_status = trajectory_execution_manager_->waitForExecution();
+
+
   if (execution_status == moveit_controller_manager::ExecutionStatus::SUCCEEDED)
   {
     ROS_DEBUG_STREAM_NAMED(name_, "Trajectory execution succeeded");
@@ -434,7 +443,7 @@ bool ExecutionInterface::checkTrajectoryController(ros::ServiceClient &service_c
 bool ExecutionInterface::saveTrajectory(const moveit_msgs::RobotTrajectory &trajectory_msg,
                                         const std::string &file_name, const std::string &save_traj_to_file_path)
 {
-  const std::string name = "execution_interface";
+  const std::string name = "execution_interface"; // this function is static and can't use member variable name_
   const trajectory_msgs::JointTrajectory &joint_trajectory = trajectory_msg.joint_trajectory;
 
   // Error check

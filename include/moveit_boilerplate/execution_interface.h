@@ -99,7 +99,7 @@ public:
    * \brief Do a bunch of checks and send to low level controllers
    * \return true on success
    */
-  bool executeTrajectory(moveit_msgs::RobotTrajectory &trajectory_msg, JointModelGroup *jmg,
+  bool executeTrajectory(const robot_trajectory::RobotTrajectoryPtr robot_trajectory, JointModelGroup *jmg,
                          bool wait_for_execution = true);
 
   /** \brief Stop the current execution from continuing, using ROS topics so its a "soft stop" */
