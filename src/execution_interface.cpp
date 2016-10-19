@@ -226,7 +226,10 @@ bool ExecutionInterface::executeTrajectory(const robot_trajectory::RobotTrajecto
       {
         // Optionally wait for completion
         if (wait_for_execution)
-          waitForExecution();
+        {
+          ros::Duration(trajectory.points.back().time_from_start).sleep();
+          //waitForExecution();
+        }
         else
           ROS_DEBUG_STREAM_NAMED("exceution_interface", "Not waiting for execution to finish");
       }
@@ -286,7 +289,8 @@ bool ExecutionInterface::waitForExecution()
 
   ROS_DEBUG_STREAM_NAMED(name_, "Waiting for executing trajectory to finish");
 
-  remote_control_->waitForNextFullStep("after execute trajectory - TODO, fix this bug");
+  //remote_control_->waitForNextFullStep("after execute trajectory - TODO, fix this bug");
+
 
   // wait for the trajectory to complete
   moveit_controller_manager::ExecutionStatus execution_status = trajectory_execution_manager_->waitForExecution();
