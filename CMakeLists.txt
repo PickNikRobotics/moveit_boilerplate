@@ -28,7 +28,6 @@ catkin_package(
   INCLUDE_DIRS
     include
   LIBRARIES
-    ${PROJECT_NAME}_debug_interface
     ${PROJECT_NAME}_fix_state_bounds
     ${PROJECT_NAME}_execution_interface
     ${PROJECT_NAME}_planning_interface
