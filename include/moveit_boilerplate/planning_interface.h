@@ -65,9 +65,8 @@ class PlanningInterface
 {
 public:
   /** \brief Constructor */
-  PlanningInterface(moveit_boilerplate::ExecutionInterfacePtr execution_interface,
-                    psm::PlanningSceneMonitorPtr planning_scene_monitor, mvt::MoveItVisualToolsPtr visual_tools,
-                    JointModelGroup* arm_jmg);
+  PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor, mvt::MoveItVisualToolsPtr visual_tools,
+                    JointModelGroup* arm_jmg, moveit_boilerplate::ExecutionInterfacePtr execution_interface = moveit_boilerplate::ExecutionInterfacePtr());
 
   /** \brief Destructor */
   virtual ~PlanningInterface();

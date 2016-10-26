@@ -52,14 +52,14 @@
 
 namespace moveit_boilerplate
 {
-PlanningInterface::PlanningInterface(moveit_boilerplate::ExecutionInterfacePtr execution_interface,
-                                     psm::PlanningSceneMonitorPtr planning_scene_monitor,
-                                     mvt::MoveItVisualToolsPtr visual_tools, JointModelGroup* arm_jmg)
+PlanningInterface::PlanningInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor,
+                                     mvt::MoveItVisualToolsPtr visual_tools, JointModelGroup* arm_jmg,
+                                     moveit_boilerplate::ExecutionInterfacePtr execution_interface)
   : nh_("~")
-  , execution_interface_(execution_interface)
   , planning_scene_monitor_(planning_scene_monitor)
   , visual_tools_(visual_tools)
   , arm_jmg_(arm_jmg)
+  , execution_interface_(execution_interface)
 {
   // Load rosparams
   // ros::NodeHandle rosparam_nh(nh_, parent_name);
@@ -155,6 +155,12 @@ bool PlanningInterface::executeState(JointModelGroup* jmg, const moveit::core::R
     return false;
   }
 
+  if (!execution_interface_)
+  {
+    ROS_ERROR_STREAM_NAMED(name_, "Execution interface not intialized");
+    return false;
+  }
+
   // Execute
   if (!execution_interface_->executeTrajectory(robot_traj, jmg, wait_for_execution))
   {
@@ -185,6 +191,8 @@ bool PlanningInterface::convertRobotStatesToTraj(const std::vector<moveit::core:
 bool PlanningInterface::convertRobotStatesToTraj(robot_trajectory::RobotTrajectoryPtr robot_traj, JointModelGroup* jmg,
                                                  const double& velocity_scaling_factor, bool use_interpolation)
 {
+  ROS_INFO_STREAM_NAMED(name_, "convertRobotStatesToTraj()");
+
   // Interpolate any path with two few points
   if (use_interpolation)
   {
@@ -197,14 +205,6 @@ bool PlanningInterface::convertRobotStatesToTraj(robot_trajectory::RobotTrajecto
       // Interpolate between each point
       interpolate(robot_traj);
     }
-  }
-
-  bool debug = false;
-  if (debug)
-  {
-    // Convert trajectory to a message
-    // robot_traj->getRobotTrajectoryMsg(trajectory_msg);
-    // std::cout << "Before Iterative smoother: " << trajectory_msg << std::endl;
   }
 
   // Perform iterative parabolic smoothing

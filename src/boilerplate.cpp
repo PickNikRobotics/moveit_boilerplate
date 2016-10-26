@@ -116,8 +116,7 @@ Boilerplate::Boilerplate() : name_("boilerplate"), nh_("~")
   execution_interface_.reset(new ExecutionInterface(remote_control_, planning_scene_monitor_));
 
   // Load planning interface
-  planning_interface_.reset(
-      new PlanningInterface(execution_interface_, planning_scene_monitor_, visual_tools_, arm_jmg_));
+  planning_interface_.reset(new PlanningInterface(planning_scene_monitor_, visual_tools_, arm_jmg_, execution_interface_));
 
   ROS_INFO_STREAM_NAMED("boilerplate", "Boilerplate Ready.");
 }
