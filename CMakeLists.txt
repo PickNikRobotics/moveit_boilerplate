@@ -7,7 +7,6 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   moveit_core
   moveit_visual_tools
-  moveit_dashboard
   cmake_modules
   controller_manager_msgs
   rosparam_shortcuts
@@ -22,7 +21,6 @@ catkin_package(
   CATKIN_DEPENDS
     moveit_core
     moveit_visual_tools
-    moveit_dashboard
     controller_manager_msgs
     rosparam_shortcuts
   INCLUDE_DIRS

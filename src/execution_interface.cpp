@@ -62,11 +62,9 @@
 
 namespace moveit_boilerplate
 {
-ExecutionInterface::ExecutionInterface(moveit_dashboard::RemoteControlPtr remote_control,
-                                       psm::PlanningSceneMonitorPtr planning_scene_monitor,
+ExecutionInterface::ExecutionInterface(psm::PlanningSceneMonitorPtr planning_scene_monitor,
                                        mvt::MoveItVisualToolsPtr visual_tools)
   : nh_("~")
-  , remote_control_(remote_control)
   , planning_scene_monitor_(planning_scene_monitor)
   , visual_tools_(visual_tools)
 {
@@ -207,9 +205,9 @@ bool ExecutionInterface::executeTrajectory(const robot_trajectory::RobotTrajecto
     checkForWaypointJumps(trajectory);
 
   // Confirm trajectory before continuing
-  if (!remote_control_->getFullAutonomous())
+  if (!visual_tools_->getRemoteControl()->getFullAutonomous())
   {
-    remote_control_->waitForNextFullStep("execute trajectory");
+    visual_tools_->getRemoteControl()->waitForNextFullStep("execute trajectory");
     ROS_INFO_STREAM_NAMED(name_, "Remote confirmed trajectory execution.");
   }
 
@@ -235,7 +233,7 @@ bool ExecutionInterface::executeTrajectory(const robot_trajectory::RobotTrajecto
       }
       else
       {
-        remote_control_->waitForNextFullStep("after execute trajectory 2");
+        visual_tools_->getRemoteControl()->waitForNextFullStep("after execute trajectory 2");
         ROS_ERROR_STREAM_NAMED(name_, "Failed to execute trajectory");
         return false;
       }
@@ -289,7 +287,7 @@ bool ExecutionInterface::waitForExecution()
 
   ROS_DEBUG_STREAM_NAMED(name_, "Waiting for executing trajectory to finish");
 
-  //remote_control_->waitForNextFullStep("after execute trajectory - TODO, fix this bug");
+  //visual_tools_->getRemoteControl()->waitForNextFullStep("after execute trajectory - TODO, fix this bug");
 
 
   // wait for the trajectory to complete
@@ -333,8 +331,8 @@ void ExecutionInterface::checkForWaypointJumps(const trajectory_msgs::JointTraje
       std::cout << "-------------------------------------------------------" << std::endl;
       std::cout << std::endl;
 
-      remote_control_->setAutonomous(false);
-      remote_control_->setFullAutonomous(false);
+      visual_tools_->getRemoteControl()->setAutonomous(false);
+      visual_tools_->getRemoteControl()->setFullAutonomous(false);
 
       // return false;
     }

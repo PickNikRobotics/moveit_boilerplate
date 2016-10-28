@@ -54,7 +54,7 @@
 #include <moveit_visual_tools/moveit_visual_tools.h>
 
 // rviz gui
-#include <moveit_dashboard/remote_control.h>
+#include <rviz_visual_tools/remote_control.h>
 
 // moveit_boilerplate
 #include <moveit_boilerplate/namespaces.h>
@@ -129,7 +129,7 @@ protected:
   moveit::core::RobotStatePtr current_state_;
 
   // Debug interface for dealing with GUIs
-  moveit_dashboard::RemoteControlPtr remote_control_;
+  rviz_visual_tools::RemoteControlPtr remote_control_;
 
   // For generating joint trajectories
   PlanningInterfacePtr planning_interface_;
