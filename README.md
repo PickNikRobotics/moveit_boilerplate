@@ -10,13 +10,18 @@ Features:
  - Remote control for use with various input devices
  - Trajectory input output from file
 
+There are two versions of the boilerplate in this package:
+
+- boilderplate.h: this is the full features approach with lots of bells and whistles
+- moveit_base.h: paired-down approach that only loads the MoveIt! RobotModel, PlanningSceneMonitor, Visual Tools, TF Listener, and single JointModelGroup
+
 Developed by [Dave Coleman](http://dav.ee/) at the University of Colorado Boulder
 
 Status:
 
- * [![Build Status](https://travis-ci.org/davetcoleman/moveit_boilerplate.svg)](https://travis-ci.org/davetcoleman/moveit_boilerplate) Indigo Travis CI
- * [![Devel Job Status](http://jenkins.ros.org/buildStatus/icon?job=devel-indigo-moveit_boilerplate)](http://jenkins.ros.org/job/devel-indigo-moveit_boilerplate) Indigo Devel Job Status
- * [![Build Status](http://jenkins.ros.org/buildStatus/icon?job=ros-indigo-moveit-boilerplate_binarydeb_trusty_amd64)](http://jenkins.ros.org/job/ros-indigo-moveit-boilerplate_binarydeb_trusty_amd64/) Indigo AMD64 Debian Job Status
+ * [![Build Status](https://travis-ci.org/davetcoleman/moveit_boilerplate.svg)](https://travis-ci.org/davetcoleman/moveit_boilerplate) Kinetic Travis CI
+ * [![Devel Job Status](http://jenkins.ros.org/buildStatus/icon?job=devel-kinetic-moveit_boilerplate)](http://jenkins.ros.org/job/devel-kinetic-moveit_boilerplate) Kinetic Devel Job Status
+ * [![Build Status](http://jenkins.ros.org/buildStatus/icon?job=ros-kinetic-moveit-boilerplate_binarydeb_trusty_amd64)](http://jenkins.ros.org/job/ros-kinetic-moveit-boilerplate_binarydeb_trusty_amd64/) Kinetic AMD64 Debian Job Status
 
 ![](docs/overview.png)
 
@@ -24,17 +29,17 @@ Status:
 
 ### Ubuntu Debian
 
-    sudo apt-get install ros-indigo-moveit-boilerplate
+    sudo apt-get install ros-kinetic-moveit-boilerplate
 
 ### Build from Source
 
 To build this package, ``git clone`` this repo into a [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace) and be sure to install necessary dependencies by running the following command in the root of your catkin workspace:
 
-    rosdep install -y --from-paths src --ignore-src --rosdistro indigo
+    rosdep install -y --from-paths src --ignore-src --rosdistro kinetic
 
 ## Code API
 
-See [Class Reference](http://docs.ros.org/indigo/api/moveit_boilerplate/html/)
+See [Class Reference](http://docs.ros.org/kinetic/api/moveit_boilerplate/html/)
 
 ## Usage
 

@@ -33,7 +33,9 @@
  *********************************************************************/
 
 /* Author: Dave Coleman <dave@dav.ee>
-   Desc:   Base boilerplate class for easily using MoveIt! in C++ with a single robot arm
+   Desc:   Base boilerplate class for easily using MoveIt! in C++
+           only loads the MoveIt! RobotModel, PlanningSceneMonitor, Visual Tools,
+           and TF Listener
 */
 
 // C++
@@ -77,9 +79,6 @@ bool MoveItBase::init(ros::NodeHandle& nh)
 
   // Load the robot model
   robot_model_ = robot_model_loader_->getModel();  // Get a shared pointer to the robot
-
-  // Choose planning group
-  jmg_ = robot_model_->getJointModelGroup(joint_model_group);
 
   // Create the planning scene
   planning_scene_.reset(new planning_scene::PlanningScene(robot_model_));

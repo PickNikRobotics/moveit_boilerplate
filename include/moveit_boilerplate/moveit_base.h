@@ -33,7 +33,7 @@
  *********************************************************************/
 
 /* Author: Dave Coleman <dave@dav.ee>
-   Desc:   Base class for using MoveIt! in C++
+   Desc:   Base class for using MoveIt! in C++. This is much simpler than boilerplate.h
 */
 
 #ifndef MOVEIT_BOILERPLATE_MOVEIT_BASE_H
@@ -156,8 +156,6 @@ protected:
   // Allocated memory for robot state
   moveit::core::RobotStatePtr current_state_;
 
-  // Desired planning group to work with
-  JointModelGroup *jmg_;
 };  // end class
 
 }  // namespace moveit_boilerplate
