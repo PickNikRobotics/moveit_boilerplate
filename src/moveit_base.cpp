@@ -51,7 +51,7 @@
 
 namespace moveit_boilerplate
 {
-MoveItBase::MoveItBase() : name_("moveit_base")
+MoveItBase::MoveItBase()
 {
 }
 
@@ -59,15 +59,12 @@ bool MoveItBase::init(ros::NodeHandle& nh)
 {
   nh_ = nh;
   std::string joint_state_topic;
-  std::string joint_model_group;
-  std::string execution_command_mode;
   std::string rviz_markers_topic, rviz_robot_state_topic, rviz_trajectory_topic;
 
   // Load rosparams
   ros::NodeHandle rpnh(nh_, name_);
   int error = 0;
   error += !rosparam_shortcuts::get(name_, rpnh, "joint_state_topic", joint_state_topic);
-  error += !rosparam_shortcuts::get(name_, rpnh, "joint_model_group", joint_model_group);
   error += !rosparam_shortcuts::get(name_, rpnh, "planning_scene_topic", planning_scene_topic_);
   error += !rosparam_shortcuts::get(name_, rpnh, "rviz/markers_topic", rviz_markers_topic);
   error += !rosparam_shortcuts::get(name_, rpnh, "rviz/robot_state_topic", rviz_robot_state_topic);

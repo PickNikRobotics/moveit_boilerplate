@@ -136,7 +136,7 @@ protected:
   ros::NodeHandle nh_;
 
   // Short name of this class
-  std::string name_;
+  std::string name_ = "moveit_base";
 
   // Settings
   std::string planning_scene_topic_;

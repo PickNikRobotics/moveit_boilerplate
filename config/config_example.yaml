@@ -12,5 +12,8 @@ execution_interface:
 # MoveIt Boilerplate Base Functionality
 boilerplate:
   joint_state_topic: /ROBOT/joint_states # location to recieve updates of the robot's pose
-  arm_joint_model_group: arm # the main planning group to control
   planning_scene_topic: /my/planning_scene # topic for communicating the collision obj in the env with other nodes
+  rviz:
+    markers_topic: /markers
+    robot_state_topic: /robot_state
+    trajectory_topic:  /trajectory
