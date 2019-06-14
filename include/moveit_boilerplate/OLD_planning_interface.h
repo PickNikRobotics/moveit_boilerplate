@@ -95,7 +95,7 @@ public:
    * \param arm_jmg - the kinematic chain of joint that should be controlled (a planning group)
    * \return true on success
    */
-  bool moveToEEPose(const Eigen::Affine3d& ee_pose, double velocity_scaling_factor, JointModelGroup* arm_jmg);
+  bool moveToEEPose(const Eigen::Isometry3d& ee_pose, double velocity_scaling_factor, JointModelGroup* arm_jmg);
 
   /**
    * \brief Send a planning request to moveit and execute
@@ -221,7 +221,7 @@ public:
    * \brief Choose which arm to use for a particular task
    * \return joint model group of arm to use in manip
    */
-  JointModelGroup* chooseArm(const Eigen::Affine3d& ee_pose);
+  JointModelGroup* chooseArm(const Eigen::Isometry3d& ee_pose);
 
   /**
    * \brief Get the robot state that accomplished a desired end effector pose
@@ -231,7 +231,7 @@ public:
    * \param consistency_limits - if greater than 0, forces ik solver to only find solutions within that joint distance
    * \return true on success
    */
-  bool getRobotStateFromPose(const Eigen::Affine3d& ee_pose, moveit::core::RobotStatePtr& robot_state,
+  bool getRobotStateFromPose(const Eigen::Isometry3d& ee_pose, moveit::core::RobotStatePtr& robot_state,
                              JointModelGroup* arm_jmg, double consistency_limit = 0.0);
 
   /**
@@ -239,7 +239,7 @@ public:
    * world frame
    * \return true on success
    */
-  bool straightProjectPose(const Eigen::Affine3d& original_pose, Eigen::Affine3d& new_pose,
+  bool straightProjectPose(const Eigen::Isometry3d& original_pose, Eigen::Isometry3d& new_pose,
                            const Eigen::Vector3d direction, double distance);
 
   /**
@@ -405,7 +405,7 @@ public:
   void updateTouchControl(JointModelGroup* arm_jmg);
 
   /** \brief Convert from world frame to base_link frame */
-  void transformWorldToBase(Eigen::Affine3d& pose_world, Eigen::Affine3d& pose_base);
+  void transformWorldToBase(Eigen::Isometry3d& pose_world, Eigen::Isometry3d& pose_base);
 
   /** \brief Debug tools for visualizing in Rviz */
   void loadVisualTools();

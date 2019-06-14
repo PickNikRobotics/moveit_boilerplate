@@ -44,7 +44,7 @@
 
 // ROS
 #include <ros/ros.h>
-#include <tf/transform_listener.h>
+#include <tf2_ros/buffer.h>
 
 // MoveIt
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
@@ -94,7 +94,7 @@ public:
   /**
    * \brief Get pose of the end effector
    */
-  const Eigen::Affine3d &getCurrentPose();
+  const Eigen::Isometry3d &getCurrentPose();
 
 protected:
   // Name of this class
@@ -104,7 +104,7 @@ protected:
   ros::NodeHandle nh_;
 
   // Transform
-  boost::shared_ptr<tf::TransformListener> tf_;
+  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
 
   // For visualizing things in rviz
   mvt::MoveItVisualToolsPtr visual_tools_;

@@ -44,7 +44,7 @@
 
 // ROS
 #include <ros/ros.h>
-#include <tf/transform_listener.h>
+#include <tf2_ros/buffer.h>
 
 // MoveIt
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
@@ -111,7 +111,7 @@ public:
    * \param pose - the returned valie
    * \return false on missing transform, may just need to wait a little longer and retry
    */
-  bool getTFTransform(const std::string &from_frame, const std::string &to_frame, Eigen::Affine3d &pose);
+  bool getTFTransform(const std::string &from_frame, const std::string &to_frame, Eigen::Isometry3d &pose);
 
   /** \brief Getter for visual tools */
   mvt::MoveItVisualToolsPtr getVisualTools()
@@ -142,7 +142,7 @@ protected:
   std::string planning_scene_topic_;
 
   // Transform
-  boost::shared_ptr<tf::TransformListener> tf_;
+  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
 
   // For visualizing things in rviz
   mvt::MoveItVisualToolsPtr visual_tools_;
