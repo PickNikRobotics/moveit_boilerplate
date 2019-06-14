@@ -1,0 +1,45 @@
+<!-- -*- mode: XML -*- -->
+<launch>
+  <!-- Specify planner/controller settings -->
+  <arg name="namespace" default="moveit_base" />
+  <arg name="pipeline" default="ompl" />
+  <arg name="controller_manager" default="fake" />
+
+  <!-- GDB Debug Arguments -->
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix"
+           value="gdb -x $(find moveit_boilerplate)/launch/gdb_settings.gdb --ex run --args" />
+
+   <!-- Specify the config file to use -->
+   <arg name="moveit_base_config" default="$(find moveit_boilerplate)/config/moveit_base.yaml" />
+
+  <!-- Callgrind Arguments -->
+  <arg name="callgrind" default="false" />
+  <arg unless="$(arg callgrind)" name="launch_prefix2" value="" />
+  <arg     if="$(arg callgrind)" name="launch_prefix2" value="valgrind --tool=callgrind --collect-atstart=no" />
+
+  <!-- Valgrind Arguments -->
+  <arg name="valgrind" default="false" />
+  <arg unless="$(arg valgrind)" name="launch_prefix3" value="" />
+  <arg     if="$(arg valgrind)" name="launch_prefix3" value="valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all" />
+
+  <!-- Trajectory Execution Functionality -->
+  <!-- TODO: fix controller manager
+  <include ns="$(arg namespace)" file="$(find moveit_config)/launch/trajectory_execution.launch.xml">
+    <arg name="moveit_manage_controllers" value="true" />
+    <arg name="moveit_controller_manager" value="$(arg controller_manager)" />    
+  </include> -->
+
+  <!-- Planning Pipeline -->
+  <!-- TODO: fix planning pipeline
+  <include ns="$(arg namespace)" file="$(find moveit_config)/launch/$(arg pipeline)_planning_pipeline.launch.xml"/> -->
+
+  <!-- Launch main node -->
+  <node name="$(arg namespace)" launch-prefix="$(arg launch_prefix) $(arg launch_prefix2) $(arg launch_prefix3)" pkg="moveit_boilerplate" type="moveit_base_main" respawn="false" output="screen">
+
+    <!-- Robot-specific settings -->
+    <rosparam file="$(arg moveit_base_config)" command="load"/>
+  </node>
+
+</launch>

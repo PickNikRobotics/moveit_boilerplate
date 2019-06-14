@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_visual_tools
   cmake_modules
   controller_manager_msgs
+  roscpp
   rosparam_shortcuts
   roslint
   tf_conversions
@@ -117,8 +118,22 @@ target_link_libraries(${PROJECT_NAME}
   ${Boost_LIBRARIES}
 )
 
-add_executable(${PROJECT_NAME}_example src/example.cpp)
-target_link_libraries(${PROJECT_NAME}_example
+# MoveIt Base example executable
+add_executable(
+  ${PROJECT_NAME}_moveit_base_main
+  src/moveit_base_main.cpp
+)
+
+# Rename C++ executable without namespace
+set_target_properties(
+  ${PROJECT_NAME}_moveit_base_main
+  PROPERTIES
+    OUTPUT_NAME moveit_base_main PREFIX ""
+)
+
+# Specify libraries to link a library or executable target against
+target_link_libraries(
+  ${PROJECT_NAME}_moveit_base_main
   ${PROJECT_NAME}_moveit_base
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -136,22 +151,45 @@ roslint_cpp()
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS
+install(
+  TARGETS
     ${PROJECT_NAME}_fix_state_bounds
     ${PROJECT_NAME}_execution_interface
     ${PROJECT_NAME}_planning_interface
     ${PROJECT_NAME}_trajectory_io
     ${PROJECT_NAME}_moveit_base
     ${PROJECT_NAME}_get_planning_scene_service
+    ${PROJECT_NAME}_moveit_base_main
     ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  ARCHIVE DESTINATION
+    ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION
+    ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION
+    ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 # Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
+install(
+  DIRECTORY
+    include/${PROJECT_NAME}/
+  DESTINATION
+    ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
+
+# Mark roslaunch files for installation
+install(
+  DIRECTORY
+    launch
+  DESTINATION
+    ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+# Mark config files for installation
+install(
+  DIRECTORY
+    config
+  DESTINATION
+    ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
