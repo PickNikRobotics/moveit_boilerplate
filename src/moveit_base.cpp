@@ -33,7 +33,7 @@
  *********************************************************************/
 
 /* Author: Dave Coleman <dave@picknik.ai>, Henning Kayser <henningkayser@picknik.ai>
-   Desc:   Collection of planning problems for experimenting with the R2 robot
+   Desc:   Implementation of MoveItBase for convenient access to MoveIt capabilities
 */
 
 // C++
