@@ -236,25 +236,4 @@ moveit::core::RobotStatePtr MoveItBase::getCurrentState()
   return current_state_;
 }
 
-bool MoveItBase::getTFTransform(const std::string& from_frame, const std::string& to_frame, Eigen::Isometry3d &pose)
-{
-  // TODO(davetcoleman): fix this function for TF2, from TF1
-
-  ROS_ERROR_STREAM_NAMED("moveit_base", "NOT IMPLEMENTED");
-  // tf::StampedTransform tf_transform;
-  // try
-  // {
-  //   tf_buffer_->lookupTransform(from_frame, to_frame, ros::Time(0), tf_transform);
-  // }
-  // catch (tf::TransformException ex)
-  // {
-  //   ROS_ERROR("%s", ex.what());
-  //   return false;
-  // }
-
-  // // Convert to eigen
-  // tf::transformTFToEigen(tf_transform, pose);
-  return true;
-}
-
 }  // namespace moveit_boilerplate
