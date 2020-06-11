@@ -15,9 +15,11 @@ There are two versions of the boilerplate in this package:
 - boilderplate.h: this is the full features approach with lots of bells and whistles
 - moveit_base.h: paired-down approach that only loads the MoveIt! RobotModel, PlanningSceneMonitor, Visual Tools, TF Listener, and single JointModelGroup
 
-Developed by [Dave Coleman](http://dav.ee/) at the University of Colorado Boulder
+<img src="https://picknik.ai/assets/images/logo.jpg" width="120">
 
-Status:
+This open source project was developed at [PickNik Robotics](https://picknik.ai/). Need professional ROS development and consulting? Contact us at projects@picknik.ai for a free consultation.
+
+## Status:
 
  * [![Build Status](https://travis-ci.org/davetcoleman/moveit_boilerplate.svg)](https://travis-ci.org/davetcoleman/moveit_boilerplate) Kinetic Travis CI
  * [![Devel Job Status](http://jenkins.ros.org/buildStatus/icon?job=devel-kinetic-moveit_boilerplate)](http://jenkins.ros.org/job/devel-kinetic-moveit_boilerplate) Kinetic Devel Job Status
