@@ -84,9 +84,9 @@ public:
    * \param pose
    * \return true on success
    */
-  bool executePose(const Eigen::Affine3d &pose);
+  bool executePose(const Eigen::Isometry3d &pose);
   MOVEIT_BOILERPLATE_DEPRECATED
-  bool executePose(const Eigen::Affine3d &pose, JointModelGroup *arm_jmg, const double &duration = 0.1)
+  bool executePose(const Eigen::Isometry3d &pose, JointModelGroup *arm_jmg, const double &duration = 0.1)
   {
     return executePose(pose);
   }

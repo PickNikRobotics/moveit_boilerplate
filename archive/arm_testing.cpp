@@ -426,11 +426,11 @@ bool ArmTesting::calibrateInCircle()
   }
 
   // Get location of camera
-  Eigen::Affine3d camera_pose;
+  Eigen::Isometry3d camera_pose;
   // TODO(davetcoleman)  planning_interface_->getPose(camera_pose, config_->right_camera_frame_);
 
   // Move camera pose forward away from camera
-  Eigen::Affine3d translate_forward = Eigen::Affine3d::Identity();
+  Eigen::Isometry3d translate_forward = Eigen::Isometry3d::Identity();
   translate_forward.translation().x() += 1.0;  // TODO(davetcoleman) config_->camera_x_translation_from_bin_;
   translate_forward.translation().z() -= 0.15;
   camera_pose = translate_forward * camera_pose;
@@ -440,7 +440,7 @@ bool ArmTesting::calibrateInCircle()
   visual_tools_->publishXArrow(camera_pose, rvt::GREEN);
 
   // Collection of goal positions
-  EigenSTL::vector_Affine3d waypoints;
+  EigenSTL::vector_Isometry3d waypoints;
 
   // Create circle of poses around center
   double radius = 0.05;
@@ -449,11 +449,11 @@ bool ArmTesting::calibrateInCircle()
   for (double angle = 0; angle <= 2 * M_PI; angle += increment)
   {
     // Rotate around circle
-    Eigen::Affine3d rotation_transform = Eigen::Affine3d::Identity();
+    Eigen::Isometry3d rotation_transform = Eigen::Isometry3d::Identity();
     rotation_transform.translation().z() += radius * cos(angle);
     rotation_transform.translation().y() += radius * sin(angle);
 
-    Eigen::Affine3d new_point = rotation_transform * camera_pose;
+    Eigen::Isometry3d new_point = rotation_transform * camera_pose;
 
     // Convert pose that has x arrow pointing to object, to pose that has z arrow pointing towards
     // object and x out in the grasp dir
@@ -464,7 +464,7 @@ bool ArmTesting::calibrateInCircle()
     // visual_tools_->publishZArrow(new_point, rvt::RED);
 
     // Translate to custom end effector geometry
-    Eigen::Affine3d grasp_pose = new_point * grasp_datas_[arm_jmg]->grasp_pose_to_eef_pose_;
+    Eigen::Isometry3d grasp_pose = new_point * grasp_datas_[arm_jmg]->grasp_pose_to_eef_pose_;
     // visual_tools_->publishZArrow(grasp_pose, rvt::PURPLE);
     visual_tools_->publishAxis(grasp_pose);
 

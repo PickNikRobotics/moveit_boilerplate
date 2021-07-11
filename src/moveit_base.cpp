@@ -103,7 +103,7 @@ bool MoveItBase::init(ros::NodeHandle& nh)
 bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
 {
   // Create tf transformer
-  tf_.reset(new tf::TransformListener(nh_));
+  tf_buffer_.reset(new tf2_ros::Buffer());
   // TODO(davetcoleman): remove these lines, only an attempt to fix loadPlanningSceneMonitor bug
   ros::spinOnce();
 
@@ -111,7 +111,7 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
   ROS_DEBUG_STREAM_NAMED(name_, "Loading Planning Scene Monitor");
   static const std::string PLANNING_SCENE_MONITOR_NAME = "MoveItBasePlanningScene";
   planning_scene_monitor_.reset(
-      new psm::PlanningSceneMonitor(planning_scene_, robot_model_loader_, tf_, PLANNING_SCENE_MONITOR_NAME));
+      new psm::PlanningSceneMonitor(planning_scene_, robot_model_loader_, tf_buffer_, PLANNING_SCENE_MONITOR_NAME));
   ros::spinOnce();
 
   if (planning_scene_monitor_->getPlanningScene())
@@ -234,24 +234,6 @@ moveit::core::RobotStatePtr MoveItBase::getCurrentState()
   psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
   (*current_state_) = scene->getCurrentState();
   return current_state_;
-}
-
-bool MoveItBase::getTFTransform(const std::string& from_frame, const std::string& to_frame, Eigen::Affine3d &pose)
-{
-  tf::StampedTransform tf_transform;
-  try
-  {
-    tf_->lookupTransform(from_frame, to_frame, ros::Time(0), tf_transform);
-  }
-  catch (tf::TransformException ex)
-  {
-    ROS_ERROR("%s", ex.what());
-    return false;
-  }
-
-  // Convert to eigen
-  tf::transformTFToEigen(tf_transform, pose);
-  return true;
 }
 
 }  // namespace moveit_boilerplate
