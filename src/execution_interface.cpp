@@ -131,7 +131,7 @@ ExecutionInterface::ExecutionInterface(psm::PlanningSceneMonitorPtr planning_sce
   ROS_INFO_STREAM_NAMED(name_, "ExecutionInterface Ready.");
 }
 
-bool ExecutionInterface::executePose(const Eigen::Affine3d &pose)
+bool ExecutionInterface::executePose(const Eigen::Isometry3d &pose)
 {
   pose_stamped_msg_.header.stamp = ros::Time::now();
   visual_tools_->convertPoseSafe(pose, pose_stamped_msg_.pose);

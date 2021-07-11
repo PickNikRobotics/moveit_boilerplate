@@ -87,7 +87,7 @@ Boilerplate::Boilerplate() : name_("boilerplate"), nh_("~")
   planning_scene_.reset(new planning_scene::PlanningScene(robot_model_));
 
   // Create tf transformer
-  tf_.reset(new tf::TransformListener(nh_));
+  tf_buffer_.reset(new tf2_ros::Buffer());
   // TODO(davetcoleman): remove these lines, only an attempt to fix loadPlanningSceneMonitor bug
   ros::spinOnce();
 
@@ -126,7 +126,7 @@ bool Boilerplate::loadPlanningSceneMonitor(const std::string& joint_state_topic)
   // Allows us to sycronize to Rviz and also publish collision objects to ourselves
   ROS_DEBUG_STREAM_NAMED("boilerplate", "Loading Planning Scene Monitor");
   planning_scene_monitor_.reset(
-      new psm::PlanningSceneMonitor(planning_scene_, robot_model_loader_, tf_, planning_scene_name_));
+      new psm::PlanningSceneMonitor(planning_scene_, robot_model_loader_, tf_buffer_, planning_scene_name_));
   ros::spinOnce();
 
   if (planning_scene_monitor_->getPlanningScene())
@@ -249,7 +249,7 @@ moveit::core::RobotStatePtr Boilerplate::getCurrentState()
   return current_state_;
 }
 
-const Eigen::Affine3d& Boilerplate::getCurrentPose()
+const Eigen::Isometry3d& Boilerplate::getCurrentPose()
 {
   return getCurrentState()->getGlobalLinkTransform(arm_jmg_->getOnlyOneEndEffectorTip());
 }

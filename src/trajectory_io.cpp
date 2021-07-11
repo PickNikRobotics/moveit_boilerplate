@@ -185,9 +185,9 @@ bool TrajectoryIO::loadCartTrajectoryFromFile(const std::string& file_name)
       continue;
 
     // Convert line to a robot state
-    Eigen::Affine3d pose;
+    Eigen::Isometry3d pose;
     double sec;
-    streamToAffine3d(pose, sec, line);
+    streamToIsometry3d(pose, sec, line);
 
     // Debug
     visual_tools_->publishZArrow(pose, rvt::RED);
@@ -210,7 +210,7 @@ bool TrajectoryIO::loadCartTrajectoryFromFile(const std::string& file_name)
   return true;
 }
 
-void TrajectoryIO::addCartWaypoint(const Eigen::Affine3d& pose, const double& sec)
+void TrajectoryIO::addCartWaypoint(const Eigen::Isometry3d& pose, const double& sec)
 {
   cartesian_trajectory_.push_back(TimePose(sec, pose));
 }
@@ -276,7 +276,7 @@ bool TrajectoryIO::getFilePath(std::string& file_path, const std::string& file_n
   return true;
 }
 
-bool TrajectoryIO::streamToAffine3d(Eigen::Affine3d& pose, double& sec, const std::string& line)
+bool TrajectoryIO::streamToIsometry3d(Eigen::Isometry3d& pose, double& sec, const std::string& line)
 {
   std::stringstream line_stream(line);
   std::string cell;

@@ -57,12 +57,12 @@ namespace moveit_boilerplate
 /** \brief Struct for storing the pose of an end effector with a time */
 struct TimePose
 {
-  TimePose(double time, Eigen::Affine3d pose) : time_(time), pose_(pose)
+  TimePose(double time, Eigen::Isometry3d pose) : time_(time), pose_(pose)
   {
   }
 
   double time_;
-  Eigen::Affine3d pose_;
+  Eigen::Isometry3d pose_;
 };
 
 class TrajectoryIO
@@ -114,7 +114,7 @@ public:
   bool loadCartTrajectoryFromFile(const std::string& file_name);
 
   /** \brief Add current robot pose to trajectory */
-  void addCartWaypoint(const Eigen::Affine3d& pose, const double& sec = 2.0);
+  void addCartWaypoint(const Eigen::Isometry3d& pose, const double& sec = 2.0);
 
   /** \brief Delete all recorded waypoints */
   void clearCartWaypoints();
@@ -131,13 +131,13 @@ public:
   bool saveCartTrajectoryToFile(const std::string& file_path);
 
   /**
-   * \brief Convert a 6-vector of x,y,z, roll,pitch,yall to an Affine3d with quaternion, from a line
+   * \brief Convert a 6-vector of x,y,z, roll,pitch,yall to an Isometry3d with quaternion, from a line
    * of a file
    * \param pose - end effector location to read from file
    * \param sec - seconds to execute this waypoint before executing next
    * \param line - single record from file
    */
-  bool streamToAffine3d(Eigen::Affine3d& pose, double& sec, const std::string& line);
+  bool streamToIsometry3d(Eigen::Isometry3d& pose, double& sec, const std::string& line);
 
   // GENERIC UTILS ------------------------------------------------------------------
 

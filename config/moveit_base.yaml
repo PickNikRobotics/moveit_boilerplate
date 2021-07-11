@@ -1,0 +1,7 @@
+moveit_base:
+  joint_state_topic: /joint_states
+  planning_scene_topic: /move_group/monitored_planning_scene
+  rviz:
+    markers_topic: "/moveit_visual_tools/markers"
+    robot_state_topic: "/moveit_visual_tools/robot_state"
+    trajectory_topic: "/moveit_visual_tools/trajectory"
